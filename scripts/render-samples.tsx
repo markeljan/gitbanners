@@ -20,7 +20,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { BannerOptions, BuiltBanner, RenderEnv } from "@/lib/banner";
 import {
-  bannerText,
   buildBanner,
   buildMessageBanner,
   collectImages,
@@ -40,12 +39,7 @@ import {
   type Repo,
   type User,
 } from "@/lib/github/schema";
-import {
-  avatarDataUri,
-  fallbackFontsFor,
-  renderPng,
-  renderSvg,
-} from "@/lib/render";
+import { avatarDataUri, prepareText, renderPng, renderSvg } from "@/lib/render";
 
 const HOST = "gitbanners.com";
 /** Themes of the profile presets: GitHub's own two and a community one. */
@@ -745,11 +739,10 @@ for (const sample of samples) {
   try {
     const env = await environment(sample);
     const built = sample.build(env);
-    const text = sample.entity ? bannerText(sample.entity, sample.options) : "";
-    const fonts = await fallbackFontsFor(text);
+    const { element, fonts } = await prepareText(built.element);
     const size = { width: built.width, height: built.height, fonts };
     const card = built.width < 1000;
-    const png = await renderPng(built.element, {
+    const png = await renderPng(element, {
       ...size,
       scale: card ? 2 : 1,
     });
@@ -757,7 +750,7 @@ for (const sample of samples) {
     if (card) {
       await writeFile(
         join(out, `${sample.name}.svg`),
-        await renderSvg(built.element, size),
+        await renderSvg(element, size),
       );
     }
     rows.push(
