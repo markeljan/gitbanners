@@ -13,7 +13,7 @@ const reach: Block[] = site.contactEmail
   : [
       {
         type: "p",
-        text: `${site.name} has no support inbox. The way to reach the maintainer is through GitHub: [${maintainer.login}](${maintainer.url}). The profile lists the current ways to get in touch.`,
+        text: `${site.name} has no support inbox. The maintainer is on GitHub as [${maintainer.login}](${maintainer.url}), and that profile is the place to reach them.`,
       },
     ];
 

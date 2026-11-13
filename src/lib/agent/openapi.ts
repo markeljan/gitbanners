@@ -340,6 +340,10 @@ function jsonResponses(operation: ApiOperation): Json {
         ...rateHeaders,
         "Cache-Control": header("Cache-Control"),
         Link: header("Link"),
+        // Not sent today. Documented on every operation because this is where
+        // a client has to look for them once an operation is being retired.
+        Deprecation: header("Deprecation"),
+        Sunset: header("Sunset"),
       },
       content: { "application/json": { schema: answer.schema } },
     },
@@ -516,11 +520,11 @@ export function openApiDocument(): Json {
           },
         },
         Deprecation: textHeader(
-          "RFC 9745. Sent by an operation that is being retired: the date from which it counts as deprecated, as a structured field date.",
+          "RFC 9745. Only sent by an operation that is being retired: the date from which it counts as deprecated, as a structured field date. Absent on every operation today.",
           "@1798761600",
         ),
         Sunset: textHeader(
-          "RFC 8594. Sent together with Deprecation: the HTTP date after which the operation may stop answering.",
+          `RFC 8594. Only sent together with Deprecation: the HTTP date after which the operation may stop answering, at least ${FACTS.deprecationNoticeDays} days after the deprecation date.`,
           "Thu, 01 Apr 2027 00:00:00 GMT",
         ),
       },

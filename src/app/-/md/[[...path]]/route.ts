@@ -22,6 +22,7 @@ import { DISCOVERY_LINKS } from "@/lib/agent/links";
 import {
   contentDocument,
   entityDocument,
+  errorDocument,
   notFoundDocument,
   presetExists,
   unavailableDocument,
@@ -165,8 +166,6 @@ export async function GET(
       });
     }
     console.error("[markdown] unexpected error", caught);
-    return markdown(unavailableDocument(requested, 30), {
-      status: 500,
-    });
+    return markdown(errorDocument(requested), { status: 500 });
   }
 }

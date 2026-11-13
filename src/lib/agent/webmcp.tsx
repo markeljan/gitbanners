@@ -161,8 +161,8 @@ export function WebMcp() {
               },
               size: {
                 type: "string",
-                enum: ["readme", "x", "linkedin", "og", "social", "square"],
-                description: 'Canvas size. Default "readme".',
+                description:
+                  'Canvas size id such as "og" or "x". Default "readme". list_banner_options names them all.',
               },
             },
             required: ["target"],

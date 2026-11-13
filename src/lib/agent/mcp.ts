@@ -30,10 +30,12 @@ import {
   searchData,
 } from "@/lib/api/service";
 import {
+  DEFAULT_SIZE_ID,
   DEFAULT_THEME_ID,
   OPTION_LIMITS,
   parseOptions,
   SIZE_IDS,
+  SIZES,
   THEMES,
 } from "@/lib/banner";
 import { isGitHubError } from "@/lib/github/errors";
@@ -166,7 +168,7 @@ export function registerTools(server: McpServer): void {
           .enum(SIZE_IDS)
           .optional()
           .describe(
-            'Canvas: "readme" (default, 846 pixels wide) or a fixed social size such as "x", "linkedin" or "og".',
+            `Canvas size id. Default "${DEFAULT_SIZE_ID}" (${SIZES[DEFAULT_SIZE_ID].width} pixels wide, height by content); the others are fixed sizes for uploads.`,
           ),
         options: z
           .string()

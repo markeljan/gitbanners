@@ -16,6 +16,7 @@ import { site } from "@/lib/site";
 import {
   contentDocument,
   entityDocument,
+  errorDocument,
   frontMatter,
   notFoundDocument,
   presetExists,
@@ -125,6 +126,14 @@ describe("error documents", () => {
     const doc = unavailableDocument("/facebook/react.md", 30);
     expect(doc).toContain("Retry in 30 seconds");
     expect(doc).toContain(`${site.url}/llms.txt`);
+  });
+
+  test("the 500 does not blame GitHub or the address", () => {
+    const doc = errorDocument("/vercel.md");
+    expect(doc.startsWith("# Something went wrong\n")).toBe(true);
+    expect(doc).toContain("`/vercel.md`");
+    expect(doc).not.toContain("GitHub could not");
+    expect(doc).toContain(`${site.url}/docs`);
   });
 });
 

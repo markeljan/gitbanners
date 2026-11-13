@@ -9,6 +9,7 @@
  * same file.
  */
 import { createHash } from "node:crypto";
+import { SIZES } from "@/lib/banner";
 import { type CachePolicy, publicCacheHeaders } from "@/lib/http/cache-headers";
 import { absoluteUrl, site } from "@/lib/site";
 import { AGENT_SKILL, MCP_SERVER, MCP_TOOLS } from "./identity";
@@ -80,6 +81,12 @@ export function jsonBody(value: unknown): string {
 
 const U = site.url;
 
+/** The canvas sizes with a fixed height, as the skill names them. */
+const FIXED_SIZES = Object.values(SIZES)
+  .filter((size) => size.height !== null)
+  .map((size) => `\`${size.id}\``)
+  .join(", ");
+
 /**
  * The skill file. One string constant on purpose: the index publishes the
  * SHA-256 of exactly these bytes, so the file served and the file hashed
@@ -110,7 +117,7 @@ Replace \`OWNER\` with a GitHub login. For a repository use \`OWNER/REPO\`:
 
 - A preset is the last path segment: \`${U}/OWNER/streak.svg\`, \`${U}/OWNER/REPO/contributors.svg\`.
 - Options are query parameters: \`?theme=dracula\`, \`?size=og\`, \`?accent=ff7ac6\`.
-- \`.png\` instead of \`.svg\` for surfaces that do not draw SVG. \`?size=x\`, \`linkedin\`, \`og\`, \`social\` and \`square\` are fixed sizes for uploads.
+- \`.png\` instead of \`.svg\` for surfaces that do not draw SVG. \`?size=\` takes ${FIXED_SIZES} for fixed upload sizes.
 - Every preset, theme, size and parameter: \`GET ${U}${site.api.basePath}/options\`.
 
 ## Check before you embed

@@ -108,6 +108,19 @@ ${resourceList()}
 `;
 }
 
+/** 500 for a failure that is neither the caller's nor GitHub's. */
+export function errorDocument(requestedPath: string): string {
+  const shown = requestedPath.replace(/[`\s]+/g, " ").slice(0, 200);
+  return `# Something went wrong
+
+The page at \`${shown}\` could not be built. The fault is on this side, not in the address. Retry in a moment.
+
+Meanwhile:
+
+${resourceList()}
+`;
+}
+
 // --- Banner pages ----------------------------------------------------------
 
 /**
