@@ -10,6 +10,7 @@
 import { revalidateTag } from "next/cache";
 import { z } from "zod";
 import { loginChanged, withUser } from "@/lib/auth/session";
+import { canonicalQuery } from "@/lib/banner";
 import {
   bannerPatchSchema,
   deleteBanner,
@@ -72,6 +73,7 @@ export async function PATCH(
     { policy: "mutations", body: patchSchema },
     async ({ user, body }) => {
       const { isDefault, ...patch } = body;
+      if (patch.query !== undefined) patch.query = canonicalQuery(patch.query);
       if (isDefault && !(await getEntitlements(user.id)).canSetDefault) {
         return proRequired(
           "Only Pro accounts can choose the banner served at their profile URL.",

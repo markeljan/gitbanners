@@ -397,7 +397,7 @@ describe("input validation", () => {
     const id = await create(as, {
       ...banner,
       preset: "streak",
-      query: "theme=dark",
+      query: "theme=dracula",
     });
     const response = await call({
       as,
@@ -412,7 +412,7 @@ describe("input validation", () => {
       userId: "4242",
       name: "Renamed",
       preset: "streak",
-      query: "theme=dark",
+      query: "theme=dracula",
       isDefault: false,
     });
   });

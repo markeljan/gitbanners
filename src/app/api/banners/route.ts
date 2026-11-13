@@ -12,6 +12,7 @@
 import { revalidateTag } from "next/cache";
 import { z } from "zod";
 import { loginChanged, withUser } from "@/lib/auth/session";
+import { canonicalQuery } from "@/lib/banner";
 import {
   bannerInputSchema,
   createBanner,
@@ -54,7 +55,10 @@ export async function POST(request: Request): Promise<Response> {
     request,
     { policy: "mutations", body: createSchema },
     async ({ user, body }) => {
-      const { isDefault = false, ...input } = body;
+      const { isDefault = false, ...fields } = body;
+      // Stored in the engine's one spelling: unknown keys and invalid
+      // values never reach the store, and equal banners get equal URLs.
+      const input = { ...fields, query: canonicalQuery(fields.query) };
       const entitlements = await getEntitlements(user.id);
       if (isDefault && !entitlements.canSetDefault) {
         return proRequired(
