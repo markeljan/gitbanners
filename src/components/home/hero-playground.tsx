@@ -3,35 +3,23 @@
 import { Button } from "@astryxdesign/core/Button";
 import { Icon } from "@astryxdesign/core/Icon";
 import { ArrowRight } from "lucide-react";
-import { useEffect, useId, useState } from "react";
-import { BannerCanvas } from "@/components/banner/banner-canvas";
+import { useId } from "react";
 import { CopyButton } from "@/components/banner/copy-button";
 import { DownloadButton } from "@/components/banner/download-button";
-import { preloadBannerFonts } from "@/components/banner/fonts";
 import { PresetPicker } from "@/components/banner/preset-picker";
 import { TargetInput } from "@/components/banner/target-input";
 import { useSiteHost } from "@/components/providers";
-import { bannerPath } from "@/lib/banner";
 import {
   bannerSnippets,
   parseTargetSlug,
   studioPath,
   targetSlug,
 } from "@/lib/embed";
-import { HOME_ENTITY, useHomePreview } from "./preview";
+import { useHomePreview } from "./preview";
+import { PreviewBanner } from "./preview-banner";
 
 /** Examples under the input: a user, a repository, an organization, a repository. */
 const EXAMPLES = ["torvalds", "vercel/next.js", "vercel", "facebook/react"];
-
-/**
- * The image the server renders for the first paint: the homepage profile as
- * a plain `<img>`, which costs a few hundred bytes of HTML where the DOM
- * banner would cost tens of thousands.
- */
-const POSTER_SRC = bannerPath(
-  { kind: "owner", login: HOME_ENTITY.login },
-  { format: "svg" },
-);
 
 /**
  * One line under the input. Normally it offers examples; when the requested
@@ -89,71 +77,6 @@ function HintLine() {
 }
 
 /**
- * The banner itself. Until the visitor changes something it is the
- * server-rendered image; the DOM canvas is mounted invisibly underneath once
- * the browser is idle and the banner fonts have arrived, so the first
- * keystroke only has to flip which of the two is visible.
- */
-function HeroBanner() {
-  const { entity, options, banner, touched } = useHomePreview();
-  const [isCanvasWarm, setCanvasWarm] = useState(false);
-  const [hasPosterFailed, setPosterFailed] = useState(false);
-  useEffect(() => {
-    let alive = true;
-    const warm = () => {
-      void preloadBannerFonts().then(() => {
-        if (alive) setCanvasWarm(true);
-      });
-    };
-    if (typeof window.requestIdleCallback === "function") {
-      const handle = window.requestIdleCallback(warm, { timeout: 2500 });
-      return () => {
-        alive = false;
-        window.cancelIdleCallback(handle);
-      };
-    }
-    const timer = setTimeout(warm, 600);
-    return () => {
-      alive = false;
-      clearTimeout(timer);
-    };
-  }, []);
-
-  const isLive = touched || hasPosterFailed;
-  return (
-    <div
-      className="gb-hero-banner"
-      style={{
-        aspectRatio: `${banner.width} / ${banner.height}`,
-        maxWidth: banner.width,
-      }}
-    >
-      {isLive || isCanvasWarm ? (
-        <BannerCanvas
-          entity={entity}
-          options={options}
-          banner={banner}
-          className={isLive ? undefined : "invisible"}
-        />
-      ) : null}
-      {isLive ? null : (
-        // biome-ignore lint/performance/noImgElement: the live banner URL is the product, and already an optimised image
-        <img
-          className="gb-hero-poster"
-          src={POSTER_SRC}
-          alt={banner.alt}
-          width={banner.width}
-          height={banner.height}
-          fetchPriority="high"
-          decoding="async"
-          onError={() => setPosterFailed(true)}
-        />
-      )}
-    </div>
-  );
-}
-
-/**
  * The interactive half of the hero: the target input, the banner that
  * follows it, preset tabs and the actions on the banner's URL.
  */
@@ -192,7 +115,7 @@ export function HeroPlayground() {
           aria-busy={isBusy}
           className="gb-frame-stage"
         >
-          <HeroBanner />
+          <PreviewBanner priority />
         </div>
         <div className="gb-frame-footer">
           <code className="gb-url">

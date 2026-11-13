@@ -230,6 +230,24 @@ html {
     line-height: 1.15;
     letter-spacing: -0.025em;
   }
+  /* Section titles. */
+  .gb-h2 {
+    font-size: var(--text-heading-1-size);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+  .gb-h3 {
+    font-size: var(--text-large-size);
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+  }
+  @media (width >= 40rem) {
+    .gb-h2 {
+      font-size: var(--text-display-3-size);
+    }
+  }
   /* The sentence under a title. */
   .gb-lead {
     font-size: var(--text-large-size);
@@ -451,8 +469,126 @@ html {
     display: block;
     width: 100%;
     height: auto;
+    /* The box is an estimate (see estimateBannerBox): the real image is
+       fitted into it, so a taller or shorter banner never moves the page. */
     object-fit: contain;
-    object-position: left top;
+  }
+
+  /* ── Code and snippets ────────────────────────────────────────────────── */
+  .gb-code {
+    margin: 0;
+    padding: var(--spacing-3) var(--spacing-4);
+    overflow-x: auto;
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-container);
+    background: var(--color-background-surface);
+    color: var(--color-text-primary);
+    font-family: var(--font-family-code);
+    font-size: var(--text-supporting-size);
+    line-height: 1.7;
+    /* A README line is one long URL: wrap it instead of hiding its end. */
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    tab-size: 2;
+  }
+  .gb-code-inline {
+    padding: 0 var(--spacing-1);
+    border-radius: var(--radius-inner);
+    background: var(--color-overlay-hover);
+    font-family: var(--font-family-code);
+    font-size: 0.92em;
+    overflow-wrap: anywhere;
+  }
+  .gb-snippets {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+    min-width: 0;
+  }
+  .gb-snippets-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-2);
+  }
+  .gb-snippet-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  /* ── Theme swatches ───────────────────────────────────────────────────── */
+  .gb-theme-picker {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+  }
+  .gb-swatch-groups {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+  }
+  .gb-swatch-groups .gb-swatches {
+    margin-block-start: var(--spacing-2);
+  }
+  .gb-swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+    gap: var(--spacing-3) var(--spacing-2);
+  }
+  .gb-swatch {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1-5);
+    min-width: 0;
+    padding: var(--spacing-1);
+    border-radius: var(--radius-element);
+    color: var(--color-text-secondary);
+    font-size: var(--text-supporting-size);
+    line-height: var(--text-supporting-leading);
+    text-align: start;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+  }
+  .gb-swatch:hover {
+    background: var(--color-overlay-hover);
+    color: var(--color-text-primary);
+  }
+  .gb-swatch[aria-checked="true"] {
+    color: var(--color-text-primary);
+  }
+  /* The theme in miniature: canvas, border, text and the contribution ramp. */
+  .gb-swatch-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-2);
+    height: var(--spacing-10);
+    padding-inline: var(--spacing-2);
+    border: var(--border-width) solid var(--gb-sw-border);
+    border-radius: var(--radius-inner);
+    background: var(--gb-sw-bg);
+    color: var(--gb-sw-text);
+  }
+  .gb-swatch[aria-checked="true"] .gb-swatch-chip {
+    outline: var(--focus-outline-width) solid var(--color-accent);
+    outline-offset: calc(var(--border-width) * 2);
+  }
+  .gb-swatch-chip > b {
+    font-size: var(--text-body-size);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: var(--gb-sw-accent);
+    text-decoration-thickness: calc(var(--border-width) * 2);
+    text-underline-offset: var(--spacing-0-5);
+  }
+  .gb-swatch-chip > i {
+    flex: 0 1 3.75rem;
+    height: var(--spacing-3);
+    border-radius: calc(var(--radius-inner) / 2);
+    background: var(--gb-sw-heat);
   }
 
   /* ── Homepage hero ────────────────────────────────────────────────────── */
@@ -561,16 +697,17 @@ html {
     background-repeat: no-repeat;
     animation: gb-sweep 900ms linear 120ms infinite both;
   }
-  .gb-hero-banner {
+  /* PreviewBanner: the server image and the DOM canvas share one box. */
+  .gb-preview {
     position: relative;
     width: 100%;
     transition: aspect-ratio var(--duration-fast) var(--ease-standard);
   }
-  .gb-hero-banner > .gb-canvas {
+  .gb-preview > .gb-canvas {
     position: absolute;
     inset: 0;
   }
-  .gb-hero-poster {
+  .gb-preview-poster {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -633,15 +770,283 @@ html {
       animation: none;
       background-size: 100% 100%;
     }
-    .gb-hero-banner,
+    .gb-preview,
     .gb-swap > * {
       transition: none;
     }
   }
 
+  /* ── Homepage sections ────────────────────────────────────────────────── */
+  .gb-section-inner {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-8);
+    padding-block: calc(var(--spacing-12) + var(--spacing-2));
+    border-block-start: var(--border-width) solid var(--color-border);
+  }
+  .gb-section-head {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-3);
+    max-width: var(--gb-prose-width);
+  }
+  .gb-section-body {
+    min-width: 0;
+  }
+  @media (width >= 64rem) {
+    .gb-section-inner {
+      padding-block: calc(var(--spacing-12) + var(--spacing-8));
+    }
+    .gb-split {
+      display: grid;
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      gap: calc(var(--spacing-12) + var(--spacing-4));
+      align-items: start;
+    }
+    /* The heading keeps the content company while a long column scrolls by. */
+    .gb-split > .gb-section-head {
+      position: sticky;
+      inset-block-start: calc(var(--gb-header-height) + var(--spacing-8));
+    }
+  }
+  .gb-link {
+    color: var(--color-text-primary);
+    text-decoration: underline;
+    text-decoration-color: var(--color-border-emphasized);
+    text-underline-offset: var(--spacing-1);
+    border-radius: var(--radius-inner);
+    transition: text-decoration-color var(--duration-fast) var(--ease-standard);
+  }
+  .gb-link:hover {
+    text-decoration-color: currentColor;
+  }
+
+  /* Tables: rows and hairlines, no boxes. */
+  .gb-table-wrap {
+    overflow-x: auto;
+  }
+  .gb-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: start;
+  }
+  .gb-table th,
+  .gb-table td {
+    padding: var(--spacing-3) var(--spacing-4) var(--spacing-3) 0;
+    border-block-end: var(--border-width) solid var(--color-border);
+    text-align: start;
+    vertical-align: top;
+  }
+  .gb-table thead th {
+    padding-block: var(--spacing-2);
+    color: var(--color-text-secondary);
+    font-size: var(--text-supporting-size);
+    font-weight: var(--text-label-weight);
+  }
+  .gb-table tbody th {
+    font-weight: 400;
+  }
+  .gb-table td {
+    color: var(--color-text-secondary);
+  }
+  .gb-table tr > :last-child {
+    padding-inline-end: 0;
+  }
+  /* A URL reads as one thing: keep it on one line where there is room. */
+  @media (width >= 40rem) {
+    .gb-table tbody th > .gb-code-inline {
+      white-space: nowrap;
+    }
+  }
+  .gb-table[data-variant="plans"] td,
+  .gb-table[data-variant="plans"] thead th:not(:first-child) {
+    width: 22%;
+    white-space: nowrap;
+  }
+  .gb-table[data-variant="plans"] thead th:not(:first-child) {
+    color: var(--color-text-primary);
+    font-size: var(--text-body-size);
+    font-weight: 600;
+  }
+  .gb-table[data-variant="plans"] td:last-child {
+    color: var(--color-text-primary);
+  }
+
+  /* Showcase: one group per kind of entity, two cards to a row. */
+  .gb-showcase + .gb-showcase {
+    margin-block-start: calc(var(--spacing-12) + var(--spacing-2));
+  }
+  .gb-showcase-head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    max-width: var(--gb-prose-width);
+    margin-block-end: var(--spacing-6);
+  }
+  .gb-showcase-grid {
+    display: grid;
+    gap: var(--spacing-5);
+  }
+  @media (width >= 48rem) {
+    .gb-showcase-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  /* BannerCard: the banner on a mat, its caption underneath. */
+  .gb-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-container);
+    background: var(--color-background-surface);
+  }
+  .gb-card > .gb-banner-link {
+    display: grid;
+    flex: 1;
+    align-items: center;
+    padding: var(--spacing-3) var(--spacing-3) 0;
+  }
+  .gb-card-body {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-3);
+    padding: var(--spacing-3) var(--spacing-4) var(--spacing-4);
+  }
+  .gb-card-text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-0-5);
+    min-width: 0;
+  }
+  .gb-card-title {
+    font-weight: 600;
+  }
+  .gb-card-blurb {
+    color: var(--color-text-secondary);
+  }
+  .gb-card-path {
+    margin-block-start: var(--spacing-1);
+    color: var(--color-text-secondary);
+    font-family: var(--font-family-code);
+    font-size: var(--text-supporting-size);
+    overflow-wrap: anywhere;
+  }
+  .gb-card-actions {
+    display: flex;
+    flex: none;
+    gap: var(--spacing-1);
+  }
+
+  /* Sizes: every canvas in its true proportion, two to a row of one height. */
+  .gb-sizes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-8);
+  }
+  .gb-size-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-8) var(--spacing-5);
+  }
+  .gb-size {
+    margin: 0;
+    min-width: 0;
+  }
+  .gb-size > figcaption {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--spacing-1) var(--spacing-3);
+    margin-block-start: var(--spacing-3);
+    color: var(--color-text-secondary);
+  }
+  .gb-size > figcaption > b {
+    color: var(--color-text-primary);
+    font-weight: 600;
+  }
+  .gb-size[data-size="size=square"] {
+    max-width: 60%;
+  }
+  @media (width >= 48rem) {
+    .gb-size-row {
+      flex-direction: row;
+      align-items: flex-start;
+    }
+    /* flex-grow = width over height, so the two share the row at one height. */
+    .gb-size {
+      flex: 3.18 1 0;
+    }
+    .gb-size[data-size="size=x"] {
+      flex-grow: 3;
+    }
+    .gb-size[data-size="size=linkedin"] {
+      flex-grow: 4;
+    }
+    .gb-size[data-size="size=og"] {
+      flex-grow: 1.905;
+    }
+    .gb-size[data-size="size=social"] {
+      flex-grow: 2;
+    }
+    .gb-size[data-size="size=square"] {
+      flex-grow: 1;
+      max-width: none;
+    }
+  }
+
+  /* Themes: the banner, then every theme under it. */
+  .gb-themes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-8);
+  }
+  .gb-themes-code {
+    margin-block-start: var(--spacing-8);
+  }
+  @media (width >= 64rem) {
+    .gb-themes .gb-swatches {
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+    }
+  }
+
+  .gb-callout {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+    padding: var(--spacing-5);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-container);
+    background: var(--color-background-surface);
+  }
+  /* A plain list as divided rows. */
+  .gb-rows > li {
+    padding-block: var(--spacing-4);
+    border-block-end: var(--border-width) solid var(--color-border);
+    color: var(--color-text-secondary);
+  }
+  .gb-rows > li:first-child {
+    padding-block-start: 0;
+  }
+  .gb-faq {
+    display: grid;
+    gap: var(--spacing-8) var(--spacing-12);
+  }
+  .gb-faq > div {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+  @media (width >= 48rem) {
+    .gb-faq {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
   /* ── Footer ───────────────────────────────────────────────────────────── */
   .gb-footer {
-    margin-block-start: calc(var(--spacing-12) * 2);
     border-block-start: var(--border-width) solid var(--color-border);
     padding-block: var(--spacing-12) var(--spacing-10);
     color: var(--color-text-secondary);
