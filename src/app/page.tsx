@@ -1,11 +1,22 @@
-import { Heading, Text } from "@astryxdesign/core/Text";
-import { site } from "@/lib/site";
+import type { Metadata } from "next";
+import { ContentPageView } from "@/components/content/content-page";
+import { JsonLd } from "@/components/content/json-ld";
+import { FAQ } from "@/content/faq";
+import { home } from "@/content/home";
+import { homeJsonLd } from "@/lib/agent/jsonld";
+import { pageMetadata } from "@/lib/agent/metadata";
 
+export const metadata: Metadata = pageMetadata(home);
+
+/**
+ * The homepage as plain content: the copy and the FAQ, rendered from the
+ * same objects as /index.md. The interactive version replaces this file.
+ */
 export default function Home() {
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-3 p-8">
-      <Heading level={1}>{site.name}</Heading>
-      <Text color="secondary">{site.description}</Text>
-    </main>
+    <>
+      <JsonLd data={homeJsonLd(FAQ)} />
+      <ContentPageView page={home} faq={FAQ} toc={false} />
+    </>
   );
 }

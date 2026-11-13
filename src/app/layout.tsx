@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Figtree } from "next/font/google";
+import Link from "next/link";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Providers } from "@/components/providers";
 import { DEFAULT_MODE, themeInitScript } from "@/components/theme";
+import { WebMcp } from "@/lib/agent/webmcp";
 import { site } from "@/lib/site";
 
 const figtree = Figtree({
@@ -64,7 +66,41 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          {/* Placeholder frame with the four landmarks agents look for. */}
+          <header className="border-border border-b">
+            <nav
+              aria-label="Main"
+              className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-4 py-3"
+            >
+              <Link href="/" className="font-semibold">
+                {site.name}
+              </Link>
+              <Link href="/docs">Docs</Link>
+              <Link href="/pricing">Pricing</Link>
+            </nav>
+          </header>
+          <main id="main">{children}</main>
+          <footer className="border-border border-t">
+            <nav
+              aria-label="Footer"
+              className="mx-auto flex max-w-6xl flex-wrap gap-4 px-4 py-6 text-secondary"
+            >
+              <Link href="/about">About</Link>
+              <Link href="/contact">Contact</Link>
+              <Link href="/privacy">Privacy</Link>
+              <Link href="/terms">Terms</Link>
+              <Link href="/docs">API docs</Link>
+              <a href="/llms.txt">llms.txt</a>
+              <a href="/openapi.json">OpenAPI</a>
+            </nav>
+            <p className="mx-auto max-w-6xl px-4 pb-6 text-secondary">
+              {site.name} is an independent project, not affiliated with or
+              endorsed by GitHub.
+            </p>
+          </footer>
+        </Providers>
+        <WebMcp />
         <Analytics />
         <SpeedInsights />
       </body>

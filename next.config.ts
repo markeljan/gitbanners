@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
-import { RESERVED_SEGMENTS } from "./src/lib/reserved";
+import { CONTENT_PATHS } from "./src/content/paths";
+import { DISCOVERY_LINK_HEADER } from "./src/lib/agent/links";
+import { BLOCKED_SEGMENTS, RESERVED_SEGMENTS } from "./src/lib/reserved";
 
 /*
  * URL grammar
@@ -23,25 +25,38 @@ import { RESERVED_SEGMENTS } from "./src/lib/reserved";
  */
 
 // `afterFiles` rewrites run before dynamic routes, so the app's own routes are
-// excluded up front. `(?:/|\\.|$)`: a bare `$` in a lookahead would mean the end
-// of the whole path, not of the segment.
-const NOT_RESERVED = `(?!(?:${RESERVED_SEGMENTS.join("|")})(?:/|\\.|$))`;
+// excluded up front, and with them the names that are never an owner (see
+// `BLOCKED_SEGMENTS`). `(?:/|\\.|$)`: a bare `$` in a lookahead would mean the
+// end of the whole path, not of the segment.
+const NOT_OWNER = [...RESERVED_SEGMENTS, ...BLOCKED_SEGMENTS].join("|");
+const NOT_RESERVED = `(?!(?:${NOT_OWNER})(?:/|\\.|$))`;
 // A GitHub login, optionally written `@login` to escape a collision with an app route.
 const LOGIN = "@?[A-Za-z0-9][A-Za-z0-9-]*";
 const OWNER = `${NOT_RESERVED}${LOGIN}`;
 // A first segment containing a character that can never appear in a login.
-const JUNK = `(?!${LOGIN}(?:/|$))[^/]+`;
+// "-" itself is not junk: a `beforeFiles` rewrite to an internal handler
+// passes through the `afterFiles` rules again on its way to the route.
+const JUNK = `(?!(?:-|${LOGIN})(?:/|$))[^/]+`;
 const IMAGE_EXT = "svg|png";
-// Paths that negotiate Markdown. Machine files (/llms.txt, /openapi.json,
-// /.well-known/*), images and API routes answer the same whatever `Accept`
-// says: a scanner asking for Markdown must still get the real api-catalog.
-// Extensions are only trusted on single-segment paths (`/vercel/next.js` is a repo).
+// Paths that negotiate Markdown by `Accept`: banner pages, and every path that
+// is nothing at all (it gets the Markdown 404 an agent can recover from).
+// Left out, so they answer the same whatever `Accept` says:
+// - the app's own routes. Machine files (/docs/llms.txt, /.well-known/*, the
+//   API, /mcp) must reach a scanner that asks for Markdown unchanged, and an
+//   app page without a Markdown version (/studio) must answer HTML, not 404.
+//   The content pages are listed one by one in `rewrites()` instead.
+// - root files (/llms.txt, /openapi.json) and image URLs. Extensions are only
+//   trusted on single-segment paths (`/vercel/next.js` is a repository).
 const NEGOTIABLE = [
-  "(?!(?:api|mcp|embed|_next|-|\\.well-known)(?:/|$))",
+  `(?!(?:${RESERVED_SEGMENTS.join("|")}|-|\\.well-known)(?:/|$))`,
   "(?![^/]+\\.[A-Za-z0-9]+$)",
   `(?!.*\\.(?:${IMAGE_EXT})$)`,
   ".+",
 ].join("");
+// Routes that are never a page, so a ".md" at the end of one means nothing.
+const NOT_MACHINE = "(?!(?:api|mcp|embed|b|_next|-|\\.well-known)(?:/|$))";
+// What an agent guesses for a versioned API at the root: /v1, /v2/anything.
+const API_VERSION = "v[0-9]+";
 
 const header = (value: string) => ({
   type: "header" as const,
@@ -96,7 +111,24 @@ const baseConfig: NextConfig = {
     },
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // Discovery for agents that read headers only. The Markdown version of
+      // the homepage sends the same links itself, next to its canonical one:
+      // two sources for one header name would leave the winner to the host.
+      {
+        source: "/",
+        missing: WANTS_MARKDOWN.has,
+        headers: [{ key: "Link", value: DISCOVERY_LINK_HEADER }],
+      },
+      // Internal handlers are reachable by URL; only their public addresses
+      // belong in a search index. (Headers match the path as requested, so
+      // a public URL rewritten to a handler is not affected.)
+      {
+        source: "/-/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex" }],
+      },
+    ];
   },
   async redirects() {
     return [{ source: "/developers", destination: "/docs", permanent: true }];
@@ -106,6 +138,11 @@ const baseConfig: NextConfig = {
       // Before the filesystem, so static pages negotiate Markdown too.
       beforeFiles: [
         { source: "/", ...WANTS_MARKDOWN, destination: "/-/md" },
+        ...CONTENT_PATHS.map((path) => ({
+          source: path,
+          ...WANTS_MARKDOWN,
+          destination: `/-/md${path}`,
+        })),
         {
           source: `/:path(${NEGOTIABLE})`,
           ...WANTS_MARKDOWN,
@@ -141,11 +178,27 @@ const baseConfig: NextConfig = {
           source: `/embed/:owner(${LOGIN})/:rest+`,
           destination: "/-/i/auto/:owner/:rest+",
         },
-        // Markdown suffix: /vercel.md, /docs/api.md, /pricing.md
+        // Markdown suffix: /vercel.md, /vercel/next.js.md, /pricing.md. Not
+        // below the machine routes: /api/v1/repos/{owner}/notes.md is a
+        // repository called "notes.md", not the Markdown version of a page.
         { source: "/index.md", destination: "/-/md" },
-        { source: "/:path(.+).md", destination: "/-/md/:path" },
+        { source: `/:path(${NOT_MACHINE}.+).md`, destination: "/-/md/:path" },
         // Junk (/.env, /wp-login.php) → one static 404, no function, no per-URL cache entry.
         { source: `/:owner(${JUNK})/:rest*`, destination: "/-/nf" },
+        // A versioned API guessed at the root answers like the API does for an
+        // unknown route: 404 as problem+json that points at the real one. The
+        // destination names no operation on purpose: the catch-all under /api
+        // takes it.
+        {
+          source: `/:version(${API_VERSION})/:rest*`,
+          destination: "/api/-/not-found",
+        },
+        // The other names that are never an owner: the same static 404, before
+        // the banner page of a GitHub account called "ask" could answer 200.
+        {
+          source: `/:name(${BLOCKED_SEGMENTS.join("|")})/:rest*`,
+          destination: "/-/nf",
+        },
         // Content negotiation on the bare URL: <img src="https://…/vercel">
         {
           source: `/:owner(${OWNER})`,
