@@ -1,11 +1,21 @@
-import { Heading, Text } from "@astryxdesign/core/Text";
-import { site } from "@/lib/site";
+import type { Metadata } from "next";
+import { Hero } from "@/components/home/hero";
+import { HomePreviewProvider } from "@/components/home/preview";
+import { home } from "@/content/home";
+
+export const metadata: Metadata = {
+  title: { absolute: home.title },
+  description: home.description,
+  alternates: {
+    canonical: "/",
+    types: { "text/markdown": "/index.md" },
+  },
+};
 
 export default function Home() {
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-3 p-8">
-      <Heading level={1}>{site.name}</Heading>
-      <Text color="secondary">{site.description}</Text>
-    </main>
+    <HomePreviewProvider>
+      <Hero heading={home.heading} lead={home.lead} />
+    </HomePreviewProvider>
   );
 }
