@@ -4,7 +4,7 @@ import { Button } from "@astryxdesign/core/Button";
 import { Heading } from "@astryxdesign/core/Heading";
 import { Icon } from "@astryxdesign/core/Icon";
 import { Text } from "@astryxdesign/core/Text";
-import { BannerCard } from "@/components/banner/banner-card";
+import { BannerCardActions } from "@/components/banner/banner-card-actions";
 import { BannerImage } from "@/components/banner/banner-image";
 import { DownloadButton } from "@/components/banner/download-button";
 import { sizeHint } from "@/components/banner/sizes";
@@ -13,6 +13,7 @@ import { Container } from "@/components/site/page";
 import { type ShowcaseItem, showcaseGroup } from "@/content/showcase";
 import { type EntityKind, getTheme, SIZES, type SizeId } from "@/lib/banner";
 import { site } from "@/lib/site";
+import { WhenInteractive } from "./hydrated";
 
 /** The words of /gallery. The banners come from `SHOWCASE`. */
 export const GALLERY = {
@@ -65,6 +66,49 @@ const THEME_SAMPLES = [
   "catppuccin-latte",
 ] as const;
 
+interface GalleryCardProps {
+  path: string;
+  alt: string;
+  title: string;
+  blurb: string;
+  kind: EntityKind;
+  hasPath?: boolean;
+  priority?: boolean;
+}
+
+/**
+ * `BannerCard` with an `<h3>` title, whose copy and studio buttons appear
+ * once the page is interactive: a gallery has dozens of them, and their
+ * markup would outweigh the text of the page.
+ */
+function GalleryCard({
+  path,
+  alt,
+  title,
+  blurb,
+  kind,
+  hasPath = false,
+  priority = false,
+}: GalleryCardProps) {
+  return (
+    <article className="gb-card">
+      <BannerImage path={path} alt={alt} kind={kind} priority={priority} />
+      <div className="gb-card-body">
+        <div className="gb-card-text">
+          <Heading level={3} className="gb-card-title">
+            {title}
+          </Heading>
+          <p className="gb-card-blurb">{blurb}</p>
+          {hasPath ? <code className="gb-card-path">{path}</code> : null}
+        </div>
+        <WhenInteractive className="gb-pending-icons">
+          <BannerCardActions path={path} title={title} />
+        </WhenInteractive>
+      </div>
+    </article>
+  );
+}
+
 function GroupSection({ copy, first }: { copy: GroupCopy; first: boolean }) {
   const items = showcaseGroup(copy.group);
   return (
@@ -84,13 +128,12 @@ function GroupSection({ copy, first }: { copy: GroupCopy; first: boolean }) {
             id={item.id}
             className={item.shape === "card" ? undefined : "gb-gallery-wide"}
           >
-            <BannerCard
+            <GalleryCard
               path={item.path}
               alt={item.alt}
               title={item.title}
               blurb={item.blurb}
               kind={copy.kind}
-              titleAs="h3"
               hasPath
               // The first row is above the fold on a laptop.
               priority={first && index < 2}
@@ -141,7 +184,7 @@ export function Gallery() {
         </div>
         <div className="gb-entity-sizes">
           {SIZE_IDS.map((id) => (
-            <figure key={id} className="gb-entity-size">
+            <figure key={id} className="gb-entity-size" data-size={id}>
               <BannerImage
                 path={`/${login}?size=${id}`}
                 alt={`${SIZES[id].name} banner for ${login}`}
@@ -185,14 +228,13 @@ export function Gallery() {
           {THEME_SAMPLES.map((id) => {
             const theme = getTheme(id);
             return (
-              <BannerCard
+              <GalleryCard
                 key={id}
                 path={`/${login}/activity?theme=${id}`}
                 alt={`Contribution graph banner for ${login} in the ${theme.name} theme`}
                 title={theme.name}
                 blurb={`A ${theme.mode} theme. Add ?theme=${id} to any banner URL.`}
                 kind="user"
-                titleAs="h3"
               />
             );
           })}

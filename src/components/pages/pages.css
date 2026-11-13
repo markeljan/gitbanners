@@ -304,3 +304,28 @@
     max-width: 24rem;
   }
 }
+
+/* Places held for controls that appear once the page is interactive. */
+@layer components {
+  .gb-pending-copy,
+  .gb-pending-icons {
+    display: flex;
+    flex: none;
+    gap: var(--spacing-1);
+  }
+  .gb-pending-copy[data-pending] {
+    width: calc(var(--spacing-1) * 22);
+    height: var(--size-element-sm);
+  }
+  .gb-pending-icons[data-pending] {
+    width: calc(var(--size-element-sm) * 2 + var(--spacing-1));
+    height: var(--size-element-sm);
+  }
+}
+
+@layer components {
+  /* A square at full column width would tower over its neighbour. */
+  .gb-entity-size[data-size="square"] > :first-child {
+    max-width: 60%;
+  }
+}

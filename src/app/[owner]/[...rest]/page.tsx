@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { EntityPage } from "@/components/pages/entity-page";
-import { loadPage, restParams } from "@/components/pages/load";
-import { entityMetadata } from "@/components/pages/metadata";
+import { loadMetadata, loadPage, restParams } from "@/components/pages/load";
 
 /*
  * /{owner}/{preset}, /{owner}/{repo} and /{owner}/{repo}/{preset}.
@@ -21,7 +20,7 @@ export async function generateMetadata({
   params,
 }: PageProps<"/[owner]/[...rest]">): Promise<Metadata> {
   const { owner, rest } = await params;
-  return entityMetadata(await loadPage([owner, ...rest]));
+  return loadMetadata([owner, ...rest]);
 }
 
 export default async function OwnerRestPage({

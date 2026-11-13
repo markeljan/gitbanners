@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { EntityPage } from "@/components/pages/entity-page";
-import { loadPage, ownerParams } from "@/components/pages/load";
-import { entityMetadata } from "@/components/pages/metadata";
+import { loadMetadata, loadPage, ownerParams } from "@/components/pages/load";
 
 /*
  * /{owner}: the page of a GitHub user or organization.
@@ -24,7 +23,7 @@ export async function generateMetadata({
   params,
 }: PageProps<"/[owner]">): Promise<Metadata> {
   const { owner } = await params;
-  return entityMetadata(await loadPage([owner]));
+  return loadMetadata([owner]);
 }
 
 export default async function OwnerPage({ params }: PageProps<"/[owner]">) {

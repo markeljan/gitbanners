@@ -22,6 +22,7 @@ import {
   summary,
 } from "./copy";
 import { Facts } from "./facts";
+import { WhenInteractive } from "./hydrated";
 import type { LoadedPage } from "./load";
 import { OwnerHint } from "./owner-hint";
 import { PageThemeProvider } from "./page-theme";
@@ -257,7 +258,9 @@ export function EntityPage({ page }: { page: LoadedPage }) {
                     <code className="gb-card-path">{view.src}</code>
                   </div>
                   <div className="gb-card-actions">
-                    <CopyImageUrl view={view} label="Copy URL" />
+                    <WhenInteractive className="gb-pending-copy">
+                      <CopyImageUrl view={view} label="Copy URL" />
+                    </WhenInteractive>
                   </div>
                 </div>
               </article>
@@ -278,7 +281,11 @@ export function EntityPage({ page }: { page: LoadedPage }) {
           </div>
           <div className="gb-entity-sizes">
             {sizes.map((view) => (
-              <figure key={view.sizeId} className="gb-entity-size">
+              <figure
+                key={view.sizeId}
+                className="gb-entity-size"
+                data-size={view.sizeId}
+              >
                 <ThemedImage view={view} />
                 <figcaption>
                   <Heading level={3} className="gb-card-title">
@@ -287,7 +294,9 @@ export function EntityPage({ page }: { page: LoadedPage }) {
                   <p className="gb-card-blurb">{sizeHint(view.sizeId)}</p>
                   <div className="gb-card-actions">
                     <DownloadSize target={target} view={view} />
-                    <CopyImageUrl view={view} label="Copy URL" />
+                    <WhenInteractive className="gb-pending-copy">
+                      <CopyImageUrl view={view} label="Copy URL" />
+                    </WhenInteractive>
                   </div>
                 </figcaption>
               </figure>

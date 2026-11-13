@@ -1,14 +1,18 @@
 import "server-only";
 
+import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { SHOWCASE } from "@/content/showcase";
 import { showcasePaths } from "@/lib/agent/site-pages";
 import { type BannerPreset, targetOf } from "@/lib/banner";
 import { getEntity } from "@/lib/github/cached";
+import { asGitHubError } from "@/lib/github/errors";
 import { getSample, SAMPLES } from "@/lib/github/samples";
 import type { Entity } from "@/lib/github/schema";
+import { entityMetadata } from "./metadata";
 import {
   decidePage,
+  decodeSegments,
   indexedTargets,
   parsePagePath,
   prerenderedParams,
@@ -39,9 +43,8 @@ const INDEXED = indexedTargets(showcasePaths(), SAMPLES.map(targetOf));
  * GitHub errors are not caught: they reach `src/app/[owner]/error.tsx`,
  * and an error is never stored as a page.
  */
-export async function loadPage(
-  segments: readonly string[],
-): Promise<LoadedPage> {
+export async function loadPage(params: readonly string[]): Promise<LoadedPage> {
+  const segments = decodeSegments(params);
   const parsed = parsePagePath(segments);
   if (!parsed) notFound();
   const entity = await getEntity(parsed.target);
@@ -77,4 +80,24 @@ export function ownerParams(): { owner: string }[] {
 /** `generateStaticParams` of `/[owner]/[...rest]`. */
 export function restParams(): { owner: string; rest: string[] }[] {
   return PARAMS.rests;
+}
+
+/**
+ * Metadata of an owner or repository page. When GitHub cannot be asked the
+ * page itself shows the error boundary; the metadata must not fail too, or
+ * the whole document is replaced by an empty error shell with no HTML for
+ * people without JavaScript. Not-found and redirects still end the request.
+ */
+export async function loadMetadata(
+  params: readonly string[],
+): Promise<Metadata> {
+  try {
+    return entityMetadata(await loadPage(params));
+  } catch (error) {
+    if (!asGitHubError(error)) throw error;
+    return {
+      title: "GitHub is not answering",
+      robots: { index: false, follow: false },
+    };
+  }
 }

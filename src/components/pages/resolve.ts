@@ -26,6 +26,20 @@ import {
 import type { Entity } from "@/lib/github/schema";
 
 /**
+ * Route params as written. Next hands `@` over percent-encoded (`%40docs`);
+ * a segment that does not decode is left as it is, and fails parsing.
+ */
+export function decodeSegments(params: readonly string[]): string[] {
+  return params.map((segment) => {
+    try {
+      return decodeURIComponent(segment);
+    } catch {
+      return segment;
+    }
+  });
+}
+
+/**
  * Reads the path segments of a page request. `null` for anything that can
  * never be a banner page: a malformed login or repository name, a reserved
  * first segment without "@", too many segments, or an image suffix (images

@@ -12,6 +12,7 @@ import { filterThemes } from "@/components/banner/theme-swatch";
 import { ArrowUpRight } from "@/components/icons";
 import { type BannerTheme, THEMES } from "@/lib/banner";
 import { studioPath } from "@/lib/embed";
+import { WhenInteractive } from "./hydrated";
 
 export interface ThemesBrowserProps {
   /** Login of the banner every theme is shown on. */
@@ -90,7 +91,7 @@ function ThemeCard({
             </li>
           </ul>
         </div>
-        <div className="gb-card-actions">
+        <WhenInteractive className="gb-pending-icons">
           <CopyButton
             text={parameter}
             label={`Copy ${parameter}`}
@@ -108,7 +109,7 @@ function ThemeCard({
             as={NoPrefetchLink}
             icon={<Icon icon={ArrowUpRight} />}
           />
-        </div>
+        </WhenInteractive>
       </div>
     </article>
   );

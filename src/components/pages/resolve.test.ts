@@ -3,6 +3,7 @@ import { SAMPLE_ORG, SAMPLE_REPO, SAMPLE_USER } from "@/lib/github/samples";
 import type { Entity } from "@/lib/github/schema";
 import {
   decidePage,
+  decodeSegments,
   indexedTargets,
   parsePagePath,
   prerenderedParams,
@@ -203,5 +204,15 @@ describe("prerenderedParams", () => {
       { owner: "vercel", rest: ["next.js"] },
       { owner: "vercel", rest: ["next.js", "activity"] },
     ]);
+  });
+});
+
+describe("decodeSegments", () => {
+  test("decodes the @ escape and keeps undecodable text", () => {
+    expect(decodeSegments(["%40docs", "next.js"])).toEqual([
+      "@docs",
+      "next.js",
+    ]);
+    expect(decodeSegments(["%E0%A4%A"])).toEqual(["%E0%A4%A"]);
   });
 });
