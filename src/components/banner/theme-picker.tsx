@@ -5,32 +5,7 @@ import { TextInput } from "@astryxdesign/core/TextInput";
 import { type CSSProperties, type KeyboardEvent, useId, useState } from "react";
 import { type BannerTheme, getTheme, THEMES } from "@/lib/banner";
 import { moveActive } from "./target-options";
-
-/** Themes whose name or id contains every word of `search`. */
-export function filterThemes(
-  themes: readonly BannerTheme[],
-  search: string,
-): BannerTheme[] {
-  const words = search.toLowerCase().split(/\s+/).filter(Boolean);
-  return themes.filter((theme) => {
-    const haystack = `${theme.name} ${theme.id}`.toLowerCase();
-    return words.every((word) => haystack.includes(word));
-  });
-}
-
-function swatchStyle(theme: BannerTheme): CSSProperties {
-  const { bg, border, text, accent, heat } = theme.colors;
-  // The theme's own colours are data, not chrome: raw values are right here.
-  return {
-    "--gb-sw-bg": bg,
-    "--gb-sw-border": border,
-    "--gb-sw-text": text,
-    "--gb-sw-accent": accent,
-    "--gb-sw-heat": `linear-gradient(90deg, ${heat
-      .map((color, at) => `${color} ${at * 20}% ${(at + 1) * 20}%`)
-      .join(", ")})`,
-  } as CSSProperties;
-}
+import { filterThemes, swatchVariables } from "./theme-swatch";
 
 export interface ThemePickerProps {
   /** Selected theme id. An unknown id selects the default theme. */
@@ -105,7 +80,7 @@ export function ThemePicker({
       aria-checked={theme.id === selected}
       tabIndex={theme.id === tabStop ? 0 : -1}
       className="gb-swatch"
-      style={swatchStyle(theme)}
+      style={swatchVariables(theme) as CSSProperties}
       onClick={() => onChange(theme.id)}
     >
       <span className="gb-swatch-chip" aria-hidden="true">
