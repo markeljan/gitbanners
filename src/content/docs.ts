@@ -76,6 +76,10 @@ function operationSection(operation: ApiOperation): Section {
         : `curl "${U}${operation.example}"`,
   });
   blocks.push({ type: "p", text: `Returns: ${operation.returns}` });
+  blocks.push({
+    type: "p",
+    text: `[Try it: ${operation.example}](${operation.example})`,
+  });
   return {
     id: anchorOf(operation),
     title: operation.summary,
@@ -119,6 +123,61 @@ const exampleProblem = {
 
 const api = FACTS.rateLimits.api;
 
+/**
+ * The workflow of the GitHub Action recipe, exported so tests can parse it
+ * and its shell steps can be run outside GitHub.
+ */
+export const BANNER_WORKFLOW = `name: Update banners
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  banners:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download banners
+        env:
+          SITE: ${U}
+          LOGIN: \${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          mkdir -p banners
+          # download <file> <path>: keeps the old file unless the new one is good
+          download() {
+            local url="$SITE/$2" state
+            state=$(curl -fsSL --retry 3 -D - -o "banners/$1.new" "$url" |
+              tr -d '\\r' | awk -F': ' 'tolower($1) == "x-banner-state" { s = $2 } END { print s }')
+            if [ "$state" = "ok" ]; then
+              mv "banners/$1.new" "banners/$1"
+            else
+              rm -f "banners/$1.new"
+              echo "::warning::$url answered '$state', keeping the old file"
+            fi
+          }
+          download profile.svg "$LOGIN.svg"
+          download stats.svg "$LOGIN/stats.svg"
+          download languages.svg "$LOGIN/languages.svg"
+
+      - name: Commit if anything changed
+        run: |
+          git add banners
+          if git diff --cached --quiet; then
+            echo "Banners unchanged"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update banners"
+          git push`;
+
 export const docs: ContentPage = {
   path: "/docs",
   title: `${site.name} API docs`,
@@ -153,6 +212,38 @@ export const docs: ContentPage = {
           type: "code",
           lang: "bash",
           code: `curl "${U}${site.api.basePath}/banner?target=vercel/next.js"`,
+        },
+      ],
+    },
+    {
+      id: "cheat-sheet",
+      title: "URL cheat sheet",
+      blocks: [
+        {
+          type: "p",
+          text: "Start from a path, then add what you need. Every part is optional except the name.",
+        },
+        {
+          type: "table",
+          head: ["You want", "Write"],
+          rows: [
+            ["A profile or organization", `\`/${login}.svg\``],
+            ["One preset of it", `\`/${login}/streak.svg\``],
+            ["A repository", "`/vercel/next.js.svg`"],
+            [
+              "One preset of a repository",
+              "`/vercel/next.js/contributors.svg`",
+            ],
+            ["Another theme", "`?theme=dracula`"],
+            ["An X header, as PNG", `\`/${login}.png?size=x\``],
+            [
+              "A compact README card",
+              `\`/${login}/card.svg\` or \`?width=495\``,
+            ],
+            ["Your own colours", "`?bg=0d1117&accent=f78166&heat=a855f7`"],
+            ["One calendar year", `\`/${login}/wrapped.svg?year=2025\``],
+            ["Less on the banner", "`?hide=bio,legend`"],
+          ],
         },
       ],
     },
@@ -317,6 +408,19 @@ export const docs: ContentPage = {
         {
           type: "p",
           text: `A banner is a preset (what it shows), a size (the canvas), a theme (the colours) and optional overrides. [GET ${site.api.basePath}/options](#get-options) returns everything in this section as JSON.`,
+        },
+        {
+          type: "banner",
+          path: `/${login}`,
+          alt: `GitHub banner for ${login}: the default profile preset`,
+          caption: `/${login}.svg: a profile with its default preset and theme.`,
+        },
+        {
+          type: "banner",
+          path: "/vercel/next.js/contributors?theme=dracula",
+          alt: "Contributors of vercel/next.js in the Dracula theme",
+          caption:
+            "/vercel/next.js/contributors.svg?theme=dracula: a repository preset in another theme.",
         },
       ],
     },
@@ -541,6 +645,41 @@ export const docs: ContentPage = {
             'Private repositories are never read or named. If a user turned on "Private contributions" in their GitHub profile settings, GitHub includes those counts in the public calendar, and a banner shows them as counts.',
             `GitHub data is refreshed every ${FACTS.dataRefreshMinutes} minutes. When GitHub cannot be reached, the last good copy is used for up to ${FACTS.lastGoodDays} days.`,
             "`fetchedAt` on every entity says when its data was read from GitHub.",
+          ],
+        },
+      ],
+    },
+    {
+      id: "github-action",
+      title: "GitHub Action",
+      blocks: [
+        {
+          type: "p",
+          text: "A README can show files from its own repository instead of images from this site. This workflow downloads your banners into your profile repository every six hours and commits them only when they changed. Save it as `.github/workflows/banners.yml` in the repository named after your username:",
+        },
+        {
+          type: "code",
+          lang: "yaml",
+          code: BANNER_WORKFLOW,
+          caption: ".github/workflows/banners.yml",
+        },
+        {
+          type: "p",
+          text: "Then point the README at the files, with paths relative to the repository:",
+        },
+        {
+          type: "code",
+          lang: "md",
+          code: `[![GitHub banner](banners/profile.svg)](${U}/${login})`,
+        },
+        {
+          type: "list",
+          items: [
+            "A banner is only replaced when the image answers `X-Banner-State: ok`. If GitHub or this site is down, the last good file stays, so the README never shows an error card.",
+            "The numbers are as fresh as the schedule, not the 15 minutes of a live URL. Change the `cron` line to run more or less often.",
+            "Each change is a commit by `github-actions[bot]` in your history. Public repositories run Actions for free.",
+            "GitHub turns off scheduled workflows in a public repository after 60 days without activity. If that happens, turn it back on in the Actions tab, or run it by hand with **Run workflow**.",
+            "To change a banner, edit the URL in the `download` lines. Any URL from this page works, `.png` included.",
           ],
         },
       ],

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { SESSION_MAX_AGE, SIGN_IN_TX_MAX_AGE } from "@/lib/auth/session-token";
 import { CACHE } from "@/lib/http/cache-headers";
+import { PRO_FRESH_MS } from "@/lib/pro";
 import { POLICIES } from "@/lib/ratelimit";
 import nextConfig from "../../next.config";
 import { FACTS, quota } from "./facts";
@@ -25,6 +26,13 @@ describe("facts quoted in the copy", () => {
     );
     expect<number>(CACHE.banner.edge).toBe(FACTS.dataRefreshMinutes * 60);
     expect<number>(CACHE.banner.sie).toBe(FACTS.lastGoodDays * 86_400);
+  });
+});
+
+describe("Pro re-checks quoted on the pricing page", () => {
+  test("match how long a decision is trusted", () => {
+    expect(FACTS.proRecheckHours * 3_600_000).toBe(PRO_FRESH_MS.pro);
+    expect(FACTS.freeRecheckSeconds * 1000).toBe(PRO_FRESH_MS.free);
   });
 });
 

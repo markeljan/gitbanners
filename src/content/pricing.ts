@@ -1,11 +1,162 @@
 import { PRESETS, SIZES, THEMES } from "@/lib/banner";
 import { FREE, PRO } from "@/lib/pro/entitlements";
 import { site } from "@/lib/site";
-import { quota } from "./facts";
+import { FACTS, quota } from "./facts";
 import { duration } from "./format";
-import type { ContentPage } from "./types";
+import type {
+  Block,
+  ContentPage,
+  FaqEntry,
+  Plan,
+  Section,
+  Step,
+} from "./types";
 
 const sizeCount = Object.keys(SIZES).length;
+const repo = `[${site.repo.slug}](${site.repo.url})`;
+
+/**
+ * The two plans, as the pricing page shows them side by side. Every line is
+ * something the image routes or the account API enforce (see
+ * `src/lib/pro/entitlements.ts` and the saved banner route).
+ */
+export const PLANS: readonly Plan[] = [
+  {
+    id: "free",
+    name: "Free",
+    price: "$0",
+    summary: "Every public banner, with no account.",
+    features: [
+      `A live banner for any public GitHub user, organization or repository, as SVG or PNG.`,
+      `All ${PRESETS.length} presets, ${sizeCount} sizes and ${THEMES.length} themes, plus your own colours, in the URL.`,
+      "Embed snippets for READMEs, and PNG downloads sized for X, LinkedIn, link previews and GitHub's social preview.",
+      `The JSON API and the MCP server, no key: ${quota("api")}.`,
+      `Sign in with GitHub to keep up to ${FREE.maxSavedBanners} saved banners, each with a stable link.`,
+    ],
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    price: "One GitHub star",
+    summary: `Star ${site.repo.slug} while signed in.`,
+    features: [
+      "Everything in Free.",
+      `Save up to ${PRO.maxSavedBanners} banners instead of ${FREE.maxSavedBanners}.`,
+      `Hide the small ${site.name} mark on your saved banners.`,
+      "Animate the contribution graph of a saved SVG banner.",
+      "Choose which saved banner is served at your own profile URL, such as `/your-login.svg`.",
+      `Saved banners refresh every ${duration(PRO.refreshSeconds)} instead of every ${duration(FREE.refreshSeconds)}.`,
+    ],
+  },
+];
+
+/** How to unlock Pro, in order. */
+export const PRO_STEPS: readonly Step[] = [
+  {
+    title: "Sign in with GitHub",
+    text: "Use the button on this page. GitHub asks for no permissions beyond your public profile.",
+  },
+  {
+    title: `Star ${site.repo.slug}`,
+    text: `Open ${repo} on GitHub and press Star. It takes one click and costs nothing.`,
+  },
+  {
+    title: "Come back and press Check again",
+    text: `Pro starts as soon as the star is seen. **Check again** looks at once; otherwise it is noticed within ${duration(FACTS.freeRecheckSeconds)} of your next visit.`,
+  },
+];
+
+/** Questions about price and plans. The site-wide FAQ is on the homepage. */
+export const PRICING_FAQ: readonly FaqEntry[] = [
+  {
+    id: "really-free",
+    question: "Is it really free?",
+    answer: `Yes. Banners, the API and the MCP server cost nothing and need no account. Pro costs one star on the repository, and nothing on this site can be bought: no payment details are ever asked for.`,
+  },
+  {
+    id: "remove-star",
+    question: "What happens if I remove the star?",
+    answer: `Pro is checked again every ${FACTS.proRecheckHours} hours. Once the star is gone the account is Free again: your saved banners and their links stay, the mark comes back on them, animation stops, and your profile URL shows the default banner again. To save new banners you then need fewer than ${FREE.maxSavedBanners}.`,
+  },
+  {
+    id: "permissions",
+    question: "Do I need to grant any permissions?",
+    answer:
+      "No. Sign in with GitHub asks for no scopes, so GitHub shows it as access to your public data only. The sign-in is used once, to read who you are and whether you starred the repository, and is not kept.",
+  },
+  {
+    id: "private-data",
+    question: "What about private data?",
+    answer: `Banners are drawn from public GitHub data only, on Free and on Pro. Private repositories are never read or named. If you turned on "Private contributions" in your GitHub profile, GitHub counts them in your public calendar and a banner shows them as numbers. The [privacy page](/privacy) lists what an account stores.`,
+  },
+  {
+    id: "teams",
+    question: "Can a team use it?",
+    answer: `Yes. Organization and repository banners are free for anyone, with no account, so a team can embed them right away. Pro belongs to one person: everyone who wants their own saved banners signs in and stars the repository. There is no shared team account.`,
+  },
+];
+
+function stepsBlock(): Block {
+  return {
+    type: "list",
+    ordered: true,
+    items: PRO_STEPS.map((step) => `**${step.title}.** ${step.text}`),
+  };
+}
+
+function faqSections(): Section[] {
+  return [
+    {
+      id: "questions",
+      title: "Questions about pricing",
+      blocks: [],
+    },
+    ...PRICING_FAQ.map(
+      (entry): Section => ({
+        id: entry.id,
+        title: entry.question,
+        level: 3,
+        blocks: [{ type: "p", text: entry.answer }],
+      }),
+    ),
+  ];
+}
+
+/** The comparison table: one row per difference, Free next to Pro. */
+export const COMPARISON: Extract<Block, { type: "table" }> = {
+  type: "table",
+  head: ["", "Free", "Pro"],
+  rows: [
+    ["Price", "$0", "One GitHub star"],
+    [
+      "Account",
+      "None needed for banners. Sign in with GitHub to save them.",
+      `Sign in with GitHub and star ${repo}`,
+    ],
+    [
+      `Live banners: all ${PRESETS.length} presets, ${sizeCount} sizes and ${THEMES.length} themes`,
+      "Yes",
+      "Yes",
+    ],
+    ["SVG and PNG, custom colours and sizes", "Yes", "Yes"],
+    ["JSON API and MCP server, no key", "Yes", "Yes"],
+    [
+      "Saved banners with stable links",
+      String(FREE.maxSavedBanners),
+      String(PRO.maxSavedBanners),
+    ],
+    [`${site.name} mark on saved banners`, "Shown", "Can be hidden"],
+    ["Animated contribution graph (SVG)", "No", "Yes"],
+    ["Your own default banner at your profile URL", "No", "Yes"],
+    [
+      "Refresh of saved banners at the edge",
+      `Every ${duration(FREE.refreshSeconds)}`,
+      `Every ${duration(PRO.refreshSeconds)}`,
+    ],
+  ],
+};
+
+const [free, pro] = PLANS;
 
 export const pricing: ContentPage = {
   path: "/pricing",
@@ -15,97 +166,29 @@ export const pricing: ContentPage = {
   heading: "Pricing",
   lead: `Every banner, preset, size and theme is free and needs no account. Pro is not for sale: it costs one star on the ${site.name} repository.`,
   sections: [
-    {
-      id: "plans",
-      title: "Plans",
-      blocks: [
-        {
-          type: "table",
-          head: ["", "Free", "Pro"],
-          rows: [
-            ["Price", "$0", "One GitHub star"],
-            [
-              "Account",
-              "None needed for banners. Sign in with GitHub to save them.",
-              `Sign in with GitHub and star [${site.repo.slug}](${site.repo.url})`,
-            ],
-            [
-              `Live banners: all ${PRESETS.length} presets, ${sizeCount} sizes and ${THEMES.length} themes`,
-              "Yes",
-              "Yes",
-            ],
-            ["SVG and PNG, custom colours and sizes", "Yes", "Yes"],
-            ["JSON API and MCP server, no key", "Yes", "Yes"],
-            [
-              "Saved banners with stable links",
-              String(FREE.maxSavedBanners),
-              String(PRO.maxSavedBanners),
-            ],
-            [`${site.name} mark on saved banners`, "Shown", "Can be hidden"],
-            ["Animated contribution graph (SVG)", "No", "Yes"],
-            ["Your own default banner at your profile URL", "No", "Yes"],
-            [
-              "Refresh of saved banners at the edge",
-              `Every ${duration(FREE.refreshSeconds)}`,
-              `Every ${duration(PRO.refreshSeconds)}`,
-            ],
-          ],
-        },
-      ],
-    },
+    { id: "plans", title: "Compare plans", blocks: [COMPARISON] },
     {
       id: "free",
       title: "Free",
       blocks: [
-        {
-          type: "p",
-          text: "Free is the whole product for public data, without a sign-in:",
-        },
-        {
-          type: "list",
-          items: [
-            "A live banner for any public GitHub user, organization or repository, as SVG or PNG.",
-            `Every preset, size and theme, plus your own colours, in the URL. The [docs](/docs#variants-and-themes) list them all.`,
-            "Embed snippets for READMEs, and PNG downloads sized for X, LinkedIn, link previews and GitHub's social preview.",
-            `The JSON API and the MCP server, with the same limits for everyone: ${quota("api")}, and ${quota("search")} for search.`,
-            `Sign in with GitHub to keep up to ${FREE.maxSavedBanners} banners with a stable link each.`,
-          ],
-        },
+        { type: "p", text: `**${free?.price}.** ${free?.summary}` },
+        { type: "list", items: free?.features ?? [] },
       ],
     },
     {
       id: "pro",
       title: "Pro",
       blocks: [
-        {
-          type: "p",
-          text: "Pro adds what matters once a banner is part of your profile. To get it:",
-        },
-        {
-          type: "list",
-          ordered: true,
-          items: [
-            `Star [${site.repo.slug}](${site.repo.url}) on GitHub.`,
-            "Sign in with GitHub on this site. If you were already signed in, sign in once more so the star is seen.",
-            "Pro is active from that moment. There is nothing to pay and no card to enter.",
-          ],
-        },
-        {
-          type: "list",
-          items: [
-            `Save up to ${PRO.maxSavedBanners} banners instead of ${FREE.maxSavedBanners}.`,
-            `Hide the small ${site.name} mark on your saved banners.`,
-            "Animate the contribution graph of a saved SVG banner.",
-            "Choose which saved banner is served at your own profile URL, such as `/your-login.svg`.",
-            `Saved banners refresh every ${duration(PRO.refreshSeconds)} instead of every ${duration(FREE.refreshSeconds)}.`,
-          ],
-        },
-        {
-          type: "p",
-          text: `Pro lasts as long as the star does, and the star is checked again a few times a day. Without it the account is Free again: your saved banners stay, the mark returns on them and animation stops, and new banners can be saved once fewer than ${FREE.maxSavedBanners} are left.`,
-        },
+        { type: "p", text: `**${pro?.price}.** ${pro?.summary}` },
+        { type: "list", items: pro?.features ?? [] },
       ],
     },
+    {
+      id: "unlock-pro",
+      title: "How to unlock Pro",
+      blocks: [stepsBlock()],
+    },
+    ...faqSections(),
     {
       id: "paid-plans",
       title: "Paid plans",

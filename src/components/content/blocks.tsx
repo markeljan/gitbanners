@@ -10,7 +10,11 @@ import { getSample } from "@/lib/github/samples";
 import { site } from "@/lib/site";
 import { Inline } from "./inline";
 
-/** Highlighters the design system ships, by the `lang` hints content uses. */
+/**
+ * Highlighters the design system ships, by the `lang` hints content uses.
+ * CodeBlock prints the highlighter's name as the sample's language label and
+ * brings its own copy button.
+ */
 const LANGUAGES: Record<string, string> = {
   bash: "bash",
   sh: "bash",
@@ -18,6 +22,8 @@ const LANGUAGES: Record<string, string> = {
   json: "json",
   md: "markdown",
   ts: "ts",
+  yaml: "yaml",
+  yml: "yaml",
 };
 
 /**

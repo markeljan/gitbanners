@@ -4,6 +4,7 @@ import { docs } from "./docs";
 import { FAQ, FAQ_HEADING } from "./faq";
 import { home } from "./home";
 import { faqToMarkdown, pageToMarkdown } from "./markdown";
+import { migrate } from "./migrate";
 import { pricing } from "./pricing";
 import { privacy } from "./privacy";
 import { terms } from "./terms";
@@ -20,6 +21,7 @@ import type { ContentPage } from "./types";
 export const CONTENT_PAGES: readonly ContentPage[] = [
   home,
   docs,
+  migrate,
   pricing,
   about,
   contact,

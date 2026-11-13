@@ -29,18 +29,49 @@ export interface ContentPageViewProps {
   toc?: boolean;
   /** Rendered between the lead and the first section. */
   children?: ReactNode;
+  /**
+   * Extra content by section id, rendered after that section's blocks: an
+   * interactive tool that belongs to one section. HTML only, so put what an
+   * agent needs to know in the section's blocks as well.
+   */
+  slots?: Readonly<Record<string, ReactNode>>;
+  /**
+   * Make each section heading a link to itself, so a reader can copy the
+   * address of a section (`DocsEnhancer` copies it on click).
+   */
+  headingLinks?: boolean;
+  /**
+   * Let `children` use the full width of the page, for a tool. The h1, the
+   * lead and the sections keep the reading measure.
+   */
+  wide?: boolean;
 }
 
-function SectionView({ section }: { section: Section }) {
+function SectionView({
+  section,
+  slot,
+  headingLink,
+}: {
+  section: Section;
+  slot?: ReactNode;
+  headingLink: boolean;
+}) {
   return (
     <>
       <Heading level={section.level ?? 2} id={section.id}>
-        {section.title}
+        {headingLink ? (
+          <a className="gb-anchor" href={`#${section.id}`}>
+            {section.title}
+          </a>
+        ) : (
+          section.title
+        )}
       </Heading>
       {section.blocks.map((block, index) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: blocks of static copy, never reordered
         <BlockView key={index} block={block} />
       ))}
+      {slot}
     </>
   );
 }
@@ -57,6 +88,9 @@ export function ContentPageView({
   faq,
   toc,
   children,
+  slots,
+  headingLinks = false,
+  wide = false,
 }: ContentPageViewProps) {
   const sections: Section[] = faq
     ? [...page.sections, { ...FAQ_SECTION, blocks: [] }]
@@ -65,7 +99,11 @@ export function ContentPageView({
   const showToc = toc ?? topLevel.length >= 6;
 
   return (
-    <div className="gb-page" data-toc={showToc ? "" : undefined}>
+    <div
+      className="gb-page"
+      data-toc={showToc ? "" : undefined}
+      data-wide={wide ? "" : undefined}
+    >
       <article className="gb-article">
         <div className="gb-head">
           <Heading level={1} type="display-3" textWrap="balance">
@@ -77,9 +115,18 @@ export function ContentPageView({
         </div>
         {showToc ? <TableOfContents sections={sections} /> : null}
         <div className="gb-body">
-          {children}
+          {wide && children ? (
+            <div className="gb-wide">{children}</div>
+          ) : (
+            children
+          )}
           {page.sections.map((section) => (
-            <SectionView key={section.id} section={section} />
+            <SectionView
+              key={section.id}
+              section={section}
+              slot={slots?.[section.id]}
+              headingLink={headingLinks}
+            />
           ))}
           {faq ? (
             <>
