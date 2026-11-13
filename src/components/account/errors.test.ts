@@ -103,7 +103,7 @@ describe("accountError", () => {
     ).toContain("could not be saved");
   });
 
-  test("no message says OAuth", () => {
+  test("no message names the sign-in protocol", () => {
     const codes = [
       "unauthorized",
       "login_changed",
@@ -117,7 +117,7 @@ describe("accountError", () => {
     ];
     for (const code of codes) {
       const { title, message } = accountError(problem(400, code), context);
-      expect(`${title} ${message}`.toLowerCase()).not.toContain("oauth");
+      expect(`${title} ${message}`).not.toMatch(/\bo?auth\b/i);
     }
   });
 });
