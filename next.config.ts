@@ -148,6 +148,22 @@ const baseConfig: NextConfig = {
           ...WANTS_MARKDOWN,
           destination: "/-/md/:path",
         },
+        // The prerendered homepage would otherwise also answer at /index.
+        { source: "/index", destination: "/-/nf" },
+        // Content negotiation on the bare URL: <img src="https://…/vercel">.
+        // Before the filesystem: owner pages are prerendered, and a static
+        // page would answer an image request with HTML.
+        {
+          source: `/:owner(${OWNER})`,
+          ...WANTS_IMAGE,
+          destination: "/-/i/auto/:owner",
+        },
+        {
+          // Not an explicit .svg/.png: the afterFiles rules give those their format.
+          source: `/:owner(${OWNER})/:rest((?!.*\\.(?:${IMAGE_EXT})$).+)`,
+          ...WANTS_IMAGE,
+          destination: "/-/i/auto/:owner/:rest",
+        },
       ],
       afterFiles: [
         // Saved banners: /b/abc123.svg
@@ -198,17 +214,6 @@ const baseConfig: NextConfig = {
         {
           source: `/:name(${BLOCKED_SEGMENTS.join("|")})/:rest*`,
           destination: "/-/nf",
-        },
-        // Content negotiation on the bare URL: <img src="https://…/vercel">
-        {
-          source: `/:owner(${OWNER})`,
-          ...WANTS_IMAGE,
-          destination: "/-/i/auto/:owner",
-        },
-        {
-          source: `/:owner(${OWNER})/:rest+`,
-          ...WANTS_IMAGE,
-          destination: "/-/i/auto/:owner/:rest+",
         },
       ],
       fallback: [],
