@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { EntityPage } from "@/components/pages/entity-page";
 import { loadMetadata, loadPage, restParams } from "@/components/pages/load";
+import { PageView } from "@/components/pages/page-view";
 
 /*
  * /{owner}/{preset}, /{owner}/{repo} and /{owner}/{repo}/{preset}.
@@ -27,5 +27,5 @@ export default async function OwnerRestPage({
   params,
 }: PageProps<"/[owner]/[...rest]">) {
   const { owner, rest } = await params;
-  return <EntityPage page={await loadPage([owner, ...rest])} />;
+  return <PageView result={await loadPage([owner, ...rest])} />;
 }

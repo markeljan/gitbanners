@@ -7,8 +7,20 @@ import { SHOWCASE } from "@/content/showcase";
 import { site } from "@/lib/site";
 import { showcasePaths, sitePages } from "./site-pages";
 
+/** The sitemap of a deployment with a GitHub token (see `src/app/sitemap.test.ts`). */
+function sitemapWithToken() {
+  const saved = process.env.GITHUB_TOKEN;
+  process.env.GITHUB_TOKEN = "server-token";
+  try {
+    return sitemap();
+  } finally {
+    if (saved === undefined) delete process.env.GITHUB_TOKEN;
+    else process.env.GITHUB_TOKEN = saved;
+  }
+}
+
 describe("sitemap", () => {
-  const entries = sitemap();
+  const entries = sitemapWithToken();
 
   test("lists every content page and every showcase target, once", () => {
     const urls = entries.map((entry) => entry.url);

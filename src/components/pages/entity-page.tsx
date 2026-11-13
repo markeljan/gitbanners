@@ -10,6 +10,7 @@ import { entityJsonLd } from "@/lib/agent/jsonld";
 import { markdownPath } from "@/lib/agent/metadata";
 import { bannerPath, resolveOptions, targetOf } from "@/lib/banner";
 import { studioPath } from "@/lib/embed";
+import { cleanUrl } from "@/lib/github/normalize";
 import type { Entity } from "@/lib/github/schema";
 import { site } from "@/lib/site";
 import {
@@ -86,8 +87,11 @@ function Header({ entity }: { entity: Entity }) {
   ]
     .filter(Boolean)
     .join(", ");
-  const website =
-    entity.kind === "repo" ? entity.homepageUrl : entity.websiteUrl;
+  // Normalised again here: snapshots and caches written before `cleanUrl`
+  // existed can still hold a value without a scheme for a while.
+  const website = cleanUrl(
+    entity.kind === "repo" ? entity.homepageUrl : entity.websiteUrl,
+  );
   return (
     <header className="gb-entity-head">
       {/* biome-ignore lint/performance/noImgElement: GitHub's avatar CDN already resizes */}

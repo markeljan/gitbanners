@@ -193,6 +193,19 @@ function sampleFor(target: BannerTarget): Entity | null {
 }
 
 /**
+ * Whether the page of a target can be built on this deployment. Accounts
+ * always can (the tokenless fallback covers them). Repository data needs a
+ * token, so without one only the repositories with a bundled sample can:
+ * links and the sitemap leave out the others rather than point at a page
+ * that can only say GitHub is not answering.
+ */
+export function hasPageData(target: BannerTarget): boolean {
+  return (
+    target.kind !== "repo" || hasGitHubToken() || getSample(target) !== null
+  );
+}
+
+/**
  * Complete data of a user or organization, cached.
  *
  * @param year Calendar year (2008..current) for a user's calendar and window

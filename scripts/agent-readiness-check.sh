@@ -65,6 +65,17 @@ req "$BASE/${UNKNOWN_OWNER:-zz-unknown-owner-$RANDOM$RANDOM}";        [ "$S" = 4
 for p in /.well-known/oauth-authorization-server /.well-known/openid-configuration /.well-known/oauth-protected-resource /v1 /v2 /ask /agent/identity /auth.md /agents.md /llms.md /openapi /index /wp-login.php /.env /a/b/c/d /embed /about/zzz; do
   req "$BASE$p"; expect_status "GET $p (must not be a soft 200)" 404
 done
+# A 404 is a page, not Next's empty `__next_error__` document: a title, a
+# language and the message are in the server HTML, for crawlers and for
+# visitors without JavaScript.
+for p in "/$PROBE" /wp-login.php /index /about/zzz /a/b/c/d /vercel/next.js/zzz "/zz-unknown-owner-$RANDOM$RANDOM"; do
+  req -H 'Accept: text/html' "$BASE$p"
+  if [ "$S" = 404 ] && grep -q '<title>' "$TMP/b" && grep -qE '<html[^>]* lang=' "$TMP/b" && grep -q 'does not exist' "$TMP/b" && ! grep -q '__next_error__' "$TMP/b"; then
+    ok "404 $p is a page: status, title, lang and message in the HTML"
+  else
+    bad "404 $p" "HTTP $S; the server HTML lacks a <title>, lang or the 404 message (the empty __next_error__ document?)"
+  fi
+done
 req "$BASE/v1/orank-probe-test"; expect_status "GET /v1/orank-probe-test (API guessed at the root)" 404; expect_hdr "root-level API guess" content-type '^application/problem\+json'
 req "$BASE/developers"; expect_status "GET /developers (redirect to the docs)" 308; expect_hdr "/developers" location '/docs$'
 
