@@ -38,6 +38,29 @@ const MAX_CODE_LENGTH = 256;
 /** What an error code or an error class name looks like. */
 const LOGGABLE_REASON = /^\w{1,64}$/;
 
+/**
+ * "I starred it, check again" signs in with `pro_check` in its return
+ * address. The answer replaces it, so the page can say what happened:
+ * `pro`, `not_starred` (GitHub says no star) or `unverified` (no check could
+ * answer; the plan stayed as it was).
+ */
+function withProCheck(
+  returnTo: string,
+  pro: { pro: boolean; verdict: "starred" | "not_starred" | "unknown" },
+): string {
+  const url = new URL(returnTo, "http://internal.invalid");
+  if (!url.searchParams.has("pro_check")) return returnTo;
+  url.searchParams.set(
+    "pro_check",
+    pro.pro
+      ? "pro"
+      : pro.verdict === "not_starred"
+        ? "not_starred"
+        : "unverified",
+  );
+  return url.pathname + url.search + url.hash;
+}
+
 export async function GET(request: NextRequest): Promise<Response> {
   const params = request.nextUrl.searchParams;
   // Single use: the cookie is cleared whatever happens next.
@@ -80,8 +103,8 @@ export async function GET(request: NextRequest): Promise<Response> {
       redirectUri: `${canonicalOrigin(request)}/api/auth/github/callback`,
     });
     const profile = await fetchGitHubUser(accessToken);
-    await completeSignIn(profile, { accessToken });
-    return back();
+    const { pro } = await completeSignIn(profile, { accessToken });
+    return backTo(withProCheck(tx.returnTo, pro), undefined);
   } catch (error) {
     const reason =
       error instanceof GitHubSignInError

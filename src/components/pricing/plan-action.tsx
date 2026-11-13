@@ -6,7 +6,7 @@ import { StatusDot } from "@astryxdesign/core/StatusDot";
 import { Text } from "@astryxdesign/core/Text";
 import { GithubMark } from "@/components/github-mark";
 import { useProRepo, useSignInAvailable } from "@/components/providers";
-import { signInHref } from "@/components/site/links";
+import { signInHref, withProCheck } from "@/components/site/links";
 import { useMe } from "@/hooks/use-me";
 
 /** Where sign-in and "Check again" come back to. */
@@ -68,7 +68,7 @@ export function PlanAction() {
         </Button>
         <Button
           label="Check again"
-          href={signInHref(RETURN_TO)}
+          href={signInHref(withProCheck(RETURN_TO))}
           as="a"
           width="100%"
         />

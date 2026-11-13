@@ -11,7 +11,7 @@
  * as "has not starred": that would take Pro away from people who earned it
  * whenever GitHub hiccups or the token loses access.
  */
-import { graphql } from "./client";
+import { graphql, rest } from "./client";
 import { isGitHubError } from "./errors";
 import { STARGAZERS } from "./queries";
 import { decode, StargazersDataSchema } from "./raw";
@@ -112,15 +112,25 @@ export async function findStargazer(
   const maxPages = Math.max(1, Math.floor(opts.maxPages ?? DEFAULT_MAX_PAGES));
   const transport = { token, signal: opts.signal };
   try {
-    let after: string | null = null;
-    let seen = 0;
-    for (let page = 0; page < maxPages; page += 1) {
-      const result = await readPage(repo, userId, after, seen, transport);
-      if (result.verdict !== null) return result.verdict;
-      after = result.next;
-      seen = result.seen;
+    try {
+      let after: string | null = null;
+      let seen = 0;
+      for (let page = 0; page < maxPages; page += 1) {
+        const result = await readPage(repo, userId, after, seen, transport);
+        if (result.verdict !== null) return result.verdict;
+        after = result.next;
+        seen = result.seen;
+      }
+      return "unknown";
+    } catch (error) {
+      // A fine-grained token with "Metadata: read" on a private repository
+      // may list its stargazers over REST while GraphQL refuses the same
+      // question ("Resource not accessible by personal access token").
+      if (isGitHubError(error) && error.code === "forbidden") {
+        return await findStargazerRest(repo, userId, maxPages, transport);
+      }
+      throw error;
     }
-    return "unknown";
   } catch (error) {
     const subject = `${repo.owner}/${repo.name}`;
     if (isGitHubError(error)) {
@@ -132,4 +142,26 @@ export async function findStargazer(
     }
     return "unknown";
   }
+}
+
+/** The REST list of stargazers, 100 per page, matched on the numeric id. */
+async function findStargazerRest(
+  repo: { owner: string; name: string },
+  userId: number,
+  maxPages: number,
+  transport: { token: string; signal?: AbortSignal },
+): Promise<StargazerVerdict> {
+  const base = `/repos/${encodeURIComponent(repo.owner)}/${encodeURIComponent(repo.name)}/stargazers?per_page=100`;
+  for (let page = 1; page <= maxPages; page += 1) {
+    const { status, data, link } = await rest<unknown>(
+      `${base}&page=${page}`,
+      transport,
+    );
+    if (status !== 200 || !Array.isArray(data)) return "unknown";
+    for (const entry of data) {
+      if ((entry as { id?: unknown } | null)?.id === userId) return "starred";
+    }
+    if (!/rel="next"/.test(link ?? "")) return "not_starred";
+  }
+  return "unknown";
 }

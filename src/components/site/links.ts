@@ -79,6 +79,17 @@ export function signInHref(returnTo = "/"): string {
 }
 
 /**
+ * `returnTo` marked as a Pro check: the sign-in callback replaces
+ * `pro_check` with what it found, and the page tells the user.
+ */
+export function withProCheck(returnTo: string): string {
+  const [path, hash = ""] = returnTo.split("#");
+  const url = new URL(path, "http://internal.invalid");
+  url.searchParams.set("pro_check", "1");
+  return `${url.pathname}${url.search}${hash ? `#${hash}` : ""}`;
+}
+
+/**
  * True for a site-relative link to a page. Files and machine endpoints
  * (`/openapi.json`, `/llms.txt`, `/mcp`, `/api/…`) are not pages: they get a
  * plain anchor, because there is nothing for the router to prefetch or render.

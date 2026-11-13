@@ -2,7 +2,13 @@
 
 import { useToast } from "@astryxdesign/core/Toast";
 import { useEffect } from "react";
-import { authErrorMessage, withoutAuthError } from "./auth-errors";
+import { useProRepo } from "@/components/providers";
+import {
+  authErrorMessage,
+  proCheckMessage,
+  withoutAuthError,
+  withoutProCheck,
+} from "./auth-errors";
 
 /**
  * Shows a toast when the page was reached with `?auth_error=<code>` (a
@@ -15,6 +21,15 @@ import { authErrorMessage, withoutAuthError } from "./auth-errors";
  */
 export function AuthNotice() {
   const showToast = useToast();
+  const repo = useProRepo().slug;
+  useEffect(() => {
+    const result = new URLSearchParams(window.location.search).get("pro_check");
+    if (result === null) return;
+    const cleaned = withoutProCheck(window.location.href);
+    if (cleaned !== null) window.history.replaceState(null, "", cleaned);
+    const message = proCheckMessage(result, repo);
+    if (message) showToast({ ...message, uniqueID: "pro-check" });
+  }, [showToast, repo]);
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get("auth_error");
     if (code === null) return;

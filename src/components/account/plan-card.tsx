@@ -10,6 +10,7 @@ import { Text } from "@astryxdesign/core/Text";
 import { RefreshCw } from "lucide-react";
 import { GithubMark } from "@/components/github-mark";
 import { useProRepo, useSiteHost } from "@/components/providers";
+import { withProCheck } from "@/components/site/links";
 import { edgeRefreshText } from "@/content/facts";
 import { FREE, PRO } from "@/lib/pro/entitlements";
 import { site } from "@/lib/site";
@@ -94,7 +95,7 @@ export function PlanCard({
             width="100%"
           />
           <SignInButton
-            returnTo={returnTo}
+            returnTo={withProCheck(returnTo)}
             label="I starred it, check again"
             variant="ghost"
             icon={<Icon icon={RefreshCw} />}

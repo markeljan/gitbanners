@@ -40,3 +40,34 @@ export function withoutAuthError(href: string): string | null {
   url.searchParams.delete("auth_error");
   return `${url.pathname}${url.search}${url.hash}`;
 }
+
+/** What the page says after "I starred it, check again". */
+export function proCheckMessage(
+  result: string,
+  repo: string,
+): { body: string; type: "info" | "error" } | null {
+  switch (result) {
+    case "pro":
+      return { body: `Pro is on. Thanks for starring ${repo}!`, type: "info" };
+    case "not_starred":
+      return {
+        body: `GitHub does not show a star from you on ${repo} yet. Star it, wait a few seconds, then check again.`,
+        type: "error",
+      };
+    case "unverified":
+      return {
+        body: `Your star on ${repo} could not be confirmed with GitHub right now, so your plan did not change. Try again in a minute.`,
+        type: "error",
+      };
+    default:
+      return null;
+  }
+}
+
+/** Removes `pro_check` from a URL's query, or `null` when it is absent. */
+export function withoutProCheck(href: string): string | null {
+  const url = new URL(href);
+  if (!url.searchParams.has("pro_check")) return null;
+  url.searchParams.delete("pro_check");
+  return `${url.pathname}${url.search}${url.hash}`;
+}

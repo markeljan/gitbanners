@@ -220,6 +220,11 @@ export async function hasStarred(
   );
   if (check?.status === 204) return true;
   if (check?.status !== 404) return "unknown";
+  // A 404 is only a "no" when this token can see the repository at all. The
+  // sign-in token has no scopes, so a private repository is invisible to it
+  // and every star on it reads as missing.
+  const visible = await apiGet(`/repos/${slug}`, accessToken).catch(() => null);
+  if (visible?.status !== 200) return "unknown";
 
   const list = await apiGet(
     "/user/starred?per_page=100&sort=created&direction=desc",

@@ -21,7 +21,7 @@ import {
   useSignInAvailable,
   useSiteOrigin,
 } from "@/components/providers";
-import { signInHref } from "@/components/site/links";
+import { signInHref, withProCheck } from "@/components/site/links";
 import { bannerPath, isProfileOf, SIZES } from "@/lib/banner";
 import { bannerLinks } from "@/lib/embed";
 import {
@@ -79,7 +79,7 @@ function SaveError({
                 label="Check again"
                 size="sm"
                 variant="ghost"
-                href={signInHref(href)}
+                href={signInHref(withProCheck(href))}
                 as="a"
               />
             ) : null}

@@ -22,7 +22,7 @@ import { TargetInput } from "@/components/banner/target-input";
 import { KIND_LABELS } from "@/components/banner/target-options";
 import { ThemePicker } from "@/components/banner/theme-picker";
 import { useProRepo, useSignInAvailable } from "@/components/providers";
-import { signInHref } from "@/components/site/links";
+import { signInHref, withProCheck } from "@/components/site/links";
 import {
   type FontId,
   getPreset,
@@ -412,7 +412,10 @@ function ProControls() {
           {me.status === "signed-in" ? (
             <>
               {", then "}
-              <a className="gb-inline-link" href={signInHref(href)}>
+              <a
+                className="gb-inline-link"
+                href={signInHref(withProCheck(href))}
+              >
                 check again
               </a>
               .

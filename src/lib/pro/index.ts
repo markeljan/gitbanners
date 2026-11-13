@@ -14,6 +14,15 @@ import { getStore, keys, type Store } from "@/lib/store";
 import { type Entitlements, entitlementsFor } from "./entitlements";
 import { proRepo, proRepoSlug, type StarRepo } from "./repo";
 
+/**
+ * What a sign-in check concluded, for telling the user: their star was seen,
+ * GitHub said they have not starred, or no check could answer.
+ */
+export type StarVerdict = "starred" | "not_starred" | "unknown";
+
+/** The decision taken at sign-in, with how it was reached. */
+export type ProDecision = ProStatus & { verdict: StarVerdict };
+
 /** Which check produced a positive Pro decision. */
 export type ProSource = "allowlist" | "user_token" | "stargazers";
 
@@ -188,11 +197,16 @@ export async function decideProAtSignIn(
   user: { id: string; login: string },
   options: { accessToken?: string } = {},
   deps?: Partial<ProDeps>,
-): Promise<ProStatus> {
+): Promise<ProDecision> {
   const d = resolveDeps(deps);
   const now = d.now();
+  const decided = (status: Promise<ProStatus>, verdict: StarVerdict) =>
+    status.then((saved) => ({ ...saved, verdict }));
   if (isAllowlisted(user.login)) {
-    return save(d.store, user.id, { pro: true, at: now, source: "allowlist" });
+    return decided(
+      save(d.store, user.id, { pro: true, at: now, source: "allowlist" }),
+      "starred",
+    );
   }
 
   const repo = proRepo();
@@ -202,28 +216,29 @@ export async function decideProAtSignIn(
       .hasStarred(options.accessToken, repo)
       .catch(() => "unknown" as const);
     if (starred === true) {
-      return save(d.store, user.id, {
-        pro: true,
-        at: now,
-        source: "user_token",
-      });
+      return decided(
+        save(d.store, user.id, { pro: true, at: now, source: "user_token" }),
+        "starred",
+      );
     }
     notStarred = starred === false;
   }
 
   const verdict = await lookUpStargazer(d, user.id);
   if (verdict === "starred") {
-    return save(d.store, user.id, {
-      pro: true,
-      at: now,
-      source: "stargazers",
-    });
+    return decided(
+      save(d.store, user.id, { pro: true, at: now, source: "stargazers" }),
+      "starred",
+    );
   }
   if (notStarred || verdict === "not_starred") {
-    return save(d.store, user.id, { pro: false, at: now, source: null });
+    return decided(
+      save(d.store, user.id, { pro: false, at: now, source: null }),
+      "not_starred",
+    );
   }
   const cached = parseStatus(await d.store.get(keys.pro(user.id)));
-  return keepLastKnown(d.store, user.id, cached, now);
+  return decided(keepLastKnown(d.store, user.id, cached, now), "unknown");
 }
 
 async function recheck(

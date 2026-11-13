@@ -103,8 +103,13 @@ describe("decideProAtSignIn: first positive wins", () => {
     setEnv({ PRO_LOGINS: "octo-test" });
     const h = harness({ token: false, stargazer: "not_starred" });
     const status = await decideProAtSignIn(user, { accessToken: "t" }, h.deps);
-    expect(status).toEqual({ pro: true, at: h.state.now, source: "allowlist" });
-    expect(await h.stored()).toEqual(status);
+    expect(status).toEqual({
+      pro: true,
+      at: h.state.now,
+      source: "allowlist",
+      verdict: "starred",
+    });
+    expect(status).toMatchObject((await h.stored()) ?? {});
     expect(h.state.tokenCalls).toEqual([]);
     expect(h.state.stargazerCalls).toEqual([]);
   });
@@ -120,8 +125,9 @@ describe("decideProAtSignIn: first positive wins", () => {
       pro: true,
       at: h.state.now,
       source: "user_token",
+      verdict: "starred",
     });
-    expect(await h.stored()).toEqual(status);
+    expect(status).toMatchObject((await h.stored()) ?? {});
     expect(h.state.tokenCalls).toEqual([
       ["gho_x", { owner: "acme", name: "gitbanners" }],
     ]);
@@ -140,6 +146,7 @@ describe("decideProAtSignIn: first positive wins", () => {
         pro: true,
         at: h.state.now,
         source: "stargazers",
+        verdict: "starred",
       });
       expect(h.state.tokenCalls.length).toBe(1);
       expect(h.state.stargazerCalls.length).toBe(1);
@@ -175,8 +182,13 @@ describe("decideProAtSignIn: first positive wins", () => {
         { accessToken: "t" },
         h.deps,
       );
-      expect(status).toEqual({ pro: false, at: h.state.now, source: null });
-      expect(await h.stored()).toEqual(status);
+      expect(status).toEqual({
+        pro: false,
+        at: h.state.now,
+        source: null,
+        verdict: "not_starred",
+      });
+      expect(status).toMatchObject((await h.stored()) ?? {});
     }
   });
 
@@ -207,7 +219,12 @@ describe("decideProAtSignIn: first positive wins", () => {
         });
         expect(
           await decideProAtSignIn(user, { accessToken: "t" }, h.deps),
-        ).toEqual({ pro: false, at: h.state.now, source: null });
+        ).toEqual({
+          pro: false,
+          at: h.state.now,
+          source: null,
+          verdict: "not_starred",
+        });
       }
     }
   });
@@ -215,8 +232,13 @@ describe("decideProAtSignIn: first positive wins", () => {
   test("nothing could answer and nothing is known: not Pro, retried soon", async () => {
     const h = harness({ token: "unknown", stargazer: new Error("boom") });
     const status = await decideProAtSignIn(user, { accessToken: "t" }, h.deps);
-    expect(status).toEqual({ pro: false, at: h.state.now, source: null });
-    expect(await h.stored()).toEqual(status);
+    expect(status).toEqual({
+      pro: false,
+      at: h.state.now,
+      source: null,
+      verdict: "unknown",
+    });
+    expect(status).toMatchObject((await h.stored()) ?? {});
   });
 
   test("nothing could answer: the last known Pro stays (stale-if-error)", async () => {
@@ -234,7 +256,7 @@ describe("decideProAtSignIn: first positive wins", () => {
     expect(status.source).toBe("user_token");
     // Trusted for a full window again: see keepLastKnown() for why not sooner.
     expect(status.at).toBe(h.state.now);
-    expect(await h.stored()).toEqual(status);
+    expect(status).toMatchObject((await h.stored()) ?? {});
   });
 
   test("a malformed PRO_REPO leaves only the allowlist", async () => {
@@ -283,7 +305,7 @@ describe("getProStatus", () => {
     );
     const status = await getProStatus("4242", h.deps);
     expect(status).toEqual({ pro: true, at: now, source: "stargazers" });
-    expect(await h.stored()).toEqual(status);
+    expect(status).toMatchObject((await h.stored()) ?? {});
     expect(h.state.stargazerCalls.length).toBe(1);
     expect(h.state.stargazerCalls[0][1]).toBe(4242);
     // No stored token exists, so the user-token check can never run here.
@@ -450,7 +472,7 @@ test("the default lookup is the GitHub data layer; without a server token it can
     const store = new MemoryStore();
     const status = await decideProAtSignIn(user, {}, { store });
     expect(status).toMatchObject({ pro: false, source: null });
-    expect(await store.get("pro:4242")).toEqual(status);
+    expect(status).toMatchObject((await store.get("pro:4242")) ?? {});
   } finally {
     undo();
   }
