@@ -7,16 +7,32 @@
     "build": "next build",
     "start": "next start",
     "lint": "biome check",
-    "format": "biome format --write"
+    "lint:fix": "biome check --write",
+    "format": "biome format --write",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "bun test",
+    "check": "bun run lint && bun run typecheck && bun test"
   },
   "dependencies": {
+    "@astryxdesign/core": "^0.7.15",
+    "@astryxdesign/theme-neutral": "^0.7.15",
+    "@stylexjs/stylex": "^0.19.2",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.1.0",
+    "lucide-react": "^1.72.0",
     "next": "16.4.6",
+    "nuqs": "^2.10.3",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "swr": "^2.5.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@astryxdesign/cli": "^0.7.15",
     "@biomejs/biome": "2.4.2",
+    "@playwright/test": "^1.65.0",
     "@tailwindcss/turbopack": "4.3.3",
+    "@types/bun": "^1.4.4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -32,5 +48,15 @@
   "trustedDependencies": [
     "sharp",
     "unrs-resolver"
-  ]
+  ],
+  "description": "Live GitHub profile, repo and org banners as images. One URL, always up to date.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/markeljan/gitbanners.git"
+  },
+  "engines": {
+    "node": ">=22",
+    "bun": ">=1.3"
+  }
 }
