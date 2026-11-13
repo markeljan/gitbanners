@@ -8,7 +8,7 @@
  * hands it out when GitHub throttles us or is down. A banner embedded in a
  * thousand READMEs keeps rendering through a GitHub incident.
  */
-import { isTransient } from "./errors";
+import { isGitHubError, isTransient } from "./errors";
 
 /** A value as kept by a {@link SnapshotStore}. */
 export interface Snapshot {
@@ -51,6 +51,15 @@ export interface SnapshotOptions<T> {
    * treated as absent.
    */
   accept?: (value: unknown) => value is T;
+  /**
+   * Lets a freshly loaded value keep parts of the stored one it replaces.
+   * A refresh in which an optional upstream request failed comes back with
+   * holes (no totals, no chart); without this it would overwrite a complete
+   * snapshot and a partial failure would show less than a total one. Called
+   * only when both values exist; must return `loaded` itself when there is
+   * nothing to carry over.
+   */
+  inherit?: (loaded: NonNullable<T>, previous: NonNullable<T>) => T;
   /** Clock in epoch milliseconds, for tests. */
   now?: () => number;
 }
@@ -188,6 +197,19 @@ async function writeSnapshot(
   }
 }
 
+/**
+ * Failures a stored copy may stand in for: GitHub throttling us or being
+ * down, and GitHub refusing the server's credential (`forbidden`: a revoked
+ * or expired token). The latter is our problem, not the visitor's, and a
+ * week of good snapshots is a better answer than an error on every banner.
+ * `invalid` is never covered: the request itself was wrong.
+ */
+function servesStale(error: unknown): boolean {
+  return (
+    isTransient(error) || (isGitHubError(error) && error.code === "forbidden")
+  );
+}
+
 async function resolve<T>(
   key: string,
   load: () => Promise<T>,
@@ -227,14 +249,30 @@ async function resolve<T>(
   } catch (error) {
     // Only a real value is worth serving stale; an old "not found" is not.
     if (
-      isTransient(error) &&
+      servesStale(error) &&
       stored &&
       stored.value !== null &&
       stored.ageSeconds < opts.staleFor
     ) {
+      if (!isTransient(error)) {
+        // The server's own credential is being refused: every refresh will
+        // fail until it is replaced, so say so where an operator looks.
+        console.warn(
+          `[github] credential refused, serving a stored copy of ${key}`,
+        );
+      }
       return stored.value;
     }
     throw error;
+  }
+  if (
+    opts.inherit &&
+    loaded != null &&
+    stored &&
+    stored.value != null &&
+    stored.ageSeconds < opts.staleFor
+  ) {
+    loaded = opts.inherit(loaded, stored.value);
   }
   // A provisional value reloaded before `freshFor` was up: this load was its
   // quick re-check. Still provisional means waiting did not help.
@@ -256,9 +294,11 @@ async function resolve<T>(
  *
  * - A fresh snapshot (younger than `freshFor`) is returned without loading.
  * - Otherwise `load` runs; its result is stored and returned.
- * - If `load` throws a `GitHubError` with code `rate_limited` or
- *   `unavailable` and a snapshot younger than `staleFor` exists, that stale
- *   snapshot is returned instead. Every other error propagates.
+ * - If `load` throws a `GitHubError` with code `rate_limited`,
+ *   `unavailable` or `forbidden` and a snapshot younger than `staleFor`
+ *   exists, that stale snapshot is returned instead. Every other error
+ *   propagates.
+ * - A loaded value may keep parts of the snapshot it replaces (`inherit`).
  * - `null` results are stored too (negative caching), but only for
  *   `min(freshFor, 300)` seconds, and are never served stale.
  * - Concurrent calls for the same key in one process share one load.

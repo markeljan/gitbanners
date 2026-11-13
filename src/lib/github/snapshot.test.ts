@@ -122,17 +122,81 @@ describe("withSnapshot", () => {
     ).rejects.toBe(error);
   });
 
-  test.each([
-    "forbidden",
-    "invalid",
-  ] as const)("%s is never papered over with a stale snapshot", async (code) => {
+  test("an invalid request is never papered over with a stale snapshot", async () => {
     const key = freshKey();
-    const error = new GitHubError(code, "not transient");
+    const error = new GitHubError("invalid", "not transient");
     await withSnapshot(key, async () => ({ v: 1 }), options());
     advance(1000);
     await expect(
       withSnapshot(key, async () => Promise.reject(error), options()),
     ).rejects.toBe(error);
+  });
+
+  test("a refused server credential serves the stored copy and says so", async () => {
+    const key = freshKey();
+    const error = new GitHubError("forbidden", "bad credentials", {
+      status: 401,
+    });
+    await withSnapshot(key, async () => ({ v: 1 }), options());
+    advance(1000);
+    expect(
+      await withSnapshot<{ v: number }>(
+        key,
+        async () => Promise.reject(error),
+        options(),
+      ),
+    ).toEqual({ v: 1 });
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0]?.[0])).toContain(key);
+    // Without a stored copy there is nothing to stand in.
+    await expect(
+      withSnapshot(freshKey(), async () => Promise.reject(error), options()),
+    ).rejects.toBe(error);
+  });
+
+  test("a reloaded value can keep parts of the snapshot it replaces", async () => {
+    const key = freshKey();
+    type Value = { fresh: number; chart: number[] | null };
+    const inherit = mock(
+      (loaded: Value, previous: Value): Value =>
+        loaded.chart ? loaded : { ...loaded, chart: previous.chart },
+    );
+    const opts = options<Value>({ inherit });
+
+    await withSnapshot(key, async () => ({ fresh: 1, chart: [1, 2] }), opts);
+    // Nothing to inherit from on the first load.
+    expect(inherit).not.toHaveBeenCalled();
+
+    advance(1000);
+    expect(
+      await withSnapshot(key, async () => ({ fresh: 2, chart: null }), opts),
+    ).toEqual({ fresh: 2, chart: [1, 2] });
+    expect(inherit).toHaveBeenCalledTimes(1);
+
+    // The merged value is what was stored, so it survives another failure.
+    advance(1000);
+    expect(
+      await withSnapshot(key, async () => ({ fresh: 3, chart: null }), opts),
+    ).toEqual({ fresh: 3, chart: [1, 2] });
+
+    // A complete value replaces everything.
+    advance(1000);
+    expect(
+      await withSnapshot(key, async () => ({ fresh: 4, chart: [9] }), opts),
+    ).toEqual({ fresh: 4, chart: [9] });
+  });
+
+  test("nothing is inherited from or into a cached null", async () => {
+    const key = freshKey();
+    type Value = { chart: number[] | null } | null;
+    const inherit = mock((loaded: { chart: number[] | null }): Value => loaded);
+    const opts = options<Value>({ inherit });
+    await withSnapshot(key, async () => null, opts);
+    advance(1000);
+    await withSnapshot(key, async () => ({ chart: null }), opts);
+    advance(1000);
+    await withSnapshot(key, async () => null, opts);
+    expect(inherit).not.toHaveBeenCalled();
   });
 
   test("errors that are not GitHub's propagate untouched", async () => {

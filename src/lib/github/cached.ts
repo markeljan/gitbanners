@@ -32,6 +32,9 @@ import "server-only";
  *   cache forgets everything on each deployment). Fresh for 900 s, in step
  *   with `revalidate`. Stored values are checked against the schema when
  *   read, and token-less results live under their own key prefix.
+ * - Partial failures: a refresh that lost an optional part (a user's
+ *   totals, a repository's chart) keeps that part from the snapshot it
+ *   replaces, see `inherit.ts`.
  * - Errors propagate as `GitHubError`; a thrown result is not cached. An
  *   error that leaves a `'use cache'` function is re-created by React, and
  *   in a production build nothing but its `digest` survives (verified under
@@ -46,6 +49,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import type { BannerTarget } from "@/lib/banner/types";
 import { entityCacheTag } from "@/lib/http/cache-headers";
 import { asGitHubError } from "./errors";
+import { inheritOwner, inheritRepo } from "./inherit";
 import { isStatisticsPending } from "./normalize";
 import { fetchOwner, fetchOwnerPreview } from "./owner";
 import { fetchRepo } from "./repo";
@@ -107,6 +111,7 @@ async function cachedOwner(
       staleFor: STALE_SECONDS,
       provisional: isPending,
       accept: isOwner,
+      inherit: inheritOwner,
     },
   );
   if (owner === null || isPending(owner)) cacheLife("minutes");
@@ -144,6 +149,7 @@ async function cachedRepo(owner: string, name: string): Promise<Repo | null> {
       staleFor: STALE_SECONDS,
       provisional: isPending,
       accept: isRepo,
+      inherit: inheritRepo,
     },
   );
   if (repo === null || isPending(repo)) cacheLife("minutes");
