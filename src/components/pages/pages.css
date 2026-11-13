@@ -1,0 +1,306 @@
+/*
+ * Owner, repository, gallery and themes pages.
+ *
+ * In `@layer components`, like the other app styles: after Astryx's own
+ * layers (these rules win over component defaults) and before Tailwind's
+ * utilities. Built from Astryx tokens only; banner colours on the themes
+ * page are data, passed in as custom properties.
+ */
+@layer components {
+  /* ── Frame ─────────────────────────────────────────────────────────────── */
+  .gb-entity {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-8);
+    padding-block: var(--spacing-6) var(--spacing-12);
+  }
+
+  .gb-crumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--color-text-secondary);
+    font-size: var(--text-supporting-size);
+  }
+  .gb-crumbs li + li::before {
+    content: "/";
+    margin-inline-end: var(--spacing-1);
+    color: var(--color-text-secondary);
+  }
+  .gb-crumbs [aria-current] {
+    color: var(--color-text-primary);
+  }
+
+  /* ── Header ────────────────────────────────────────────────────────────── */
+  .gb-entity-head {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-4);
+  }
+  .gb-entity-avatar {
+    flex: none;
+    width: var(--spacing-12);
+    height: var(--spacing-12);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-full);
+    background: var(--color-skeleton);
+  }
+  /* GitHub draws organizations and repository owners as rounded squares. */
+  .gb-entity-avatar[data-kind="org"] {
+    border-radius: var(--radius-element);
+  }
+  .gb-entity-intro {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    min-width: 0;
+    max-width: var(--gb-prose-width);
+  }
+  .gb-entity-title {
+    overflow-wrap: anywhere;
+  }
+  .gb-entity-login {
+    color: var(--color-text-secondary);
+    font-weight: 500;
+  }
+  .gb-entity-summary {
+    margin: 0;
+  }
+  .gb-entity-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-1) var(--spacing-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  @media (width >= 40rem) {
+    .gb-entity-avatar {
+      width: calc(var(--spacing-12) + var(--spacing-4));
+      height: calc(var(--spacing-12) + var(--spacing-4));
+    }
+  }
+
+  /* ── Sections ──────────────────────────────────────────────────────────── */
+  .gb-entity-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-5);
+    padding-block-start: var(--spacing-8);
+    border-block-start: var(--border-width) solid var(--color-border);
+  }
+  .gb-entity-section-head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    max-width: var(--gb-prose-width);
+  }
+
+  /* The banner the page is about: its box is the banner's exact ratio. */
+  .gb-entity-banner {
+    width: 100%;
+  }
+  .gb-entity-banner > .gb-banner-img,
+  .gb-entity-banner > .gb-canvas {
+    width: 100%;
+    height: 100%;
+  }
+  .gb-entity-tools {
+    display: grid;
+    gap: var(--spacing-5);
+  }
+  .gb-entity-themes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+  .gb-entity-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-2);
+  }
+
+  .gb-entity-grid {
+    display: grid;
+    gap: var(--spacing-5);
+  }
+  @media (width >= 48rem) {
+    .gb-entity-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .gb-entity-sizes {
+    display: grid;
+    gap: var(--spacing-8) var(--spacing-5);
+  }
+  @media (width >= 48rem) {
+    .gb-entity-sizes {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .gb-entity-size {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+    min-width: 0;
+    margin: 0;
+  }
+  .gb-entity-size > .gb-banner-img {
+    border-radius: var(--radius-inner);
+  }
+  .gb-entity-size > figcaption {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+  }
+  .gb-entity-size .gb-card-actions {
+    flex-wrap: wrap;
+    margin-block-start: var(--spacing-2);
+  }
+
+  .gb-entity-note {
+    color: var(--color-text-secondary);
+    font-size: var(--text-supporting-size);
+  }
+
+  /* ── Facts ─────────────────────────────────────────────────────────────── */
+  .gb-facts {
+    display: grid;
+    gap: var(--spacing-8);
+  }
+  @media (width >= 64rem) {
+    .gb-facts {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      gap: var(--spacing-12);
+    }
+  }
+  .gb-facts-list {
+    display: grid;
+    margin: var(--spacing-3) 0 var(--spacing-3);
+  }
+  .gb-facts-list > div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-4);
+    padding-block: var(--spacing-2);
+    border-block-end: var(--border-width) solid var(--color-border);
+  }
+  .gb-facts-list dt {
+    color: var(--color-text-secondary);
+  }
+  .gb-facts-list dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+  }
+  .gb-facts-side {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-6);
+  }
+  .gb-facts-side > section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+  .gb-facts-side p {
+    margin: 0;
+  }
+  .gb-facts-inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-1) var(--spacing-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .gb-facts-rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--color-text-secondary);
+  }
+  .gb-facts-rows a {
+    font-weight: 500;
+  }
+
+  /* ── Gallery ───────────────────────────────────────────────────────────── */
+  .gb-gallery {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-8);
+    padding-block: var(--spacing-10) var(--spacing-12);
+  }
+  .gb-gallery-head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+    max-width: var(--gb-prose-width);
+  }
+  .gb-gallery-wide {
+    grid-column: 1 / -1;
+  }
+  .gb-gallery-themes {
+    display: grid;
+    gap: var(--spacing-5);
+  }
+  @media (width >= 48rem) {
+    .gb-gallery-themes {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* ── Themes ────────────────────────────────────────────────────────────── */
+  .gb-theme-list {
+    display: grid;
+    gap: var(--spacing-5);
+  }
+  @media (width >= 48rem) {
+    .gb-theme-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .gb-theme-card {
+    scroll-margin-block-start: calc(var(--gb-header-height) + var(--spacing-4));
+  }
+  .gb-theme-card:target {
+    outline: var(--focus-outline-width) solid var(--color-accent);
+    outline-offset: var(--spacing-1);
+  }
+  .gb-theme-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-1) var(--spacing-3);
+    margin: var(--spacing-2) 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--text-supporting-size);
+  }
+  .gb-theme-swatches li {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    color: var(--color-text-secondary);
+  }
+  .gb-theme-swatches code {
+    color: var(--color-text-primary);
+    font-family: var(--font-family-code);
+  }
+  .gb-theme-dot {
+    width: var(--spacing-3);
+    height: var(--spacing-3);
+    border: var(--border-width) solid var(--color-border-emphasized);
+    border-radius: var(--radius-full);
+    background: var(--gb-dot);
+  }
+  .gb-theme-filter {
+    max-width: 24rem;
+  }
+}
