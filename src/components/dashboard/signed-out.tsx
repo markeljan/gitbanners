@@ -57,7 +57,7 @@ export function SignedOut({ signInAvailable, host }: SignedOutProps) {
             <Banner
               status="info"
               title="Accounts are not set up on this deployment"
-              description="Saving banners needs an account database, and this deployment has none. Every public banner still works: make one in the studio and copy its link."
+              description="Signing in needs an account database and GitHub app settings that this deployment does not have. Every public banner still works: make one in the studio and copy its link."
             />
             <div className="gb-dash-intro-actions">
               <Button

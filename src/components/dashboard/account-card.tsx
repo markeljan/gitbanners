@@ -19,6 +19,8 @@ export interface AccountCardProps {
   user: SessionUser;
   /** Saved banners that deleting the account removes. */
   bannerCount: number;
+  /** One of them is served at the user's profile URL. */
+  hasDefault: boolean;
   /** Reports a failed request; the card stays as it was. */
   onError: (error: unknown) => void;
 }
@@ -34,21 +36,29 @@ function avatarAt(url: string, px: number): string {
   }
 }
 
-function deletionText(count: number): string {
+function deletionText(count: number, hasDefault: boolean): string {
   const banners =
     count === 0
       ? "Your account record is deleted."
       : count === 1
         ? "Your account record and your saved banner are deleted, and its link stops working."
         : `Your account record and all ${count} saved banners are deleted, and their links stop working.`;
-  return `${banners} Your profile URL goes back to the standard banner. Your GitHub account is not touched. This cannot be undone.`;
+  const profile = hasDefault
+    ? " Your profile URL goes back to the standard banner."
+    : "";
+  return `${banners}${profile} Your GitHub account is not touched. This cannot be undone.`;
 }
 
 /**
  * Who is signed in, and the account's exits: sign out here, sign out on
  * every device, delete the account.
  */
-export function AccountCard({ user, bannerCount, onError }: AccountCardProps) {
+export function AccountCard({
+  user,
+  bannerCount,
+  hasDefault,
+  onError,
+}: AccountCardProps) {
   const signOut = useRef<HTMLFormElement>(null);
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -88,7 +98,7 @@ export function AccountCard({ user, bannerCount, onError }: AccountCardProps) {
         <div className="gb-account-names">
           <Text weight="semibold">{user.name ?? user.login}</Text>
           <Link href={ownerPath(user.login)} isStandalone color="secondary">
-            @{user.login}
+            {user.name ? `@${user.login}` : "Your banner page"}
           </Link>
         </div>
       </div>
@@ -128,7 +138,7 @@ export function AccountCard({ user, bannerCount, onError }: AccountCardProps) {
           if (!deleting) setConfirming(open);
         }}
         title="Delete your account?"
-        description={deletionText(bannerCount)}
+        description={deletionText(bannerCount, hasDefault)}
         actionLabel="Delete account"
         cancelLabel="Keep account"
         isActionLoading={deleting}

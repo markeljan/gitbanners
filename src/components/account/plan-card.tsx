@@ -54,7 +54,9 @@ export function PlanCard({
   return (
     <Card padding={4} className="gb-plan">
       <div className="gb-plan-head">
-        <Heading level={headingLevel}>{pro ? "Pro plan" : "Free plan"}</Heading>
+        <Heading level={headingLevel}>
+          {pro ? "Your plan" : "Free plan"}
+        </Heading>
         {pro ? <ProBadge /> : null}
       </div>
       <Text type="supporting" color="secondary" as="p">

@@ -19,6 +19,7 @@ import type { SavedBanner } from "@/components/account/saved-banners";
 import { SignInButton } from "@/components/account/sign-in-button";
 import { useSavedBanners } from "@/components/account/use-saved-banners";
 import { useSiteHost } from "@/components/providers";
+import { ApiProblem } from "@/hooks/api";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { type SessionUser, type UseMeResult, useMe } from "@/hooks/use-me";
 import { PRO } from "@/lib/pro/entitlements";
@@ -157,6 +158,8 @@ function SignedIn({ me, user }: { me: UseMeResult; user: SessionUser }) {
     if (message.action === "sign-in" || message.action === "upgrade") {
       me.refresh();
     }
+    // Deleted elsewhere: drop it from the list instead of keeping a ghost.
+    if (error instanceof ApiProblem && error.status === 404) list.reload();
   };
   const run = (work: () => Promise<void>) => async () => {
     try {
@@ -268,7 +271,14 @@ function SignedIn({ me, user }: { me: UseMeResult; user: SessionUser }) {
 
         <aside className="gb-dash-side" aria-label="Plan and account">
           <PlanCard pro={me.pro} login={user.login} returnTo={RETURN_TO} />
-          <AccountCard user={user} bannerCount={count} onError={report} />
+          <AccountCard
+            user={user}
+            bannerCount={count}
+            hasDefault={
+              list.banners?.some((banner) => banner.isDefault) ?? false
+            }
+            onError={report}
+          />
         </aside>
       </div>
 
