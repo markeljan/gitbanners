@@ -16,7 +16,11 @@ function decide(path: string, entity: Entity | null) {
   if (!parsed) return { type: "not-a-path" } as const;
   const decision = decidePage(segments, parsed, entity);
   return decision.type === "page"
-    ? { type: "page", preset: decision.preset.id, path: decision.path }
+    ? ({
+        type: "page",
+        preset: decision.preset.id,
+        path: decision.path,
+      } as const)
     : decision;
 }
 
