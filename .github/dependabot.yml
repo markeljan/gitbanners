@@ -1,0 +1,18 @@
+version: 2
+updates:
+  - package-ecosystem: bun
+    directory: /
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    groups:
+      next-react:
+        patterns: ["next", "react", "react-dom", "@types/react*", "babel-plugin-react-compiler"]
+      astryx:
+        patterns: ["@astryxdesign/*", "@stylexjs/stylex"]
+      vercel:
+        patterns: ["@vercel/*"]
+      dev-tooling:
+        dependency-type: development
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
