@@ -413,6 +413,11 @@ req "$BASE/markeljan.svg"; expect_hdr "image" x-banner-state '^ok$'; expect_hdr 
 req -H 'Accept: image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8' "$BASE/vercel"; expect_status "GET /vercel the way an <img> asks" 200; expect_hdr "<img> on a page URL" content-type '^image/'; expect_hdr "<img> on a page URL" vary '(^|, *)accept(,|$)'
 req "$BASE/zz-unknown-owner-$RANDOM$RANDOM.svg"; expect_status "an unknown login as an image still answers 200" 200; expect_hdr "unknown login image" x-banner-state '^(not_found|unavailable)$'
 req "$BASE/markeljan.png?size=og"; expect_status "GET /markeljan.png?size=og (link preview image)" 200; expect_hdr "preview image" content-type '^image/png'
+# A URL that cannot be a banner is the one case without an image. Both answers are in the OpenAPI document:
+# the image handler's problem, and the static 404 page of the routing layer (no function runs for it).
+req "$BASE/$(printf 'a%.0s' $(seq 1 40)).svg"; expect_status "an image URL with a login that is too long" 404; expect_hdr "image 404 from the handler" content-type '^application/problem\+json'; expect_body "image 404 from the handler" '"code":"not_found"'
+req "$BASE/docs.svg"; expect_status "an image URL on one of the site's own routes" 404; expect_hdr "image 404 from the routing layer" content-type '^text/html'
+node -e 'const d=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));const ok=["/{owner}.{format}","/{owner}/{repo}.{format}"].every((p)=>{const c=Object.keys(d.paths[p]?.get?.responses?.["404"]?.content??{});return c.includes("application/problem+json")&&c.includes("text/html")});process.exit(ok?0:1)' "$TMP/openapi.json" && ok "the OpenAPI document describes both image 404 answers" || bad "image 404 in the OpenAPI document" "both image operations must list application/problem+json and text/html under 404"
 
 echo "== the sign-in protocol is named nowhere (the auth surface stays dark), and no placeholder is served"
 WORD='oauth'

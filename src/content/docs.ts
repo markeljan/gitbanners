@@ -219,7 +219,7 @@ export const docs: ContentPage = {
       blocks: [
         {
           type: "p",
-          text: "An image URL always answers `200` with an image. A README shows a broken-image icon for any other status, so an unknown login or a GitHub outage is drawn as a small card instead, and the `X-Banner-State` header says which it was.",
+          text: "A well-formed image URL always answers `200` with an image. A README shows a broken-image icon for any other status, so an unknown login or a GitHub outage is drawn as a small card instead, and the `X-Banner-State` header says which it was.",
         },
         {
           type: "table",
@@ -251,6 +251,7 @@ export const docs: ContentPage = {
             "`Access-Control-Allow-Origin: *` and `Cross-Origin-Resource-Policy: cross-origin`: a banner can be embedded, fetched and drawn on a canvas from any site.",
             "SVG answers carry a `Content-Security-Policy` that allows no scripts and no external resources. Avatars are inlined, so the image needs nothing from the network.",
             "`?scale=1`, `2` or `3` sets the pixel density of a PNG. README banners default to 2, the fixed social sizes to 1. `?download=1` asks the browser to save the file.",
+            "A URL that cannot be a banner answers `404` and no image: as a problem (`not_found`) when a login or repository name is too long or malformed or the path has more than three segments, and as the HTML 404 page when the first segment is a route of this site or contains a character no GitHub login can.",
           ],
         },
       ],
@@ -315,7 +316,7 @@ export const docs: ContentPage = {
       blocks: [
         {
           type: "p",
-          text: `A banner is a preset (what it shows), a size (the canvas), a theme (the colours) and optional overrides. [GET ${site.api.basePath}/options](#get-options) returns everything on this section as JSON.`,
+          text: `A banner is a preset (what it shows), a size (the canvas), a theme (the colours) and optional overrides. [GET ${site.api.basePath}/options](#get-options) returns everything in this section as JSON.`,
         },
       ],
     },
@@ -448,7 +449,7 @@ export const docs: ContentPage = {
       blocks: [
         {
           type: "p",
-          text: "Every answer that is not a success is `application/problem+json` (RFC 9457). Branch on `code`, show `title` and `detail` to a person, and follow `resolution`.",
+          text: "Every API answer that is not a success is `application/problem+json` (RFC 9457). Branch on `code`, show `title` and `detail` to a person, and follow `resolution`.",
         },
         {
           type: "code",

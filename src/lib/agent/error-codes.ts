@@ -29,7 +29,7 @@ export const ERROR_CODES: readonly ErrorCodeDoc[] = [
     code: "not_found",
     status: 404,
     meaning:
-      "No public GitHub user, organization or repository has that name. A private repository counts as not found.",
+      "No public GitHub user, organization or repository has that name. A private repository counts as not found. An image URL answers with this code when it cannot be a banner at all.",
     action:
       "Check the spelling on github.com, or resolve a partial name with the search operation.",
     surface: "api",

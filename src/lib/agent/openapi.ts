@@ -396,11 +396,15 @@ function imageResponses(): Json {
         "image/png": image("image/png"),
       },
     },
+    // Two layers refuse a URL that cannot be a banner, and they answer
+    // differently: the image handler with a problem, the routing layer (which
+    // never starts a function for such a path) with the static 404 page.
     "404": {
       description:
-        "The path cannot be a banner, for example a reserved name or a malformed repository name (`not_found`).",
+        "The URL cannot be a banner. A login or repository name that is too long or malformed, or more than three segments, answers a problem (`not_found`). A first segment that is one of this site's own routes, or that contains a character no GitHub login can, answers the site's HTML 404 page.",
       content: {
         "application/problem+json": { schema: ref("ProblemDetails") },
+        "text/html": { schema: { type: "string" } },
       },
     },
   };
@@ -478,7 +482,7 @@ export function openApiDocument(): Json {
       {
         name: "Images",
         description:
-          "The banner images themselves, as SVG or PNG. They always answer 200.",
+          "The banner images themselves, as SVG or PNG. A well-formed banner URL always answers 200.",
       },
     ],
     "x-rate-limit-policies": [policyOf("api"), policyOf("search")],

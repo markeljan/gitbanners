@@ -128,7 +128,7 @@ Ask the API. It confirms the target exists and returns the exact URLs and snippe
 curl "${U}${site.api.basePath}/banner?target=OWNER/REPO&preset=contributors"
 \`\`\`
 
-An image URL always answers 200, also for a login that does not exist (the image then says so), which is why the check belongs in the API call.
+A banner image URL answers 200 also for a login that does not exist (the image then says so), which is why the check belongs in the API call.
 
 ## Machine interfaces
 

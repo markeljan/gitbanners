@@ -122,7 +122,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     ],
     bannerOptions: false,
     example: `${base}/search?q=verc`,
-    returns: "A `SearchResult`: the query and a list of `Suggestion`s.",
+    returns: "A `SearchResult`: the query and a list of suggestions.",
     kind: "json",
   },
   {
@@ -246,7 +246,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     path: "/{owner}.{format}",
     summary: "Draw the banner of a user or an organization",
     description:
-      "The live banner image of a GitHub user or organization, drawn with the default preset. Always answers 200 with an image: an unknown login or an upstream failure is drawn as a card and reported in the `X-Banner-State` header, because an embedded image must never turn into a broken-image icon.",
+      "The live banner image of a GitHub user or organization, drawn with the default preset. A well-formed URL always answers 200 with an image: an unknown login or an upstream failure is drawn as a card and reported in the `X-Banner-State` header, because an embedded image must never turn into a broken-image icon.",
     parameters: [
       ownerParam(
         "GitHub user or organization login. Write `@login` for a login that collides with a route of this site, such as `@docs`.",
@@ -264,7 +264,7 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     path: "/{owner}/{repo}.{format}",
     summary: "Draw the banner of a repository, or a profile preset",
     description:
-      "The live banner image of a public repository. When the second segment is the id of a profile preset (such as `activity`, `stats` or `streak`) the answer is that preset of the owner's banner instead. A third segment selects a repository preset: `/{owner}/{repo}/{preset}.{format}`. Always answers 200 with an image, like the owner form.",
+      "The live banner image of a public repository. When the second segment is the id of a profile preset (such as `activity`, `stats` or `streak`) the answer is that preset of the owner's banner instead. A third segment selects a repository preset: `/{owner}/{repo}/{preset}.{format}`. A well-formed URL always answers 200 with an image, like the owner form.",
     parameters: [
       ownerParam("Login of the user or organization."),
       {

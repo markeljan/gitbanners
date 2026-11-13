@@ -129,6 +129,12 @@ describe("OpenAPI document", () => {
         "image/svg+xml",
         "image/png",
       ]);
+      // The image handler refuses with a problem, the routing layer with the
+      // static 404 page: both are what a client can get back.
+      expect(Object.keys(operation.responses["404"].content ?? {})).toEqual([
+        "application/problem+json",
+        "text/html",
+      ]);
     }
   });
 
