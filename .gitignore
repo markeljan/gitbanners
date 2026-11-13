@@ -43,3 +43,6 @@ next-env.d.ts
 
 # local data store used by the in-memory store in development
 .data/
+
+# agent worktrees
+.claude/worktrees/
