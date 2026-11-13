@@ -1,0 +1,377 @@
+/*
+ * Shared banner components: target input, canvas, pickers, snippets, cards.
+ *
+ * Imported by src/app/globals.css into `@layer components`: Astryx's own
+ * layers come earlier, so these rules win over component defaults, and
+ * Tailwind utilities come later, so a utility on an element still wins.
+ * Everything is built from Astryx tokens; app tokens are prefixed `--gb-`.
+ */
+
+/* ── Small shared pieces ───────────────────────────────────────────────────── */
+/*
+ * Two labels in one cell, one visible: the control keeps the width of the
+ * longer one, so "Copy URL" turning into "Copied" moves nothing.
+ */
+.gb-swap {
+  display: inline-grid;
+}
+.gb-swap > * {
+  grid-area: 1 / 1;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+.gb-swap > :last-child,
+.gb-swap[data-on] > :first-child {
+  opacity: 0;
+}
+.gb-swap[data-on] > :last-child {
+  opacity: 1;
+}
+
+/* ── Target input (combobox) ───────────────────────────────────────────────── */
+.gb-target {
+  position: relative;
+  width: 100%;
+}
+.gb-target[data-size="lg"] .gb-target-control {
+  height: calc(var(--spacing-1) * 12);
+  padding-inline: var(--spacing-4);
+  border-radius: var(--radius-container);
+  gap: var(--spacing-3);
+}
+.gb-target[data-size="lg"] .gb-target-control input {
+  font-size: var(--text-large-size);
+}
+/* Holds the place of the 48px field while its code loads. Nothing is drawn:
+   an empty box would look like a broken field to someone without JavaScript. */
+.gb-target-placeholder {
+  height: calc(var(--spacing-1) * 12);
+}
+/* Static text in front of the field: reads as the start of one URL. */
+.gb-target-prefix {
+  color: var(--color-text-secondary);
+  font-size: var(--text-large-size);
+  white-space: nowrap;
+  /* Sits flush against what is typed. */
+  margin-inline-end: calc(var(--spacing-3) * -1);
+}
+/* The "/" shortcut, shown at the end of the empty field until it has focus. */
+.gb-target-kbd {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: var(--spacing-4);
+  display: grid;
+  place-items: center;
+  min-width: var(--spacing-6);
+  height: var(--spacing-6);
+  padding-inline: var(--spacing-1-5);
+  transform: translateY(-50%);
+  border: var(--border-width) solid var(--color-border-emphasized);
+  border-radius: var(--radius-inner);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-code);
+  font-size: var(--text-supporting-size);
+  line-height: 1;
+  pointer-events: none;
+}
+.gb-target:focus-within .gb-target-kbd {
+  display: none;
+}
+@media (pointer: coarse) {
+  .gb-target-kbd {
+    display: none;
+  }
+}
+.gb-target-popup {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: calc(100% + var(--spacing-1));
+  z-index: 30;
+  max-height: min(26rem, 60dvh);
+  overflow-y: auto;
+  padding: var(--spacing-1);
+  border: var(--border-width) solid var(--color-border-emphasized);
+  border-radius: var(--radius-container);
+  background: var(--color-background-popover);
+  box-shadow: var(--shadow-med);
+  text-align: start;
+}
+.gb-target-group {
+  padding: var(--spacing-2) var(--spacing-3) var(--spacing-1);
+  color: var(--color-text-secondary);
+  font-size: var(--text-supporting-size);
+  line-height: var(--text-supporting-leading);
+}
+.gb-target-option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  min-height: var(--spacing-10);
+  padding-inline: var(--spacing-3);
+  border-radius: var(--radius-inner);
+  cursor: pointer;
+}
+/* Highlight is instant on purpose: it follows the arrow keys. */
+.gb-target-option[aria-selected="true"] {
+  background: var(--color-overlay-hover);
+}
+.gb-target-avatar {
+  flex: none;
+  width: var(--spacing-6);
+  height: var(--spacing-6);
+  border-radius: var(--radius-full);
+  background: var(--color-skeleton);
+}
+/* GitHub draws organizations and repository owners as rounded squares. */
+.gb-target-avatar:not([data-kind="user"]) {
+  border-radius: var(--radius-inner);
+}
+.gb-target-slug {
+  flex: none;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--text-label-weight);
+}
+.gb-target-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+}
+.gb-target-meta {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--spacing-3);
+  margin-inline-start: auto;
+  color: var(--color-text-secondary);
+  font-size: var(--text-supporting-size);
+}
+.gb-target-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  font-variant-numeric: tabular-nums;
+}
+.gb-target-hint {
+  padding: var(--spacing-2) var(--spacing-3);
+  color: var(--color-text-secondary);
+}
+@media (width < 30rem) {
+  .gb-target-title,
+  .gb-target-prefix {
+    display: none;
+  }
+}
+
+/* ── Banner preview ────────────────────────────────────────────────────────── */
+/*
+ * BannerCanvas: a box with the banner's aspect ratio and, inside it, the
+ * banner at its natural pixel size, scaled to the box. The default scale is
+ * pure CSS (container width over natural width; tan(atan2()) turns the two
+ * lengths into a number) so the server HTML is right before any script
+ * runs. The component then sets the measured factor.
+ */
+.gb-canvas {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  container-type: inline-size;
+}
+.gb-canvas-layer {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  transform-origin: 0 0;
+  transform: scale(
+    var(--gb-banner-scale, tan(atan2(100cqw, var(--gb-banner-width))))
+  );
+}
+/* Area a destination covers with its own UI (the profile photo on X). */
+.gb-safe-zone {
+  position: absolute;
+  border: var(--border-width) dashed
+    color-mix(in srgb, var(--gb-zone-ink) 70%, transparent);
+  background: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--gb-zone-ink) 14%, transparent) 0 var(--spacing-1),
+    transparent var(--spacing-1) var(--spacing-2)
+  );
+  pointer-events: none;
+}
+.gb-safe-zone-label {
+  position: absolute;
+  inset-block-start: var(--spacing-1);
+  inset-inline-start: var(--spacing-1);
+  max-width: calc(100% - var(--spacing-2));
+  padding: 0 var(--spacing-1);
+  border-radius: var(--radius-inner);
+  background: var(--gb-zone-ink);
+  color: var(--gb-zone-paper);
+  font-size: var(--text-supporting-size);
+  line-height: var(--text-supporting-leading);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gb-stage {
+  display: grid;
+  place-items: center;
+  padding: var(--spacing-4);
+  border-radius: var(--radius-container);
+}
+.gb-stage-plain {
+  background: var(--color-background-muted);
+}
+.gb-stage-checker {
+  background:
+    repeating-conic-gradient(
+      var(--color-overlay-hover) 0 25%,
+      transparent 0 50%
+    )
+    0 0 / var(--spacing-4) var(--spacing-4),
+    var(--color-background-muted);
+}
+/* BannerImage: a live banner URL in a box that never changes size. */
+.gb-banner-link {
+  display: block;
+  border-radius: var(--radius-container);
+}
+.gb-banner-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* The box is an estimate (see estimateBannerBox): the real image is
+     fitted into it, so a taller or shorter banner never moves the page. */
+  object-fit: contain;
+}
+
+/* ── Size picker ───────────────────────────────────────────────────────────── */
+.gb-size-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+.gb-ratio-glyph {
+  display: block;
+  border: var(--border-width) solid var(--color-border-emphasized);
+  border-radius: calc(var(--radius-inner) / 2);
+  background: var(--color-overlay-hover);
+}
+
+/* ── Code and snippets ─────────────────────────────────────────────────────── */
+.gb-code {
+  margin: 0;
+  padding: var(--spacing-3) var(--spacing-4);
+  overflow-x: auto;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-container);
+  background: var(--color-background-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-code);
+  font-size: var(--text-supporting-size);
+  line-height: 1.7;
+  /* A README line is one long URL: wrap it instead of hiding its end. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 2;
+}
+.gb-code-inline {
+  padding: 0 var(--spacing-1);
+  border-radius: var(--radius-inner);
+  background: var(--color-overlay-hover);
+  font-family: var(--font-family-code);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+}
+.gb-snippets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  min-width: 0;
+}
+.gb-snippets-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+}
+.gb-snippet-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ── Theme swatches ────────────────────────────────────────────────────────── */
+.gb-theme-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+.gb-swatch-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+.gb-swatch-groups .gb-swatches {
+  margin-block-start: var(--spacing-2);
+}
+.gb-swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.25rem, 1fr));
+  gap: var(--spacing-3) var(--spacing-2);
+}
+.gb-swatch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1-5);
+  min-width: 0;
+  padding: var(--spacing-1);
+  border-radius: var(--radius-element);
+  color: var(--color-text-secondary);
+  font-size: var(--text-supporting-size);
+  line-height: 1.35;
+  text-align: start;
+  cursor: pointer;
+}
+.gb-swatch:hover {
+  background: var(--color-overlay-hover);
+  color: var(--color-text-primary);
+}
+.gb-swatch[aria-checked="true"] {
+  color: var(--color-text-primary);
+}
+/* The theme in miniature: canvas, border, text and the contribution ramp. */
+.gb-swatch-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+  height: var(--spacing-10);
+  padding-inline: var(--spacing-2);
+  border: var(--border-width) solid var(--gb-sw-border);
+  border-radius: var(--radius-inner);
+  background: var(--gb-sw-bg);
+  color: var(--gb-sw-text);
+}
+.gb-swatch[aria-checked="true"] .gb-swatch-chip {
+  outline: var(--focus-outline-width) solid var(--color-accent);
+  outline-offset: calc(var(--border-width) * 2);
+}
+.gb-swatch-chip > b {
+  font-size: var(--text-body-size);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--gb-sw-accent);
+  text-decoration-thickness: calc(var(--border-width) * 2);
+  text-underline-offset: var(--spacing-0-5);
+}
+.gb-swatch-chip > i {
+  flex: 0 1 3.75rem;
+  height: var(--spacing-3);
+  border-radius: calc(var(--radius-inner) / 2);
+  background: var(--gb-sw-heat);
+}
