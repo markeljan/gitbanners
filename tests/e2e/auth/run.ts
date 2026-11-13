@@ -585,7 +585,7 @@ async function accountSuite({ mock }: Context): Promise<void> {
         name: "  First  ",
         target: { kind: "repo", owner: "vercel", name: "next.js" },
         preset: "contributors",
-        query: "?theme=dark&size=x",
+        query: "?theme=dracula&size=x",
       }),
     });
     const body = await first.json();
@@ -598,7 +598,7 @@ async function accountSuite({ mock }: Context): Promise<void> {
         body.banner.name === "First" &&
         body.banner.target.kind === "repo" &&
         body.banner.preset === "contributors" &&
-        body.banner.query === "theme=dark&size=x" &&
+        body.banner.query === "size=x&theme=dracula" &&
         body.banner.isDefault === false &&
         body.banner.createdAt === body.banner.updatedAt &&
         !Number.isNaN(Date.parse(body.banner.createdAt)),
