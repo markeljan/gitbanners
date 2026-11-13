@@ -120,10 +120,17 @@ describe("kind switches", () => {
 
   test("adaptOverrides keeps only stats and sections of the kind", () => {
     const adapted = adaptOverrides(
-      { stats: ["members", "stars"], sections: ["people", "heatmap"], year: 2020 },
+      {
+        stats: ["members", "stars"],
+        sections: ["people", "heatmap"],
+        year: 2020,
+      },
       "org",
     );
-    expect(adapted).toEqual({ stats: ["members", "stars"], sections: ["people"] });
+    expect(adapted).toEqual({
+      stats: ["members", "stars"],
+      sections: ["people"],
+    });
     expect(adaptOverrides({ stats: ["members"] }, "repo")).toEqual({});
   });
 
@@ -190,7 +197,9 @@ describe("editing", () => {
   });
 
   test("reset clears options and keeps the rest", () => {
-    const tuned = state("banner=b0123456789a&target=vercel&preset=repos&theme=nord");
+    const tuned = state(
+      "banner=b0123456789a&target=vercel&preset=repos&theme=nord",
+    );
     const reset = resetOptions(tuned);
     expect(studioSearch("org", reset)).toBe(
       "banner=b0123456789a&target=vercel&preset=repos",

@@ -147,7 +147,11 @@ async function request(
       body: init.body ? JSON.stringify(init.body) : undefined,
     });
   } catch {
-    throw new SaveProblem(0, "network", "The request did not reach the server.");
+    throw new SaveProblem(
+      0,
+      "network",
+      "The request did not reach the server.",
+    );
   }
   let body: unknown = null;
   try {

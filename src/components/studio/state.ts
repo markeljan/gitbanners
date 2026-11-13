@@ -272,9 +272,7 @@ export function studioSearch(kind: EntityKind, state: StudioState): string {
   const preset = presetFor(kind, state);
   if (preset !== defaultPresetId(kind)) head.push(`preset=${preset}`);
   const query = bannerQuery(kind, state);
-  return [...head, ...(query ? [query] : [])]
-    .join("&")
-    .replace(/%2F/gi, "/");
+  return [...head, ...(query ? [query] : [])].join("&").replace(/%2F/gi, "/");
 }
 
 /** Two addresses that mean the same studio state. */
@@ -348,7 +346,10 @@ export function withTarget(
   state: StudioState,
   target: BannerTarget,
 ): StudioState {
-  return { ...state, target };
+  const same =
+    state.target !== null &&
+    targetSlug(state.target).toLowerCase() === targetSlug(target).toLowerCase();
+  return same ? state : { ...state, target };
 }
 
 /** Back to the preset's defaults, keeping target, preset and the saved banner. */

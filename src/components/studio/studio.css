@@ -1,0 +1,324 @@
+/*
+ * The studio. Imported by src/app/studio/page.tsx only, so no other page
+ * pays for it. Rules sit in the same `components` layer as the shared
+ * component styles: after Astryx's layers, before Tailwind's utilities.
+ * Built from Astryx tokens; app tokens are prefixed `--gb-`.
+ */
+@layer components {
+  .gb-studio-page {
+    width: 100%;
+    max-width: 100rem;
+    margin-inline: auto;
+    padding: var(--spacing-4) var(--spacing-4) var(--spacing-10);
+  }
+  @media (width >= 640px) {
+    .gb-studio-page {
+      padding-inline: var(--spacing-6);
+    }
+  }
+  .gb-studio-intro {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--spacing-1) var(--spacing-3);
+    margin-block-end: var(--spacing-3);
+  }
+
+  /* ── Grid ─────────────────────────────────────────────────────────────── */
+  /*
+   * Phones and tablets: one column, the canvas pinned under the site header
+   * while the controls scroll beneath it. From 1024px: controls on the left
+   * in their own scroll area, canvas and output on the right.
+   */
+  .gb-studio {
+    --gb-studio-top: calc(var(--gb-header-height) + var(--spacing-2));
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "head" "bar" "canvas" "controls" "output";
+    gap: var(--spacing-3);
+    align-items: start;
+  }
+  .gb-studio-head {
+    grid-area: head;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-2);
+    min-height: var(--size-element-sm);
+  }
+  .gb-studio-bar {
+    grid-area: bar;
+    display: grid;
+    gap: var(--spacing-2);
+    min-width: 0;
+  }
+  .gb-studio-canvas {
+    grid-area: canvas;
+    position: sticky;
+    inset-block-start: var(--gb-header-height);
+    z-index: 5;
+    min-width: 0;
+    padding-block: var(--spacing-2);
+    background: var(--color-background-body);
+  }
+  .gb-studio-controls {
+    grid-area: controls;
+    min-width: 0;
+  }
+  .gb-studio-output {
+    grid-area: output;
+    display: grid;
+    gap: var(--spacing-4);
+    min-width: 0;
+  }
+  @media (width >= 1024px) {
+    .gb-studio {
+      grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr);
+      grid-template-rows: auto auto auto 1fr;
+      grid-template-areas:
+        "controls head"
+        "controls bar"
+        "controls canvas"
+        "controls output";
+      column-gap: var(--spacing-6);
+    }
+    .gb-studio-canvas {
+      position: static;
+      padding-block: 0;
+      background: none;
+    }
+    .gb-studio-controls {
+      position: sticky;
+      inset-block-start: var(--gb-studio-top);
+      align-self: start;
+      max-height: calc(100dvh - var(--gb-studio-top) - var(--spacing-4));
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding-inline: var(--spacing-3);
+      border: var(--border-width) solid var(--color-border);
+      border-radius: var(--radius-container);
+      background: var(--color-background-surface);
+      scrollbar-gutter: stable;
+    }
+  }
+
+  /* ── Small layout helpers ─────────────────────────────────────────────── */
+  .gb-studio-group {
+    display: grid;
+    gap: var(--spacing-3);
+    padding-block: var(--spacing-1) var(--spacing-4);
+  }
+  .gb-studio-stack {
+    display: grid;
+    gap: var(--spacing-3);
+    min-width: 0;
+  }
+  .gb-studio-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-2);
+  }
+  .gb-studio-row-end {
+    justify-content: flex-end;
+  }
+  .gb-studio-pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spacing-2);
+  }
+  .gb-studio-fieldset {
+    display: grid;
+    gap: var(--spacing-1-5);
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .gb-studio-fieldset > legend {
+    margin-block-end: var(--spacing-1-5);
+    padding: 0;
+  }
+  .gb-stat-list {
+    display: grid;
+    gap: var(--spacing-0-5);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .gb-stat-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    min-height: var(--size-element-sm);
+  }
+  .gb-stat-row > :first-child {
+    flex: 1;
+    min-width: 0;
+  }
+  .gb-inline-link {
+    color: var(--color-text-accent);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+  .gb-inline-link:focus-visible {
+    outline: var(--focus-outline-width) solid var(--color-accent);
+    outline-offset: var(--focus-outline-offset);
+    border-radius: var(--radius-inner);
+  }
+
+  /* ── Colour fields ────────────────────────────────────────────────────── */
+  .gb-color-field {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: end;
+    gap: var(--spacing-2);
+  }
+  /* The native well, drawn as a chip; the input itself stays keyboard reachable. */
+  .gb-color-well {
+    position: relative;
+    display: block;
+    width: var(--size-element-sm);
+    height: var(--size-element-sm);
+    margin-block-end: 0;
+    cursor: pointer;
+  }
+  .gb-color-well > input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .gb-color-chip {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: var(--border-width) solid var(--color-border-emphasized);
+    border-radius: var(--radius-inner);
+    background: var(--gb-chip);
+    pointer-events: none;
+  }
+  .gb-color-well:has(input:focus-visible) .gb-color-chip {
+    outline: var(--focus-outline-width) solid var(--color-accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+  .gb-color-field[data-overridden] .gb-color-chip {
+    box-shadow: 0 0 0 var(--border-width) var(--color-accent);
+  }
+  /* "Custom", at the end of the label line, so the field never changes height. */
+  .gb-color-mark {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: calc(var(--size-element-sm) + var(--spacing-2));
+    padding-inline: var(--spacing-1);
+    border-radius: var(--radius-inner);
+    background: var(--color-background-muted);
+    color: var(--color-text-secondary);
+    font-size: var(--text-supporting-size);
+    font-weight: var(--text-label-weight);
+    line-height: var(--text-supporting-leading);
+  }
+
+  /* ── Canvas ───────────────────────────────────────────────────────────── */
+  .gb-stage-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-2) var(--spacing-3);
+  }
+  .gb-stage-size {
+    margin-inline-start: auto;
+  }
+  .gb-stage-view {
+    display: grid;
+    justify-content: safe center;
+    align-items: center;
+    min-height: calc(var(--spacing-10) * 3);
+    padding: var(--spacing-4);
+    overflow: auto;
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-container);
+  }
+  @media (width < 640px) {
+    .gb-stage-view {
+      padding: var(--spacing-2);
+    }
+  }
+  .gb-stage-view[data-backdrop="page"] {
+    background: var(--color-background-body);
+  }
+  .gb-stage-view[data-backdrop="light"],
+  .gb-stage-view[data-backdrop="dark"] {
+    background: var(--color-background-muted);
+  }
+  .gb-stage-view[data-backdrop="checker"] {
+    background:
+      repeating-conic-gradient(
+        var(--color-overlay-pressed) 0 25%,
+        transparent 0 50%
+      )
+      0 0 / var(--spacing-4) var(--spacing-4),
+      var(--color-background-surface);
+  }
+  /*
+   * Fit: as wide as the stage, and short enough to stay on screen, never
+   * above the banner's own size (BannerCanvas caps that).
+   */
+  .gb-stage-view[data-zoom="fit"] .gb-stage-frame {
+    width: min(
+      100cqw,
+      calc((100dvh - var(--gb-studio-fit-chrome)) * var(--gb-ratio))
+    );
+  }
+  .gb-stage-view[data-zoom="fit"] {
+    container-type: inline-size;
+    --gb-studio-fit-chrome: 22rem;
+  }
+  @media (width < 1024px) {
+    .gb-stage-view[data-zoom="fit"] {
+      /* Pinned at the top on phones: at most two fifths of the screen. */
+      --gb-studio-fit-chrome: 60dvh;
+    }
+  }
+  .gb-stage-frame .gb-canvas {
+    margin-inline: auto;
+  }
+  .gb-stage-frame {
+    min-width: 0;
+    transition: opacity var(--duration-medium) var(--ease-standard);
+  }
+  .gb-stage-frame[data-pending] {
+    opacity: 0.55;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .gb-stage-frame {
+      transition: none;
+    }
+  }
+  .gb-fallback-banner {
+    width: 100%;
+    aspect-ratio: 846 / 266;
+  }
+
+  /* ── Output ───────────────────────────────────────────────────────────── */
+  .gb-output {
+    display: grid;
+    gap: var(--spacing-4);
+    padding: var(--spacing-4);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-container);
+    background: var(--color-background-surface);
+    min-width: 0;
+  }
+  .gb-output-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-3);
+  }
+}

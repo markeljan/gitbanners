@@ -1,10 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-  parseSavedBanner,
-  problemOf,
-  SaveProblem,
-  saveMessage,
-} from "./saved";
+import { parseSavedBanner, problemOf, SaveProblem, saveMessage } from "./saved";
 
 const banner = {
   id: "b0123456789a",
