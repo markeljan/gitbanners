@@ -47,7 +47,7 @@ import {
   renderSvg,
 } from "@/lib/render";
 
-const HOST = "gitbanners.vercel.app";
+const HOST = "gitbanners.com";
 /** Themes of the profile presets: GitHub's own two and a community one. */
 const MATRIX_THEMES = ["github-dark", "github-light", "dracula"] as const;
 /** Themes of the repository, organization and year-in-review presets. */
