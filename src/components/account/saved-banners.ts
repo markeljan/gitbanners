@@ -3,7 +3,12 @@
  * pure list updates the dashboard applies optimistically, and the few facts
  * the UI prints about a banner. Isomorphic, no React.
  */
-import { type BannerTarget, bannerPath, PRESETS } from "@/lib/banner";
+import {
+  type BannerTarget,
+  bannerPath,
+  isProfileOf,
+  PRESETS,
+} from "@/lib/banner";
 import { bannerSnippets } from "@/lib/embed";
 
 /** A saved banner, as `GET /api/banners` returns it. */
@@ -185,10 +190,7 @@ export function isOwnProfile(
   banner: Pick<SavedBanner, "target">,
   login: string,
 ): boolean {
-  return (
-    banner.target.kind === "owner" &&
-    banner.target.login.toLowerCase() === login.toLowerCase()
-  );
+  return isProfileOf(banner.target, login);
 }
 
 /** Site-relative addresses of a saved banner. */

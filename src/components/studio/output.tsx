@@ -22,7 +22,7 @@ import {
   useSiteOrigin,
 } from "@/components/providers";
 import { signInHref } from "@/components/site/links";
-import { bannerPath, SIZES } from "@/lib/banner";
+import { bannerPath, isProfileOf, SIZES } from "@/lib/banner";
 import { bannerLinks } from "@/lib/embed";
 import {
   createBanner,
@@ -147,6 +147,9 @@ export function StudioOutput() {
   const [isSaving, setSaving] = useState(false);
   const [problem, setProblem] = useState<SaveProblem | null>(null);
   const editing = studio.state.bannerId ? saved.banner : null;
+  // `/{login}.svg` only serves a banner of the user's own profile, so the
+  // profile default is offered for that target alone.
+  const ownProfile = me.user ? isProfileOf(target, me.user.login) : false;
 
   const open = (mode: SaveMode) => {
     // Said before the attempt when the session already knows the answer.
@@ -175,7 +178,11 @@ export function StudioOutput() {
       target,
       preset,
       query: studio.query,
-      ...(me.entitlements.canSetDefault || isDefault ? { isDefault } : {}),
+      // Another target can never stay the default: saving it clears the
+      // pointer instead of being refused.
+      ...(me.entitlements.canSetDefault || isDefault
+        ? { isDefault: isDefault && ownProfile }
+        : {}),
     };
     try {
       const result =
@@ -316,19 +323,27 @@ export function StudioOutput() {
                     hasAutoFocus
                     width="100%"
                   />
-                  <Switch
-                    label="Use as my profile default"
-                    description={
-                      me.entitlements.canSetDefault
-                        ? `Served at ${new URL(origin).host}/${me.user?.login ?? "you"}.svg instead of the standard banner.`
-                        : "Pro: star the repository to choose the banner at your own profile URL."
-                    }
-                    value={isDefault}
-                    isDisabled={!me.entitlements.canSetDefault}
-                    onChange={setDefault}
-                    labelPosition="start"
-                    labelSpacing="spread"
-                  />
+                  {ownProfile ? (
+                    <Switch
+                      label="Use as my profile default"
+                      description={
+                        me.entitlements.canSetDefault
+                          ? `Served at ${new URL(origin).host}/${me.user?.login ?? "you"}.svg instead of the standard banner.`
+                          : "Pro: star the repository to choose the banner at your own profile URL."
+                      }
+                      value={isDefault}
+                      isDisabled={!me.entitlements.canSetDefault}
+                      onChange={setDefault}
+                      labelPosition="start"
+                      labelSpacing="spread"
+                    />
+                  ) : isDefault ? (
+                    <Text as="p" type="supporting" color="secondary">
+                      This banner is your profile default, which can only show
+                      your own profile. Saving it for another target stops using
+                      it as your default.
+                    </Text>
+                  ) : null}
                   {message ? (
                     <SaveError
                       message={message}

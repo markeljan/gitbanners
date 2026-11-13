@@ -301,7 +301,8 @@ export async function getDefaultBannerId(
 
 /**
  * Points `/{login}` at one of the user's banners, or clears the pointer with
- * `null`. The caller checks that the banner is the user's.
+ * `null`. The caller checks that the banner is the user's and that it shows
+ * their own profile (`isProfileOf`).
  *
  * Returns false when the login in the user record meanwhile belongs to another
  * account (the user renamed themselves and GitHub recycled the login). Their

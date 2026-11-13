@@ -44,6 +44,7 @@ export {
 export { type Palette, resolvePalette } from "@/lib/banner/palette";
 export {
   bannerPath,
+  isProfileOf,
   parseBannerPath,
   targetLabel,
   targetOf,

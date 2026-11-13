@@ -9,8 +9,8 @@
  *
  * The script starts everything itself and stops it again: a mock GitHub, the
  * Upstash REST shim, and `bunx next dev -p 3111` once per variant with an
- * environment pointing at those. Port 3111 must be free and no other
- * `next dev` may be running in this checkout.
+ * environment pointing at those (`E2E_PORT` picks another port). The port
+ * must be free and no other `next dev` may be running in this checkout.
  *
  * Nothing here talks to github.com. The GitHub CLI is replaced by a stub that
  * is first on PATH, so the developer's real `gh` token is never read, and the
@@ -49,7 +49,7 @@ import {
 } from "./mock-github";
 import { startUpstashShim, type UpstashShim } from "./upstash-shim";
 
-const PORT = 3111;
+const PORT = Number(process.env.E2E_PORT) || 3111;
 const APP = `http://localhost:${PORT}`;
 const REPO_ROOT = resolve(import.meta.dir, "../../..");
 const VARIANTS = ["memory", "upstash", "unconfigured"] as const;
@@ -821,7 +821,18 @@ async function accountSuite({ mock }: Context): Promise<void> {
       mock.requests,
     );
 
-    const makeDefault = await send(jar, `/api/banners/${created[0]}`, {
+    // created[0] now shows torvalds, created[2] the user's own profile: the
+    // only target a profile default may have.
+    const notMine = await send(jar, `/api/banners/${created[0]}`, {
+      method: "PATCH",
+      ...json({ isDefault: true }),
+    });
+    check(
+      "a banner of someone else's profile cannot be the default",
+      notMine.status === 422 &&
+        (await notMine.json()).code === "default_not_own_profile",
+    );
+    const makeDefault = await send(jar, `/api/banners/${created[2]}`, {
       method: "PATCH",
       ...json({ isDefault: true }),
     });
@@ -830,18 +841,36 @@ async function accountSuite({ mock }: Context): Promise<void> {
       makeDefault.status === 200 &&
         (await makeDefault.json()).banner.isDefault === true,
     );
-    await send(jar, `/api/banners/${created[2]}`, {
-      method: "PATCH",
-      ...json({ isDefault: true }),
+    const foreignDefault = await send(jar, "/api/banners", {
+      method: "POST",
+      ...json({
+        name: "Someone else",
+        target: { kind: "owner", login: "torvalds" },
+        isDefault: true,
+      }),
     });
-    const afterSwitch = await (await send(jar, "/api/banners")).json();
     check(
-      "only one banner is the default",
-      afterSwitch.banners
-        .filter((b: { isDefault: boolean }) => b.isDefault)
-        .map((b: { id: string }) => b.id)
-        .join() === created[2],
-      afterSwitch,
+      "a new default of someone else's profile is refused",
+      foreignDefault.status === 422 &&
+        (await foreignDefault.json()).code === "default_not_own_profile",
+    );
+    const retarget = await send(jar, `/api/banners/${created[2]}`, {
+      method: "PATCH",
+      ...json({ target: { kind: "repo", owner: "vercel", name: "next.js" } }),
+    });
+    check(
+      "the default cannot be moved to another target",
+      retarget.status === 422,
+    );
+    const afterRefusals = await (await send(jar, "/api/banners")).json();
+    check(
+      "only the banner of the user's own profile is the default",
+      afterRefusals.banners.length === 2 &&
+        afterRefusals.banners
+          .filter((b: { isDefault: boolean }) => b.isDefault)
+          .map((b: { id: string }) => b.id)
+          .join() === created[2],
+      afterRefusals,
     );
     const cleared = await send(jar, `/api/banners/${created[2]}`, {
       method: "PATCH",
@@ -1357,6 +1386,16 @@ async function unconfiguredSuite({ secret }: Context): Promise<void> {
     problem,
   );
   check("…and it does not name the protocol", !/oauth/i.test(text), text);
+  const clicked = await send(new Jar(), "/api/auth/github?returnTo=/pricing", {
+    headers: { accept: "text/html", "sec-fetch-mode": "navigate" },
+  });
+  check(
+    "no database: a clicked sign-in link goes back with the reason",
+    clicked.status === 303 &&
+      clicked.headers.get("location") ===
+        "/pricing?auth_error=accounts_unavailable",
+    clicked.headers.get("location"),
+  );
 
   const anonymous = await (await send(new Jar(), "/api/me")).json();
   check(

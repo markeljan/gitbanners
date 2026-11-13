@@ -240,6 +240,13 @@ export function saveMessage(
           "Only Pro accounts can choose the banner served at their profile URL. Star the repository, then check again.",
         remedy: "pro",
       };
+    case "default_not_own_profile":
+      return {
+        title: "Not a banner of your profile",
+        description:
+          "Only a banner of your own profile can be served at your profile URL. Turn off the profile default, or make a banner of your own account.",
+        remedy: null,
+      };
     case "rate_limited":
       return {
         title: "Too many saves at once",

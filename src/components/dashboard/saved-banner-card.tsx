@@ -70,6 +70,9 @@ export function SavedBannerCard({
   const paths = savedPaths(banner.id);
   const snippets = savedSnippets(banner, origin);
   const own = isOwnProfile(banner, login);
+  // Only a banner of the user's own profile is served at `/{login}`. A default
+  // of another target (stored before the API refused them) serves nothing.
+  const served = banner.isDefault && own;
   const problem = nameProblem(draft);
 
   const startEditing = () => {
@@ -85,17 +88,19 @@ export function SavedBannerCard({
     if (name !== banner.name) void onRename(name);
   };
 
-  const defaultItem = !own
-    ? []
-    : banner.isDefault
-      ? [
-          {
-            label: "Stop using as profile default",
-            description: `${host}/${login}.svg goes back to the standard banner`,
-            icon: PinOff,
-            onClick: () => void onSetDefault(false),
-          },
-        ]
+  // Clearing is always offered, whatever the target: a stale default must
+  // be removable from the card that shows it.
+  const defaultItem = banner.isDefault
+    ? [
+        {
+          label: "Stop using as profile default",
+          description: `${host}/${login}.svg goes back to the standard banner`,
+          icon: PinOff,
+          onClick: () => void onSetDefault(false),
+        },
+      ]
+    : !own
+      ? []
       : [
           {
             label: "Use as profile default",
@@ -169,7 +174,7 @@ export function SavedBannerCard({
             >
               {banner.name}
             </Heading>
-            {banner.isDefault ? (
+            {served ? (
               <Token
                 label="Profile default"
                 size="sm"
@@ -186,9 +191,14 @@ export function SavedBannerCard({
             hasTooltip={false}
           />
         </Text>
-        {banner.isDefault ? (
+        {served ? (
           <Text type="supporting" color="secondary" as="p">
             Served at {host}/{login}.svg
+          </Text>
+        ) : banner.isDefault ? (
+          <Text type="supporting" color="secondary" as="p">
+            Not served at {host}/{login}.svg: only a banner of your own profile
+            can be. Stop using it as your profile default from the menu.
           </Text>
         ) : null}
         <div className="gb-saved-actions">

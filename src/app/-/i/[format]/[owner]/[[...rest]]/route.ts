@@ -16,6 +16,7 @@ import type { NextRequest } from "next/server";
 import {
   type BannerOptions,
   type ImageFormat,
+  isProfileOf,
   parseBannerPath,
   parseOptions,
   QUERY_KEYS,
@@ -63,12 +64,8 @@ async function vanityDefault(login: string): Promise<Chosen | null> {
     const found = await getDefaultBanner(login);
     const banner = found?.banner;
     if (!found || !banner) return null;
-    if (
-      banner.target.kind !== "owner" ||
-      banner.target.login.toLowerCase() !== login.toLowerCase()
-    ) {
-      return null;
-    }
+    // The API refuses such a default; one stored before it did is ignored.
+    if (!isProfileOf(banner.target, login)) return null;
     const entitlements = await getEntitlements(found.userId);
     if (!entitlements.canSetDefault) return null;
     const overrides = parseOptions(new URLSearchParams(banner.query));
