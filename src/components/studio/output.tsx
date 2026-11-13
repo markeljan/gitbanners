@@ -12,6 +12,7 @@ import { TextInput } from "@astryxdesign/core/TextInput";
 import { useToast } from "@astryxdesign/core/Toast";
 import { ArrowUpRight } from "lucide-react";
 import { useState } from "react";
+import { NoPrefetchLink } from "@/components/app-link";
 import { CopyButton } from "@/components/banner/copy-button";
 import { DownloadButton } from "@/components/banner/download-button";
 import { EmbedSnippets } from "@/components/banner/embed-snippets";
@@ -254,6 +255,8 @@ export function StudioOutput() {
         <Button
           label="Open page"
           href={bannerPath(target)}
+          // The target follows typing: prefetching each one would too.
+          as={NoPrefetchLink}
           variant="ghost"
           endContent={<Icon icon={ArrowUpRight} size="sm" />}
         />
