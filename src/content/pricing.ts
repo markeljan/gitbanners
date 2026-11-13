@@ -1,5 +1,6 @@
 import { PRESETS, SIZES, THEMES } from "@/lib/banner";
 import { FREE, PRO } from "@/lib/pro/entitlements";
+import { proRepoLink } from "@/lib/pro/repo";
 import { site } from "@/lib/site";
 import { FACTS, quota } from "./facts";
 import { duration } from "./format";
@@ -13,7 +14,9 @@ import type {
 } from "./types";
 
 const sizeCount = Object.keys(SIZES).length;
-const repo = `[${site.repo.slug}](${site.repo.url})`;
+/** The repository the server checks for Pro, the one every step names. */
+const proRepo = proRepoLink();
+const repo = `[${proRepo.slug}](${proRepo.url})`;
 
 /**
  * The two plans, as the pricing page shows them side by side. Every line is
@@ -38,7 +41,7 @@ export const PLANS: readonly Plan[] = [
     id: "pro",
     name: "Pro",
     price: "One GitHub star",
-    summary: `Star ${site.repo.slug} while signed in.`,
+    summary: `Star ${proRepo.slug} while signed in.`,
     features: [
       "Everything in Free.",
       `Save up to ${PRO.maxSavedBanners} banners instead of ${FREE.maxSavedBanners}.`,
@@ -57,7 +60,7 @@ export const PRO_STEPS: readonly Step[] = [
     text: "Use the button on this page. GitHub asks for no permissions beyond your public profile.",
   },
   {
-    title: `Star ${site.repo.slug}`,
+    title: `Star ${proRepo.slug}`,
     text: `Open ${repo} on GitHub and press Star. It takes one click and costs nothing.`,
   },
   {

@@ -21,6 +21,7 @@ import { SizePicker } from "@/components/banner/size-picker";
 import { TargetInput } from "@/components/banner/target-input";
 import { KIND_LABELS } from "@/components/banner/target-options";
 import { ThemePicker } from "@/components/banner/theme-picker";
+import { useProRepo, useSignInAvailable } from "@/components/providers";
 import { signInHref } from "@/components/site/links";
 import {
   type FontId,
@@ -33,7 +34,6 @@ import {
   type StatId,
 } from "@/lib/banner";
 import { MIN_YEAR } from "@/lib/github/calendar";
-import { site } from "@/lib/site";
 import { ColorField } from "./color-field";
 import {
   COLOR_FIELDS,
@@ -372,6 +372,8 @@ function ContentControls() {
 
 function ProControls() {
   const { options, setOptions, me, href } = useStudioContext();
+  const repo = useProRepo();
+  const signInAvailable = useSignInAvailable();
   const { canHideBrand, canAnimate } = me.entitlements;
   const isPro = me.pro;
   return (
@@ -400,10 +402,11 @@ function ProControls() {
         Both apply to saved banners only. Copied links and downloads always show
         the mark and stay still, and the preview does not animate.
       </Text>
-      {isPro ? null : (
+      {/* Pro needs an account: nothing to offer where nobody can sign in. */}
+      {isPro || !signInAvailable ? null : (
         <Text as="p" type="supporting" color="secondary">
           {"Pro is free: "}
-          <Link href={site.repo.url} isExternalLink>
+          <Link href={repo.url} isExternalLink>
             Star the repository
           </Link>
           {me.status === "signed-in" ? (

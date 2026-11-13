@@ -16,11 +16,14 @@ import { NoPrefetchLink } from "@/components/app-link";
 import { CopyButton } from "@/components/banner/copy-button";
 import { DownloadButton } from "@/components/banner/download-button";
 import { EmbedSnippets } from "@/components/banner/embed-snippets";
-import { useSiteOrigin } from "@/components/providers";
+import {
+  useProRepo,
+  useSignInAvailable,
+  useSiteOrigin,
+} from "@/components/providers";
 import { signInHref } from "@/components/site/links";
 import { bannerPath, SIZES } from "@/lib/banner";
 import { bannerLinks } from "@/lib/embed";
-import { site } from "@/lib/site";
 import {
   createBanner,
   type SavedBanner,
@@ -45,37 +48,41 @@ function SaveError({
   onSaveAsNew: () => void;
 }) {
   const { href } = useStudioContext();
+  const repo = useProRepo();
+  const signInAvailable = useSignInAvailable();
   const actions = (() => {
     switch (message.remedy) {
       case "retry":
         return <Button label="Try again" size="sm" onClick={onRetry} />;
       case "sign-in":
-        return (
+        return signInAvailable ? (
           <Button
             label="Sign in with GitHub"
             size="sm"
             href={signInHref(href)}
             as="a"
           />
-        );
+        ) : null;
       case "pro":
         return (
           <>
             <Button
               label="Star the repository"
               size="sm"
-              href={site.repo.url}
+              href={repo.url}
               as="a"
               target="_blank"
               rel="noopener"
             />
-            <Button
-              label="Check again"
-              size="sm"
-              variant="ghost"
-              href={signInHref(href)}
-              as="a"
-            />
+            {signInAvailable ? (
+              <Button
+                label="Check again"
+                size="sm"
+                variant="ghost"
+                href={signInHref(href)}
+                as="a"
+              />
+            ) : null}
           </>
         );
       case "dashboard":
@@ -126,6 +133,7 @@ export function StudioOutput() {
   const studio = useStudioContext();
   const showToast = useToast();
   const origin = useSiteOrigin();
+  const signInAvailable = useSignInAvailable();
   const { target, preset, linkQuery, banner, options, kind, me, saved } =
     studio;
   const links = bannerLinks({ target, preset, query: linkQuery, origin });
@@ -215,14 +223,15 @@ export function StudioOutput() {
       )
     ) : me.status === "loading" ? (
       <Button label="Save banner" variant="primary" isLoading />
-    ) : (
+    ) : signInAvailable ? (
       <Button
         label="Sign in with GitHub to save"
         variant="primary"
         href={signInHref(studio.href)}
         as="a"
       />
-    );
+    ) : // Saving needs an account, and this deployment has none to offer.
+    null;
 
   return (
     <section className="gb-output" aria-labelledby="gb-output-title">

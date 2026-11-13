@@ -9,7 +9,7 @@ import { Icon } from "@astryxdesign/core/Icon";
 import { Text } from "@astryxdesign/core/Text";
 import { RefreshCw } from "lucide-react";
 import { GithubMark } from "@/components/github-mark";
-import { useSiteHost } from "@/components/providers";
+import { useProRepo, useSiteHost } from "@/components/providers";
 import { duration } from "@/content/format";
 import { FREE, PRO } from "@/lib/pro/entitlements";
 import { site } from "@/lib/site";
@@ -50,6 +50,7 @@ export function PlanCard({
   headingLevel = 2,
 }: PlanCardProps) {
   const host = useSiteHost();
+  const repo = useProRepo();
   const features = proFeatures(login, host);
   return (
     <Card padding={4} className="gb-plan">
@@ -61,8 +62,8 @@ export function PlanCard({
       </div>
       <Text type="supporting" color="secondary" as="p">
         {pro
-          ? `Thanks for starring ${site.repo.slug}. Pro stays on as long as the star does.`
-          : `Pro costs one star on ${site.repo.slug}. There is nothing to pay. It adds:`}
+          ? `Thanks for starring ${repo.slug}. Pro stays on as long as the star does.`
+          : `Pro costs one star on ${repo.slug}. There is nothing to pay. It adds:`}
       </Text>
       <ul className="gb-plan-list">
         {features.map((feature) => (
@@ -84,8 +85,8 @@ export function PlanCard({
       ) : (
         <div className="gb-plan-actions">
           <Button
-            label={`Star ${site.repo.slug} on GitHub`}
-            href={site.repo.url}
+            label={`Star ${repo.slug} on GitHub`}
+            href={repo.url}
             as="a"
             target="_blank"
             rel="noopener noreferrer"

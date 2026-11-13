@@ -1,6 +1,7 @@
 import "server-only";
 import { site } from "@/lib/site";
 import { storeIsDurable } from "@/lib/store";
+import { safeReturnTo } from "./github";
 import { hasSessionSecret } from "./session-token";
 
 function required(name: string): string {
@@ -98,4 +99,38 @@ export function redirectTo(
     status,
     headers: { Location: path, "Cache-Control": "no-store" },
   });
+}
+
+/**
+ * What went wrong, as the sign-in routes report it in `?auth_error=<code>`.
+ * `src/components/site/auth-errors.ts` has the sentence shown for each.
+ *
+ *   state_mismatch       no or wrong transaction cookie (expired, replayed)
+ *   access_denied        the user declined on github.com
+ *   github_error         GitHub reported another error
+ *   missing_code         no authorization code in the request
+ *   expired_code         the code was already used or is older than ten minutes
+ *   rate_limited         too many sign-ins from this address
+ *   accounts_unavailable accounts are not configured on this deployment
+ *   sign_in_failed       anything else (GitHub or the database unreachable)
+ */
+export type AuthError =
+  | "state_mismatch"
+  | "access_denied"
+  | "github_error"
+  | "missing_code"
+  | "expired_code"
+  | "rate_limited"
+  | "accounts_unavailable"
+  | "sign_in_failed";
+
+/**
+ * 303 back to the page sign-in started from, with `?auth_error=<code>` when
+ * it failed, so the page can say what happened. `returnTo` is made safe here
+ * again: nothing depends on what a request or an old cookie contains.
+ */
+export function backTo(returnTo: string, error?: AuthError): Response {
+  const url = new URL(safeReturnTo(returnTo), "http://internal.invalid");
+  if (error) url.searchParams.set("auth_error", error);
+  return redirectTo(url.pathname + url.search + url.hash);
 }

@@ -1,7 +1,10 @@
+import { proRepoLink } from "@/lib/pro/repo";
 import { site } from "@/lib/site";
 import type { ContentPage } from "./types";
 
 const host = new URL(site.url).host;
+/** The repository the server checks for Pro. */
+const proRepo = proRepoLink();
 
 /**
  * Homepage copy. The page component adds the interactive parts (the input,
@@ -178,7 +181,7 @@ export const home: ContentPage = {
       blocks: [
         {
           type: "p",
-          text: `Every banner, preset, size and theme is free, with no sign-in. Pro costs one star on [${site.repo.slug}](${site.repo.url}) and adds the things you want once a banner is part of your profile. [See pricing](/pricing).`,
+          text: `Every banner, preset, size and theme is free, with no sign-in. Pro costs one star on [${proRepo.slug}](${proRepo.url}) and adds the things you want once a banner is part of your profile. [See pricing](/pricing).`,
         },
         {
           type: "table",

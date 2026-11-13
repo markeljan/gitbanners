@@ -4,6 +4,7 @@ import { Button } from "@astryxdesign/core/Button";
 import { Icon } from "@astryxdesign/core/Icon";
 import type { ReactNode } from "react";
 import { GithubMark } from "@/components/github-mark";
+import { useSignInAvailable } from "@/components/providers";
 import { signInHref } from "@/components/site/links";
 
 export interface SignInButtonProps {
@@ -27,6 +28,8 @@ export interface SignInButtonProps {
  *
  * For a link that returns to whatever page the visitor is on, use
  * `SignInLink` from the site header instead.
+ *
+ * Renders nothing on a deployment that cannot sign anyone in.
  */
 export function SignInButton({
   returnTo,
@@ -36,6 +39,8 @@ export function SignInButton({
   icon,
   width,
 }: SignInButtonProps) {
+  const available = useSignInAvailable();
+  if (!available) return null;
   return (
     <Button
       label={label}

@@ -9,6 +9,8 @@ import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
 import { DEFAULT_MODE, themeInitScript } from "@/components/theme";
 import { WebMcp } from "@/lib/agent/webmcp";
+import { githubSignInAvailable } from "@/lib/auth/env";
+import { proRepoLink } from "@/lib/pro/repo";
 import { site } from "@/lib/site";
 
 const figtree = Figtree({
@@ -63,7 +65,8 @@ export const viewport: Viewport = {
  * The root layout must stay fully static: no cookies(), headers() or uncached
  * data here (not even inside <Suspense>), otherwise the statically generated
  * banner pages below it fail to build. Session UI is a Client Component that
- * asks /api/me.
+ * asks /api/me. The account settings handed to <Providers> come from the
+ * deployment's environment, which is known at build time.
  *
  * Document outline: <header> and <footer> hold no heading element, so the
  * page's <h1> is always the first heading. Pages render inside <main>.
@@ -82,7 +85,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>
-        <Providers origin={site.url}>
+        <Providers
+          origin={site.url}
+          account={{
+            signInAvailable: githubSignInAvailable(),
+            proRepo: proRepoLink(),
+          }}
+        >
           <a href="#main" className="gb-skip-link">
             Skip to content
           </a>

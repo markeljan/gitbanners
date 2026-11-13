@@ -6,9 +6,14 @@
  *
  * Link to it with a plain `<a>`, never `<Link>`: a prefetch would mint
  * cookies and follow the redirect.
+ *
+ * On a deployment without accounts, a browser that follows a link here is
+ * sent back to `returnTo` with `?auth_error=accounts_unavailable`, which the
+ * page turns into a sentence. Any other client gets a 503 problem document.
  */
 import type { NextRequest } from "next/server";
 import {
+  backTo,
   canonicalOrigin,
   env,
   githubSignInAvailable,
@@ -40,12 +45,27 @@ function redirect(location: string, status: 302 | 307): Response {
   });
 }
 
+/**
+ * True when a person's browser is loading this URL as a page (a clicked
+ * link), as opposed to a script or an API client asking for it.
+ */
+function isPageNavigation(request: Request): boolean {
+  const mode = request.headers.get("sec-fetch-mode");
+  if (mode) return mode === "navigate";
+  return request.headers.get("accept")?.includes("text/html") ?? false;
+}
+
 export async function GET(request: NextRequest): Promise<Response> {
   // Reading the request also keeps this handler out of build-time prerendering.
   const params = request.nextUrl.searchParams;
   const returnTo = safeReturnTo(params.get("returnTo"));
 
   if (!githubSignInAvailable()) {
+    // A person sees the page they came from and why nothing happened, not a
+    // JSON document.
+    if (isPageNavigation(request)) {
+      return backTo(returnTo, "accounts_unavailable");
+    }
     return unavailable(undefined, {
       code: "accounts_unavailable",
       title: "Accounts are not configured on this deployment",

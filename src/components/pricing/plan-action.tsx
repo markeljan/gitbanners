@@ -3,10 +3,11 @@
 import { Button } from "@astryxdesign/core/Button";
 import { Icon } from "@astryxdesign/core/Icon";
 import { StatusDot } from "@astryxdesign/core/StatusDot";
+import { Text } from "@astryxdesign/core/Text";
 import { GithubMark } from "@/components/github-mark";
+import { useProRepo, useSignInAvailable } from "@/components/providers";
 import { signInHref } from "@/components/site/links";
 import { useMe } from "@/hooks/use-me";
-import { site } from "@/lib/site";
 
 /** Where sign-in and "Check again" come back to. */
 const RETURN_TO = "/pricing";
@@ -17,13 +18,26 @@ const RETURN_TO = "/pricing";
  * - signed out (and the server render): "Sign in with GitHub";
  * - signed in on Free: "Star the repository", with "Check again" to sign in
  *   once more so the new star is seen at once;
- * - on Pro: "You are on Pro".
+ * - on Pro: "You are on Pro";
+ * - on a deployment that cannot sign anyone in: a note saying so, instead
+ *   of a button that would end on an error.
  *
  * Sign-in is a plain link (`as="a"`): the route redirects to github.com and
  * sets a cookie, so the router must never prefetch it.
  */
 export function PlanAction() {
   const { status, pro, user } = useMe();
+  const repo = useProRepo();
+  const signInAvailable = useSignInAvailable();
+
+  if (!signInAvailable) {
+    return (
+      <Text as="p" type="supporting" color="secondary">
+        Accounts are not available on this deployment, so Pro cannot be unlocked
+        here. Every public banner still works without one.
+      </Text>
+    );
+  }
 
   if (status === "signed-in" && pro) {
     return (
@@ -41,9 +55,9 @@ export function PlanAction() {
     return (
       <div className="gb-plan-actions">
         <Button
-          label={`Star ${site.repo.slug} on GitHub`}
+          label={`Star ${repo.slug} on GitHub`}
           variant="primary"
-          href={site.repo.url}
+          href={repo.url}
           as="a"
           target="_blank"
           rel="noopener noreferrer"

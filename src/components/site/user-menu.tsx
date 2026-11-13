@@ -6,6 +6,7 @@ import { Skeleton } from "@astryxdesign/core/Skeleton";
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { GithubMark } from "@/components/github-mark";
+import { useSignInAvailable } from "@/components/providers";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { useMe } from "@/hooks/use-me";
 import { signInHref } from "./links";
@@ -24,12 +25,16 @@ export interface SignInLinkProps {
  * The page is static, so the server cannot know where the visitor is: the
  * link is rendered returning to "/" and switches to the current URL the
  * moment the visitor reaches for it (focus or pointer down).
+ *
+ * Renders nothing on a deployment that cannot sign anyone in.
  */
 export function SignInLink({ compact = false, width }: SignInLinkProps) {
+  const available = useSignInAvailable();
   const [returnTo, setReturnTo] = useState("/");
   const capture = () => {
     setReturnTo(`${window.location.pathname}${window.location.search}`);
   };
+  if (!available) return null;
   return (
     <span
       className={width ? "block w-full" : "inline-flex"}

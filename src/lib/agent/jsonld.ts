@@ -11,6 +11,7 @@ import { plainInline } from "@/content/inline";
 import type { ContentPage, FaqEntry } from "@/content/types";
 import { bannerPath, targetOf } from "@/lib/banner";
 import type { Entity } from "@/lib/github/schema";
+import { proRepoSlug } from "@/lib/pro/repo";
 import { absoluteUrl, site } from "@/lib/site";
 import { previewImagePath } from "./metadata";
 
@@ -129,7 +130,7 @@ export function applicationNode(): Node {
       ),
       offer(
         "Pro",
-        `Unlocked by signing in with GitHub and starring the ${site.repo.slug} repository.`,
+        `Unlocked by signing in with GitHub and starring the ${proRepoSlug()} repository.`,
       ),
     ],
     provider: { "@id": ORGANIZATION_ID },

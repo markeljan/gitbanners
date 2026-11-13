@@ -11,6 +11,7 @@ import {
   useMemo,
   useSyncExternalStore,
 } from "react";
+import type { ProRepoLink } from "@/lib/pro/repo";
 import { AppLink } from "./app-link";
 import {
   applyMode,
@@ -66,9 +67,51 @@ export function useSiteHost(): string {
   return new URL(useSiteOrigin()).host;
 }
 
+/**
+ * What this deployment offers around accounts, decided on the server from
+ * its configuration at build time and handed to Client Components, which
+ * cannot read server environment variables themselves.
+ */
+export interface AccountConfig {
+  /**
+   * Whether "Sign in with GitHub" can work here (`githubSignInAvailable()`).
+   * When it cannot, no sign-in control is shown: it would only end on an
+   * error.
+   */
+  signInAvailable: boolean;
+  /** The repository whose star unlocks Pro, the one the server checks. */
+  proRepo: ProRepoLink;
+}
+
+const AccountConfigContext = createContext<AccountConfig | null>(null);
+
+function useAccountConfig(): AccountConfig {
+  const config = use(AccountConfigContext);
+  if (config === null) {
+    throw new Error("Account settings need <Providers account> above them");
+  }
+  return config;
+}
+
+/** False when this deployment cannot sign anyone in. */
+export function useSignInAvailable(): boolean {
+  return useAccountConfig().signInAvailable;
+}
+
+/**
+ * The repository to star for Pro. Client Components name it through this
+ * hook, never through `site.repo`: the server may check another repository
+ * (`PRO_REPO`), and only the server can read that setting.
+ */
+export function useProRepo(): ProRepoLink {
+  return useAccountConfig().proRepo;
+}
+
 export interface ProvidersProps {
   /** `site.url`, passed from the root layout (a Server Component). */
   origin: string;
+  /** Account settings of the deployment, from the root layout. */
+  account: AccountConfig;
   children: React.ReactNode;
 }
 
@@ -77,7 +120,7 @@ export interface ProvidersProps {
  * mounting <Theme>: <Theme> overwrites <html data-theme> on hydration, which
  * would break the no-flash colour mode on statically prerendered pages.
  */
-export function Providers({ origin, children }: ProvidersProps) {
+export function Providers({ origin, account, children }: ProvidersProps) {
   const mode = useColorMode();
   // Dev only: StrictMode's remount resets <html> attributes to the JSX ones; re-apply the stored mode.
   useLayoutEffect(() => {
@@ -86,11 +129,13 @@ export function Providers({ origin, children }: ProvidersProps) {
   const theme = useMemo(() => ({ theme: neutralTheme, mode }), [mode]);
   return (
     <SiteOriginContext value={origin.replace(/\/+$/, "")}>
-      <ThemeContext value={theme}>
-        <LayerProvider toast={{ position: "bottomEnd" }}>
-          <LinkProvider component={AppLink}>{children}</LinkProvider>
-        </LayerProvider>
-      </ThemeContext>
+      <AccountConfigContext value={account}>
+        <ThemeContext value={theme}>
+          <LayerProvider toast={{ position: "bottomEnd" }}>
+            <LinkProvider component={AppLink}>{children}</LinkProvider>
+          </LayerProvider>
+        </ThemeContext>
+      </AccountConfigContext>
     </SiteOriginContext>
   );
 }

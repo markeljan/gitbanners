@@ -3,6 +3,7 @@
 import { Banner } from "@astryxdesign/core/Banner";
 import { Button } from "@astryxdesign/core/Button";
 import { NoPrefetchLink } from "@/components/app-link";
+import { useProRepo } from "@/components/providers";
 import { useMe } from "@/hooks/use-me";
 import { site } from "@/lib/site";
 
@@ -20,10 +21,11 @@ export interface OwnerHintProps {
  */
 export function OwnerHint({ login, studio }: OwnerHintProps) {
   const { user, pro } = useMe();
+  const repo = useProRepo();
   if (!user || user.login.toLowerCase() !== login.toLowerCase()) return null;
   const description = pro
     ? `Save it in the studio to keep its options. With Pro you can hide the ${site.name} mark, animate the graph and serve a saved banner as your default at /${user.login}.svg.`
-    : `Save it in the studio to keep its options. Star ${site.repo.slug} to unlock Pro: no ${site.name} mark, an animated graph and your own default banner at /${user.login}.svg.`;
+    : `Save it in the studio to keep its options. Star ${repo.slug} to unlock Pro: no ${site.name} mark, an animated graph and your own default banner at /${user.login}.svg.`;
   return (
     <Banner
       status="info"

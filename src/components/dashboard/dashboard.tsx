@@ -18,27 +18,21 @@ import { PlanCard } from "@/components/account/plan-card";
 import type { SavedBanner } from "@/components/account/saved-banners";
 import { SignInButton } from "@/components/account/sign-in-button";
 import { useSavedBanners } from "@/components/account/use-saved-banners";
-import { useSiteHost } from "@/components/providers";
+import {
+  useProRepo,
+  useSignInAvailable,
+  useSiteHost,
+} from "@/components/providers";
 import { ApiProblem } from "@/hooks/api";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { type SessionUser, type UseMeResult, useMe } from "@/hooks/use-me";
 import { PRO } from "@/lib/pro/entitlements";
-import { site } from "@/lib/site";
 import { AccountCard } from "./account-card";
 import { DashboardSkeleton, SavedGridSkeleton } from "./dashboard-skeleton";
 import { SavedBannerCard } from "./saved-banner-card";
 import { SignedOut } from "./signed-out";
 
 const RETURN_TO = "/dashboard";
-
-export interface DashboardProps {
-  /**
-   * Whether this deployment can sign anyone in (decided on the server from
-   * its configuration). When it cannot, the page says so instead of offering
-   * a button that ends on an error.
-   */
-  signInAvailable: boolean;
-}
 
 /**
  * `/dashboard`. The server renders the signed-out explanation; signed-in
@@ -47,11 +41,17 @@ export interface DashboardProps {
  * While the session hint cookie exists, the inline script in `<head>` marks
  * `<html data-gb-in>` before first paint and CSS swaps the explanation for a
  * skeleton, so a signed-in visitor never sees the signed-out page flash.
+ *
+ * Whether this deployment can sign anyone in comes from the root layout
+ * (`useSignInAvailable()`). When it cannot, the page says so instead of
+ * offering a button that ends on an error.
  */
-export function Dashboard({ signInAvailable }: DashboardProps) {
+export function Dashboard() {
   const me = useMe();
   const hydrated = useHydrated();
   const host = useSiteHost();
+  const repo = useProRepo();
+  const signInAvailable = useSignInAvailable();
 
   if (me.status === "signed-in" && me.user) {
     return <SignedIn me={me} user={me.user} />;
@@ -61,7 +61,7 @@ export function Dashboard({ signInAvailable }: DashboardProps) {
     return (
       <SessionProblem
         message={accountError(me.error, {
-          repo: site.repo.slug,
+          repo: repo.slug,
           reading: true,
         })}
         onRetry={me.refresh}
@@ -88,14 +88,15 @@ function MessageAction({
   message: AccountMessage;
   onRetry: () => void;
 }) {
+  const repo = useProRepo();
   switch (message.action) {
     case "sign-in":
       return <SignInButton returnTo={RETURN_TO} size="sm" />;
     case "upgrade":
       return (
         <Button
-          label={`Star ${site.repo.slug}`}
-          href={site.repo.url}
+          label={`Star ${repo.slug}`}
+          href={repo.url}
           as="a"
           target="_blank"
           rel="noopener noreferrer"
@@ -141,7 +142,8 @@ function SignedIn({ me, user }: { me: UseMeResult; user: SessionUser }) {
   const max = me.entitlements.maxSavedBanners;
   const count = list.banners?.length ?? me.banners.count;
   const atLimit = count >= max;
-  const context = { repo: site.repo.slug, max };
+  const repo = useProRepo();
+  const context = { repo: repo.slug, max };
 
   const report = (error: unknown) => {
     const message = accountError(error, context);
@@ -222,7 +224,7 @@ function SignedIn({ me, user }: { me: UseMeResult; user: SessionUser }) {
               description={
                 me.pro
                   ? "Delete a banner to make room for a new one."
-                  : `Delete a banner to make room, or star ${site.repo.slug} on GitHub for up to ${PRO.maxSavedBanners}.`
+                  : `Delete a banner to make room, or star ${repo.slug} on GitHub for up to ${PRO.maxSavedBanners}.`
               }
             />
           ) : null}
