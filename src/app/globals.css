@@ -38,3 +38,52 @@ body {
   font-size: var(--text-body-size);
   line-height: var(--text-body-leading);
 }
+
+/*
+ * 5. Banner fonts for the live DOM preview. The family names must equal the
+ * names registered with the image engine (src/lib/render/fonts.ts) so the
+ * preview and the rendered image use identical glyph metrics. Plain @font-face
+ * on purpose: next/font would hash the family name.
+ */
+@font-face {
+  font-family: "Mona Sans";
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  src: url("/fonts/MonaSans-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Mona Sans";
+  font-weight: 500;
+  font-style: normal;
+  font-display: block;
+  src: url("/fonts/MonaSans-Medium.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Mona Sans";
+  font-weight: 600;
+  font-style: normal;
+  font-display: block;
+  src: url("/fonts/MonaSans-SemiBold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Mona Sans";
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+  src: url("/fonts/MonaSans-Bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Mona Sans Mono";
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  src: url("/fonts/MonaSansMono-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Mona Sans Mono";
+  font-weight: 500;
+  font-style: normal;
+  font-display: block;
+  src: url("/fonts/MonaSansMono-Medium.woff2") format("woff2");
+}

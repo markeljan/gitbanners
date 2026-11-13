@@ -101,20 +101,95 @@ export const AvatarRefSchema = z
   })
   .meta({ id: "AvatarRef" });
 
+export const RepoActivityWeekSchema = z
+  .object({
+    week: isoDate.describe("First day (Sunday) of the week"),
+    commits: count,
+    days: z
+      .array(count)
+      .length(7)
+      .nullable()
+      .describe(
+        "Commits per weekday, Sunday first (REST stats/commit_activity `days`). Null when only the weekly total is known",
+      ),
+  })
+  .meta({ id: "RepoActivityWeek" });
+
+/**
+ * Weekly commit activity.
+ * Repositories: REST `GET /repos/{o}/{r}/stats/commit_activity` (52 weeks with
+ * `days[7]`). Organizations: the same endpoint summed week by week over the
+ * organization's top public repositories (max 6); null when any of them is
+ * still being computed (HTTP 202) or fails.
+ */
+export const CommitActivitySchema = z
+  .object({
+    total: count.describe("Commits in the covered weeks"),
+    weeks: z
+      .array(RepoActivityWeekSchema)
+      .describe("Up to 52 weeks, oldest first"),
+  })
+  .meta({ id: "CommitActivity" });
+
+/**
+ * Year-in-review extras, only fetched when a calendar `year` is requested.
+ * `previousTotal`: `contributionCalendar.totalContributions` of the year before.
+ * `topRepos`: `commitContributionsByRepository(maxRepositories: 5)` for that
+ * year, PUBLIC repositories only (drop anything private before it gets here).
+ */
+export const YearInReviewSchema = z
+  .object({
+    year: z.number().int(),
+    previousTotal: count
+      .nullable()
+      .describe(
+        "Contributions in the previous calendar year, null when unknown",
+      ),
+    topRepos: z
+      .array(
+        z.object({
+          fullName: z.string().describe("owner/name of a PUBLIC repository"),
+          commits: count,
+        }),
+      )
+      .describe("Public repositories with the most commits that year (max 5)"),
+  })
+  .meta({ id: "YearInReview" });
+
 export const UserStatsSchema = z
   .object({
     contributions: count.describe(
       "Contributions in the calendar range (last 12 months by default)",
     ),
-    commits: count,
-    pullRequests: count,
-    issues: count,
-    reviews: count,
+    commits: count
+      .nullable()
+      .describe(
+        "Commit contributions in the calendar range, null when unavailable",
+      ),
+    pullRequests: count
+      .nullable()
+      .describe(
+        "Pull requests opened in the calendar range, null when unavailable",
+      ),
+    issues: count
+      .nullable()
+      .describe("Issues opened in the calendar range, null when unavailable"),
+    reviews: count
+      .nullable()
+      .describe(
+        "Pull request reviews in the calendar range, null when unavailable",
+      ),
+    contributedTo: count
+      .nullable()
+      .describe(
+        "Repositories contributed to in the calendar range, null when unavailable",
+      ),
     repositories: count.describe("Public repositories owned"),
-    stars: count.describe("Stars received across owned, non-fork repositories"),
-    contributedTo: count.describe(
-      "Repositories contributed to in the calendar range",
-    ),
+    stars: count
+      .nullable()
+      .describe(
+        "Stars received across owned public non-fork repositories, null when unavailable",
+      ),
   })
   .meta({ id: "UserStats" });
 
@@ -154,10 +229,13 @@ export const UserSchema = z
     organizations: z
       .array(AvatarRefSchema)
       .describe("Public organization memberships (max 8)"),
-    includesPrivate: z
+    wrapped: YearInReviewSchema.nullable().describe(
+      "Extra year-in-review facts. Only set when a calendar year was requested; null otherwise",
+    ),
+    complete: z
       .boolean()
       .describe(
-        "True when private contribution counts are included (owner-connected banners only)",
+        "False while only the fast profile + calendar data is available; nullable stats, repos and languages fill in when true",
       ),
     fetchedAt: isoDateTime,
   })
@@ -197,17 +275,20 @@ export const OrgSchema = z
     languages: z
       .array(LanguageShareSchema)
       .describe("Top languages across top repositories"),
+    activity: CommitActivitySchema.nullable().describe(
+      "Weekly commits summed over the organization's top public repositories, null when unavailable",
+    ),
     people: z.array(AvatarRefSchema).describe("Public members (max 24)"),
     fetchedAt: isoDateTime,
   })
   .meta({ id: "Organization" });
 
-export const RepoActivityWeekSchema = z
+export const StarHistoryPointSchema = z
   .object({
-    week: isoDate.describe("First day (Sunday) of the week"),
-    commits: count,
+    week: isoDate.describe("First day of the week"),
+    stars: count.describe("Total stars at the end of that week"),
   })
-  .meta({ id: "RepoActivityWeek" });
+  .meta({ id: "StarHistoryPoint" });
 
 export const ContributorSchema = z
   .object({
@@ -252,16 +333,14 @@ export const RepoSchema = z
     commits: count
       .nullable()
       .describe("Commits on the default branch, null when unknown"),
-    activity: z
-      .object({
-        total: count.describe("Commits in the covered weeks"),
-        weeks: z
-          .array(RepoActivityWeekSchema)
-          .describe("Up to 52 weeks, oldest first"),
-      })
+    activity: CommitActivitySchema.nullable().describe(
+      "Weekly commit activity, null while GitHub is still computing it",
+    ),
+    starHistory: z
+      .array(StarHistoryPointSchema)
       .nullable()
       .describe(
-        "Weekly commit activity, null while GitHub is still computing it",
+        "Cumulative stars per week, oldest first (up to 30 weeks), null when unavailable",
       ),
     contributors: z
       .array(ContributorSchema)
@@ -309,14 +388,21 @@ export type User = z.infer<typeof UserSchema>;
 export type OrgStats = z.infer<typeof OrgStatsSchema>;
 export type Org = z.infer<typeof OrgSchema>;
 export type RepoActivityWeek = z.infer<typeof RepoActivityWeekSchema>;
+export type CommitActivity = z.infer<typeof CommitActivitySchema>;
+export type YearInReview = z.infer<typeof YearInReviewSchema>;
 export type Contributor = z.infer<typeof ContributorSchema>;
+export type StarHistoryPoint = z.infer<typeof StarHistoryPointSchema>;
 export type Repo = z.infer<typeof RepoSchema>;
 export type Owner = z.infer<typeof OwnerSchema>;
 export type Entity = z.infer<typeof EntitySchema>;
 export type Suggestion = z.infer<typeof OwnerSuggestionSchema>;
 
-/** GitHub login / organization name: 1-39 chars, alphanumeric or single hyphens, no leading/trailing hyphen. */
-export const LOGIN_RE = /^[a-zA-Z\d](?:[a-zA-Z\d]|-(?=[a-zA-Z\d])){0,38}$/;
+/**
+ * GitHub login / organization name as it actually resolves: 1-39 characters,
+ * alphanumerics and hyphens, not starting with a hyphen. (Signup is stricter,
+ * but legacy accounts end in "-" or contain "--".)
+ */
+export const LOGIN_RE = /^[a-zA-Z\d][a-zA-Z\d-]{0,38}$/;
 /** Repository name: 1-100 chars of letters, digits, ".", "-", "_" (not "." or ".."). */
 export const REPO_NAME_RE = /^(?!\.{1,2}$)[\w.-]{1,100}$/;
 

@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 import { RESERVED_SEGMENTS } from "./src/lib/reserved";
 
 /*
@@ -14,6 +15,7 @@ import { RESERVED_SEGMENTS } from "./src/lib/reserved";
  *
  * The mapping is done with rewrites so it is resolved at the routing layer:
  * no proxy function runs, and every representation is cached on its own.
+ * Internal handlers live under `/-/` because "-" can never be a GitHub login.
  *
  * Rewrite-derived values are passed as PATH segments on purpose: a handler
  * behind a rewrite sees the original request URL, so destination query
@@ -25,11 +27,21 @@ import { RESERVED_SEGMENTS } from "./src/lib/reserved";
 // of the whole path, not of the segment.
 const NOT_RESERVED = `(?!(?:${RESERVED_SEGMENTS.join("|")})(?:/|\\.|$))`;
 // A GitHub login, optionally written `@login` to escape a collision with an app route.
-const LOGIN = "@?[A-Za-z0-9-]+";
+const LOGIN = "@?[A-Za-z0-9][A-Za-z0-9-]*";
 const OWNER = `${NOT_RESERVED}${LOGIN}`;
 // A first segment containing a character that can never appear in a login.
 const JUNK = `(?!${LOGIN}(?:/|$))[^/]+`;
 const IMAGE_EXT = "svg|png";
+// Paths that negotiate Markdown. Machine files (/llms.txt, /openapi.json,
+// /.well-known/*), images and API routes answer the same whatever `Accept`
+// says: a scanner asking for Markdown must still get the real api-catalog.
+// Extensions are only trusted on single-segment paths (`/vercel/next.js` is a repo).
+const NEGOTIABLE = [
+  "(?!(?:api|mcp|embed|_next|-|\\.well-known)(?:/|$))",
+  "(?![^/]+\\.[A-Za-z0-9]+$)",
+  `(?!.*\\.(?:${IMAGE_EXT})$)`,
+  ".+",
+].join("");
 
 const header = (value: string) => ({
   type: "header" as const,
@@ -57,17 +69,16 @@ const securityHeaders = [
   },
 ];
 
-const nextConfig: NextConfig = {
+const baseConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   reactCompiler: true,
   poweredByHeader: false,
   // Native addons cannot be bundled into ESM chunks.
-  serverExternalPackages: ["@resvg/resvg-js"],
+  serverExternalPackages: ["@takumi-rs/core"],
   // Banner fonts are read from disk by the image route.
   outputFileTracingIncludes: {
-    "/i/**": ["./assets/fonts/**/*"],
-    "/b/**": ["./assets/fonts/**/*"],
+    "/-/i/**": ["./assets/fonts/**/*"],
   },
   cacheLife: {
     // GitHub data: fresh for 15 minutes, then served stale while it refreshes.
@@ -87,61 +98,64 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  async redirects() {
+    return [{ source: "/developers", destination: "/docs", permanent: true }];
+  },
   async rewrites() {
     return {
       // Before the filesystem, so static pages negotiate Markdown too.
       beforeFiles: [
-        { source: "/", ...WANTS_MARKDOWN, destination: "/md" },
+        { source: "/", ...WANTS_MARKDOWN, destination: "/-/md" },
         {
-          source: "/:path((?!(?:api|i|md|mcp|_next)(?:/|$)).+)",
+          source: `/:path(${NEGOTIABLE})`,
           ...WANTS_MARKDOWN,
-          destination: "/md/:path",
+          destination: "/-/md/:path",
         },
       ],
       afterFiles: [
         // Saved banners: /b/abc123.svg
         {
           source: `/b/:id([A-Za-z0-9_-]+).:format(${IMAGE_EXT})`,
-          destination: "/i/saved/:format/:id",
+          destination: "/-/i/saved/:format/:id",
         },
         // Explicit image suffix: /vercel.svg, /vercel/next.js/contributors.png
         {
           source: `/:owner(${OWNER}).:format(${IMAGE_EXT})`,
-          destination: "/i/:format/:owner",
+          destination: "/-/i/:format/:owner",
         },
         {
           source: `/:owner(${OWNER})/:rest+.:format(${IMAGE_EXT})`,
-          destination: "/i/:format/:owner/:rest+",
+          destination: "/-/i/:format/:owner/:rest+",
         },
         // Embed endpoint: always the image. /embed/vercel, /embed/vercel/next.js.png
         {
           source: `/embed/:owner(${LOGIN}).:format(${IMAGE_EXT})`,
-          destination: "/i/:format/:owner",
+          destination: "/-/i/:format/:owner",
         },
         {
           source: `/embed/:owner(${LOGIN})/:rest+.:format(${IMAGE_EXT})`,
-          destination: "/i/:format/:owner/:rest+",
+          destination: "/-/i/:format/:owner/:rest+",
         },
-        { source: `/embed/:owner(${LOGIN})`, destination: "/i/auto/:owner" },
+        { source: `/embed/:owner(${LOGIN})`, destination: "/-/i/auto/:owner" },
         {
           source: `/embed/:owner(${LOGIN})/:rest+`,
-          destination: "/i/auto/:owner/:rest+",
+          destination: "/-/i/auto/:owner/:rest+",
         },
         // Markdown suffix: /vercel.md, /docs/api.md, /pricing.md
-        { source: "/index.md", destination: "/md" },
-        { source: "/:path(.+).md", destination: "/md/:path" },
+        { source: "/index.md", destination: "/-/md" },
+        { source: "/:path(.+).md", destination: "/-/md/:path" },
         // Junk (/.env, /wp-login.php) → one static 404, no function, no per-URL cache entry.
-        { source: `/:owner(${JUNK})/:rest*`, destination: "/nf" },
+        { source: `/:owner(${JUNK})/:rest*`, destination: "/-/nf" },
         // Content negotiation on the bare URL: <img src="https://…/vercel">
         {
           source: `/:owner(${OWNER})`,
           ...WANTS_IMAGE,
-          destination: "/i/auto/:owner",
+          destination: "/-/i/auto/:owner",
         },
         {
           source: `/:owner(${OWNER})/:rest+`,
           ...WANTS_IMAGE,
-          destination: "/i/auto/:owner/:rest+",
+          destination: "/-/i/auto/:owner/:rest+",
         },
       ],
       fallback: [],
@@ -149,4 +163,16 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+/**
+ * `*.dev.ts(x)` routes (the local-only sign-in helper) are page extensions only
+ * under `next dev`: production builds never compile them, so they cannot ship.
+ */
+export default function nextConfig(phase: string): NextConfig {
+  return {
+    ...baseConfig,
+    pageExtensions:
+      phase === PHASE_DEVELOPMENT_SERVER
+        ? ["dev.tsx", "dev.ts", "tsx", "ts"]
+        : ["tsx", "ts"],
+  };
+}

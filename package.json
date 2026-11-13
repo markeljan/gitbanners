@@ -16,15 +16,23 @@
   "dependencies": {
     "@astryxdesign/core": "^0.7.15",
     "@astryxdesign/theme-neutral": "^0.7.15",
+    "@modelcontextprotocol/server": "^2",
     "@stylexjs/stylex": "^0.19.2",
+    "@upstash/ratelimit": "2.2.1",
+    "@upstash/redis": "1.41.0",
     "@vercel/analytics": "^2.0.1",
+    "@vercel/functions": "3.11.2",
     "@vercel/speed-insights": "^2.1.0",
+    "jose": "6.2.17",
     "lucide-react": "^1.72.0",
+    "mcp-handler": "2.4.0",
     "next": "16.4.6",
     "nuqs": "^2.10.3",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "server-only": "0.0.1",
     "swr": "^2.5.1",
+    "takumi-js": "2.20.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -38,6 +46,8 @@
     "@types/react-dom": "^19",
     "@vercel/config": "0.14.1",
     "babel-plugin-react-compiler": "1.0.0",
+    "ioredis": "5",
+    "ioredis-mock": "8.13.1",
     "tailwindcss": "4.3.3",
     "typescript": "^5"
   },

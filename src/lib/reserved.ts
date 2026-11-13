@@ -10,6 +10,8 @@
  *
  * IMPORTANT: every new top-level folder under `src/app` must be added here,
  * otherwise `<img>` requests below it would be rewritten to the banner route.
+ * Internal-only routes go under `src/app/-/` instead: "-" is not a valid login,
+ * so nothing there can shadow a GitHub account.
  */
 export const RESERVED_SEGMENTS = [
   "_next",
@@ -21,13 +23,9 @@ export const RESERVED_SEGMENTS = [
   "docs",
   "embed",
   "gallery",
-  "i",
   "mcp",
-  "md",
-  "nf",
   "pricing",
   "privacy",
-  "sitemaps",
   "studio",
   "terms",
   "themes",

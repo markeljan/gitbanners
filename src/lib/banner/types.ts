@@ -91,7 +91,8 @@ export interface BannerTheme {
   colors: ThemeColors;
 }
 
-export type FontId = "mona" | "inter" | "geist" | "mono";
+/** `mona` = Mona Sans (GitHub's typeface), `mono` = Mona Sans Mono. */
+export type FontId = "mona" | "mono";
 
 export interface BannerFont {
   id: FontId;
@@ -206,6 +207,25 @@ export interface BuiltBanner {
   font: BannerFont;
   /** Resolved theme after overrides. */
   theme: BannerTheme;
+  /**
+   * Geometry of the contribution heatmap, when the banner has one. The server
+   * uses it to animate the SVG after rendering (`animate` option); `cells` is
+   * the number of day cells drawn and guards against format drift.
+   */
+  heatmap: HeatmapGeometry | null;
+}
+
+export interface HeatmapGeometry {
+  /** Cell edge in px. */
+  cell: number;
+  /** Cell corner radius in px. */
+  radius: number;
+  /** Gap between cells in px. */
+  gap: number;
+  /** Heat palette exactly as written into the cells (lower-case hex). */
+  colors: readonly string[];
+  /** Number of day cells drawn. */
+  cells: number;
 }
 
 /** Result of parsing a banner URL path such as `/vercel/next.js/contributors.png`. */
