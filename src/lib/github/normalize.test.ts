@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { fixture, fixtureData } from "./__fixtures__/mock";
 import {
+  cleanUrl,
   FALLBACK_LANGUAGE_COLOR,
   isStatisticsPending,
   LIMITS,
@@ -1028,5 +1029,85 @@ describe("isStatisticsPending", () => {
     expect(org.activity).toBeNull();
     expect(org.stats.followers).not.toBeNull();
     expect(isStatisticsPending(org)).toBe(false);
+  });
+});
+
+describe("cleanUrl", () => {
+  test.each([
+    ["danabra.mov", "https://danabra.mov"],
+    ["  danabra.mov  ", "https://danabra.mov"],
+    ["www.example.com/about", "https://www.example.com/about"],
+    ["example.com:8080/x", "https://example.com:8080/x"],
+    ["//example.com", "https://example.com"],
+    ["https://vercel.com", "https://vercel.com"],
+    ["http://example.org/", "http://example.org/"],
+    ["HTTPS://Example.com", "HTTPS://Example.com"],
+  ])("%p becomes %p", (input, expected) => {
+    expect(cleanUrl(input)).toBe(expected);
+  });
+
+  test.each([
+    null,
+    undefined,
+    "",
+    "   ",
+    "javascript:alert(1)",
+    "JavaScript:alert(1)",
+    "mailto:x@example.com",
+    "mailto:x",
+    "data:text/html,hi",
+    "ftp://example.com",
+    "localhost",
+    "my site.com",
+    "https://",
+  ])("%p is not a website", (input) => {
+    expect(cleanUrl(input)).toBeNull();
+  });
+
+  test("every website field goes through it", () => {
+    const user = toUser(
+      { ...userCore("owner-core.torvalds.json"), websiteUrl: "danabra.mov" },
+      null,
+      RECENT,
+    );
+    expect(user.websiteUrl).toBe("https://danabra.mov");
+
+    const profile = decode(
+      RestUserSchema,
+      {
+        ...(fixture("rest-user.torvalds.json") as object),
+        blog: "danabra.mov",
+      },
+      "profile",
+    );
+    expect(toUserFromRest(profile, null, RECENT).websiteUrl).toBe(
+      "https://danabra.mov",
+    );
+
+    const org = decode(
+      RestOrgSchema,
+      {
+        ...(fixture("rest-org.vercel.json") as object),
+        blog: "javascript:alert(1)",
+      },
+      "org",
+    );
+    expect(toOrgFromRest(org, RECENT).websiteUrl).toBeNull();
+
+    const repoParts = {
+      contributors: [],
+      contributorCount: null,
+      activity: null,
+      starHistory: null,
+    };
+    const repo = toRepo(
+      {
+        ...repoCore("repo-core.vercel-next.js.json"),
+        homepageUrl: "nextjs.org",
+      },
+      repoParts,
+      RECENT,
+    );
+    expect(repo?.homepageUrl).toBe("https://nextjs.org");
   });
 });

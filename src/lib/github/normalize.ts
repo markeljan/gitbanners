@@ -78,6 +78,39 @@ function clean(value: string | null | undefined): string | null {
   return trimmed ? trimmed : null;
 }
 
+/** `https://…`, `http://…`: the value already says how to reach it. */
+const WEB_SCHEME_RE = /^[a-z][a-z0-9+.-]*:\/\//i;
+/** `mailto:x`, `javascript:…`: a scheme, not a `host:port`. */
+const OTHER_SCHEME_RE = /^[a-z][a-z0-9+.-]*:(?!\d)/i;
+
+/**
+ * A website or homepage field as a link target, or `null`.
+ *
+ * GitHub stores these as free text, and people often leave out the scheme
+ * (`danabra.mov`). Used as an `href` as is, that is a relative link to a
+ * page of this site. A value without a scheme gets `https://`; the result
+ * must then parse as an http(s) URL with a dotted host name. Anything else
+ * (`mailto:`, `javascript:`, a lone word) is not a website and is dropped.
+ */
+export function cleanUrl(value: string | null | undefined): string | null {
+  let text = clean(value);
+  if (!text) return null;
+  if (text.startsWith("//")) text = `https:${text}`;
+  else if (!WEB_SCHEME_RE.test(text)) {
+    if (OTHER_SCHEME_RE.test(text)) return null;
+    text = `https://${text}`;
+  }
+  let url: URL;
+  try {
+    url = new URL(text);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+  if (!url.hostname.includes(".") || url.hostname.endsWith(".")) return null;
+  return text;
+}
+
 /**
  * The one definition of "public" for a repository node: both flags must say
  * so. Internal (enterprise) repositories are `isPrivate` as well.
@@ -465,7 +498,7 @@ export function toUser(
       bio: clean(core.bio),
       company: clean(core.company),
       location: clean(core.location),
-      websiteUrl: clean(core.websiteUrl),
+      websiteUrl: cleanUrl(core.websiteUrl),
       twitter: clean(core.twitterUsername),
       pronouns: clean(core.pronouns),
       createdAt: core.createdAt,
@@ -500,7 +533,7 @@ export function toUserFromRest(
       bio: clean(profile.bio),
       company: clean(profile.company),
       location: clean(profile.location),
-      websiteUrl: clean(profile.blog),
+      websiteUrl: cleanUrl(profile.blog),
       twitter: clean(profile.twitter_username),
       pronouns: null,
       createdAt: profile.created_at,
@@ -567,7 +600,7 @@ export function toOrg(
     avatarUrl: core.avatarUrl,
     description: clean(core.description),
     location: clean(core.location),
-    websiteUrl: clean(core.websiteUrl),
+    websiteUrl: cleanUrl(core.websiteUrl),
     twitter: clean(core.twitterUsername),
     isVerified: core.isVerified,
     createdAt: core.createdAt,
@@ -602,7 +635,7 @@ export function toOrgFromRest(
     avatarUrl: profile.avatar_url,
     description: clean(profile.description),
     location: clean(profile.location),
-    websiteUrl: clean(profile.blog),
+    websiteUrl: cleanUrl(profile.blog),
     twitter: clean(profile.twitter_username),
     isVerified: profile.is_verified ?? false,
     createdAt: profile.created_at,
@@ -652,7 +685,7 @@ export function toRepo(
     name: core.name,
     fullName: core.nameWithOwner,
     description: clean(core.description),
-    homepageUrl: clean(core.homepageUrl),
+    homepageUrl: cleanUrl(core.homepageUrl),
     stars: core.stargazerCount,
     forks: core.forkCount,
     watchers: core.watchers.totalCount,
