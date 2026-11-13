@@ -320,6 +320,8 @@ export function useStudio(): Studio {
     savedKey,
     () => (savedId ? loadBanner(savedId) : Promise.reject(new Error("none"))),
     {
+      // A saved banner only changes when this page saves it.
+      revalidateIfStale: false,
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
       shouldRetryOnError: false,

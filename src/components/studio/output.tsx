@@ -140,7 +140,15 @@ export function StudioOutput() {
   const editing = studio.state.bannerId ? saved.banner : null;
 
   const open = (mode: SaveMode) => {
-    setProblem(null);
+    // Said before the attempt when the session already knows the answer.
+    const isFull = mode === "create" && me.banners.count >= me.banners.max;
+    setProblem(
+      isFull
+        ? new SaveProblem(403, "banner_limit_reached", "Limit reached", {
+            limit: me.banners.max,
+          })
+        : null,
+    );
     setName(
       mode === "update" && editing
         ? editing.name
@@ -278,7 +286,7 @@ export function StudioOutput() {
                 subtitle={
                   dialog === "update"
                     ? "Everyone who embeds the saved URL sees the new version."
-                    : "Saved banners get a short URL that you can change later."
+                    : "A saved banner gets its own URL. Changes you save later show up there."
                 }
                 onOpenChange={(isOpen) => {
                   if (!isOpen) setDialog(null);
