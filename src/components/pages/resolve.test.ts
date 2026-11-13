@@ -153,6 +153,39 @@ describe("decidePage", () => {
     }
   });
 
+  test("a repository whose name ends in .md lives under its preset", () => {
+    // `/jasonnor/README.md` is the Markdown of the repository "README"
+    // (next.config.ts), so the page of "README.md" is never written that way.
+    const readme: Entity = {
+      ...SAMPLE_REPO,
+      owner: { ...SAMPLE_REPO.owner, login: "Jasonnor" },
+      name: "README.md",
+      fullName: "Jasonnor/README.md",
+    };
+    expect(decide("/jasonnor/README.md/overview", readme)).toEqual({
+      type: "page",
+      preset: "overview",
+      path: "/jasonnor/README.md/overview",
+    });
+    expect(decide("/jasonnor/README.md/activity", readme)).toMatchObject({
+      type: "page",
+      path: "/jasonnor/README.md/activity",
+    });
+    for (const path of [
+      "/jasonnor/README.md",
+      "/Jasonnor/readme.MD/Overview",
+      "/jasonnor/README.md.git",
+    ]) {
+      const first = decide(path, readme);
+      expect(first).toEqual({
+        type: "redirect",
+        location: "/jasonnor/README.md/overview",
+      });
+      if (first.type !== "redirect") continue;
+      expect(decide(first.location, readme)).toMatchObject({ type: "page" });
+    }
+  });
+
   test("a login that collides with a route keeps its @", () => {
     const docs: Entity = { ...SAMPLE_ORG, login: "docs" };
     expect(decide("/@docs", docs)).toMatchObject({

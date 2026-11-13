@@ -107,12 +107,23 @@ export function parseBannerPath(
 }
 
 /**
+ * A name ending in ".md": as the last segment of a URL it asks for the
+ * Markdown version of the page before it (next.config.ts rewrites it).
+ */
+const MARKDOWN_SUFFIX = /\.md$/i;
+
+/**
  * True when `/{owner}/{name}` alone would be read as something else: a
  * profile preset (`stats`), or a name whose own ending looks like an image
- * suffix (`logo.svg`). Such repositories are always written with their preset.
+ * suffix (`logo.svg`) or the Markdown suffix (`README.md`). Such
+ * repositories are always written with their preset.
  */
 function needsPresetSegment(name: string): boolean {
-  return OWNER_PRESET_IDS.has(presetOf(name)) || IMAGE_SUFFIX.test(name);
+  return (
+    OWNER_PRESET_IDS.has(presetOf(name)) ||
+    IMAGE_SUFFIX.test(name) ||
+    MARKDOWN_SUFFIX.test(name)
+  );
 }
 
 /**
