@@ -5,7 +5,13 @@ import { LinkProvider } from "@astryxdesign/core/Link";
 import { registerTheme, ThemeContext } from "@astryxdesign/core/theme";
 import { neutralTheme } from "@astryxdesign/theme-neutral/built";
 import Link from "next/link";
-import { useLayoutEffect, useMemo, useSyncExternalStore } from "react";
+import {
+  createContext,
+  use,
+  useLayoutEffect,
+  useMemo,
+  useSyncExternalStore,
+} from "react";
 import {
   applyMode,
   type ColorMode,
@@ -35,12 +41,43 @@ export function useColorMode(): ColorMode {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
+const SiteOriginContext = createContext<string | null>(null);
+
+/**
+ * The canonical origin (`site.url`) as the SERVER resolved it, without a
+ * trailing slash.
+ *
+ * Client components must print URLs through this hook instead of importing
+ * `site.url`: on the server the origin comes from server-only environment
+ * variables (the deployment's production domain, the dev server's port), so
+ * the browser's copy of that module can resolve to something else and the
+ * page would hydrate with different text.
+ */
+export function useSiteOrigin(): string {
+  const origin = use(SiteOriginContext);
+  if (origin === null) {
+    throw new Error("useSiteOrigin() needs <Providers origin> above it");
+  }
+  return origin;
+}
+
+/** Host of the canonical origin, e.g. "gitbanners.vercel.app". */
+export function useSiteHost(): string {
+  return new URL(useSiteOrigin()).host;
+}
+
+export interface ProvidersProps {
+  /** `site.url`, passed from the root layout (a Server Component). */
+  origin: string;
+  children: React.ReactNode;
+}
+
 /**
  * App-wide providers. We provide Astryx's ThemeContext ourselves instead of
  * mounting <Theme>: <Theme> overwrites <html data-theme> on hydration, which
  * would break the no-flash colour mode on statically prerendered pages.
  */
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ origin, children }: ProvidersProps) {
   const mode = useColorMode();
   // Dev only: StrictMode's remount resets <html> attributes to the JSX ones; re-apply the stored mode.
   useLayoutEffect(() => {
@@ -48,10 +85,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
   const theme = useMemo(() => ({ theme: neutralTheme, mode }), [mode]);
   return (
-    <ThemeContext value={theme}>
-      <LayerProvider toast={{ position: "bottomEnd" }}>
-        <LinkProvider component={Link}>{children}</LinkProvider>
-      </LayerProvider>
-    </ThemeContext>
+    <SiteOriginContext value={origin.replace(/\/+$/, "")}>
+      <ThemeContext value={theme}>
+        <LayerProvider toast={{ position: "bottomEnd" }}>
+          <LinkProvider component={Link}>{children}</LinkProvider>
+        </LayerProvider>
+      </ThemeContext>
+    </SiteOriginContext>
   );
 }
