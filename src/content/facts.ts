@@ -8,6 +8,9 @@
  * cache lifetimes from `@/lib/http/cache-headers`, plan limits from
  * `@/lib/pro/entitlements`, banner registries from `@/lib/banner`.
  */
+import { FREE, PRO } from "@/lib/pro/entitlements";
+import { duration } from "./format";
+
 export const FACTS = {
   /** `POLICIES` in `src/lib/ratelimit.ts`. */
   rateLimits: {
@@ -29,6 +32,15 @@ export const FACTS = {
   /** Notice between the `Deprecation` and the `Sunset` date of an API operation. */
   deprecationNoticeDays: 90,
 } as const;
+
+/**
+ * What Pro's `refreshSeconds` buys, said as it is: the CDN redraws a saved
+ * Pro banner sooner, from the same GitHub data, which refreshes on its own
+ * schedule for every plan.
+ */
+export function edgeRefreshText(): string {
+  return `Saved banners are redrawn at the edge every ${duration(PRO.refreshSeconds)} instead of every ${duration(FREE.refreshSeconds)}. The GitHub data behind them refreshes every ${FACTS.dataRefreshMinutes} minutes on both plans.`;
+}
 
 /** "120 requests per 60 seconds" for one of the public quotas. */
 export function quota(policy: keyof typeof FACTS.rateLimits): string {

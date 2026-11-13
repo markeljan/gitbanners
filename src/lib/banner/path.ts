@@ -164,3 +164,14 @@ export function targetLabel(target: BannerTarget): string {
     ? `${target.owner}/${target.name}`
     : target.login;
 }
+
+/**
+ * True when `target` is the profile of `login` itself, the only banner that
+ * may be served at `/{login}`. GitHub logins are case-insensitive.
+ */
+export function isProfileOf(target: BannerTarget, login: string): boolean {
+  return (
+    target.kind === "owner" &&
+    target.login.toLowerCase() === login.toLowerCase()
+  );
+}

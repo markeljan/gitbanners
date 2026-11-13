@@ -85,6 +85,14 @@ export function accountError(
         action: "upgrade",
         retryAfter,
       };
+    case "default_not_own_profile":
+      return {
+        title: "Not a banner of your profile",
+        message:
+          "Only a banner of your own profile can be served at your profile URL. Stop using this one as your default, or point it at your own account.",
+        action: "none",
+        retryAfter,
+      };
     case "rate_limited":
       return {
         title: reading ? "Too many requests" : "Too many changes at once",

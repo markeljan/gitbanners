@@ -259,7 +259,63 @@ describe("GET /api/auth/github", () => {
         expect(cookies.written()).toEqual([]);
         expect(mock.requests).toEqual([]);
       });
+
+      test(`${label}: a clicked link goes back to the page with the reason`, async () => {
+        setEnv(vars);
+        setStore(undefined);
+        const response = await startRequest("?returnTo=/pricing%3Fplan=pro", {
+          ...canonicalHeaders,
+          accept: "text/html,application/xhtml+xml",
+          "sec-fetch-mode": "navigate",
+        });
+        expect(response.status).toBe(303);
+        expect(response.headers.get("location")).toBe(
+          "/pricing?plan=pro&auth_error=accounts_unavailable",
+        );
+        expect(response.headers.get("cache-control")).toBe("no-store");
+        expect(cookies.written()).toEqual([]);
+        expect(mock.requests).toEqual([]);
+      });
     }
+
+    test("a browser without fetch metadata is recognised by its Accept header", async () => {
+      setEnv({ GITHUB_CLIENT_ID: undefined });
+      const response = await startRequest("?returnTo=/studio", {
+        ...canonicalHeaders,
+        accept: "text/html",
+      });
+      expect(response.status).toBe(303);
+      expect(response.headers.get("location")).toBe(
+        "/studio?auth_error=accounts_unavailable",
+      );
+    });
+
+    test("a script asking for the page still gets the problem document", async () => {
+      setEnv({ GITHUB_CLIENT_ID: undefined });
+      const response = await startRequest("?returnTo=/studio", {
+        ...canonicalHeaders,
+        accept: "text/html",
+        "sec-fetch-mode": "cors",
+      });
+      expect(response.status).toBe(503);
+      expect(response.headers.get("content-type")).toBe(
+        "application/problem+json",
+      );
+    });
+
+    test("the way back is never another site", async () => {
+      setEnv({ GITHUB_CLIENT_ID: undefined });
+      for (const returnTo of ["//evil.example", "https://evil.example/x"]) {
+        const response = await startRequest(
+          `?returnTo=${encodeURIComponent(returnTo)}`,
+          { ...canonicalHeaders, "sec-fetch-mode": "navigate" },
+        );
+        expect(response.status).toBe(303);
+        expect(response.headers.get("location")).toBe(
+          "/?auth_error=accounts_unavailable",
+        );
+      }
+    });
   });
 });
 

@@ -140,6 +140,15 @@ export const ERROR_CODES: readonly ErrorCodeDoc[] = [
     surface: "account",
   },
   {
+    code: "default_not_own_profile",
+    status: 422,
+    meaning:
+      "Only a banner of your own profile can be the default served at your profile URL.",
+    action:
+      "Set the target to your own account, or send `isDefault: false` to stop using the banner as your default.",
+    surface: "account",
+  },
+  {
     code: "payload_too_large",
     status: 413,
     meaning: "The request body is larger than 16 KB.",

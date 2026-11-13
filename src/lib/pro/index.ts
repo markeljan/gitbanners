@@ -9,11 +9,10 @@
 import "server-only";
 import { hasStarred } from "@/lib/auth/github";
 import { getUser } from "@/lib/db/users";
-import { LOGIN_RE, REPO_NAME_RE } from "@/lib/github/schema";
 import { forbidden, type ProblemOverrides } from "@/lib/http/problem";
-import { site } from "@/lib/site";
 import { getStore, keys, type Store } from "@/lib/store";
 import { type Entitlements, entitlementsFor } from "./entitlements";
+import { proRepo, proRepoSlug, type StarRepo } from "./repo";
 
 /** Which check produced a positive Pro decision. */
 export type ProSource = "allowlist" | "user_token" | "stargazers";
@@ -28,12 +27,6 @@ export interface ProStatus {
   at: number;
   /** `null` whenever `pro` is false. */
   source: ProSource | null;
-}
-
-/** A repository as `owner` and `name`, both already validated. */
-export interface StarRepo {
-  owner: string;
-  name: string;
 }
 
 /**
@@ -85,29 +78,6 @@ function resolveDeps(deps: Partial<ProDeps> = {}): ProDeps {
     hasStarred: deps.hasStarred ?? hasStarred,
     now: deps.now ?? Date.now,
   };
-}
-
-/**
- * The repository whose stargazers are Pro: `PRO_REPO` when set, the product's
- * own repository otherwise. `null` when the value is not `owner/name`, in
- * which case only the allowlist can grant Pro.
- */
-export function proRepo(): StarRepo | null {
-  const [owner, name, ...rest] = (process.env.PRO_REPO || site.repo.slug).split(
-    "/",
-  );
-  if (rest.length > 0 || !owner || !name) return null;
-  if (!LOGIN_RE.test(owner) || !REPO_NAME_RE.test(name)) return null;
-  return { owner, name };
-}
-
-/**
- * "owner/name" of the repository to star, for messages. Falls back to the
- * product's own repository when `PRO_REPO` is unusable.
- */
-export function proRepoSlug(): string {
-  const repo = proRepo();
-  return repo ? `${repo.owner}/${repo.name}` : site.repo.slug;
 }
 
 /**
@@ -350,3 +320,10 @@ export {
   FREE,
   PRO,
 } from "./entitlements";
+export {
+  type ProRepoLink,
+  proRepo,
+  proRepoLink,
+  proRepoSlug,
+  type StarRepo,
+} from "./repo";

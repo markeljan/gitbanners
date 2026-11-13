@@ -113,6 +113,33 @@ export function forbidden(
 }
 
 /**
+ * 422: the request is well formed and allowed, but asks for something that
+ * cannot be.
+ */
+export function unprocessable(
+  detail: string | undefined,
+  overrides: ProblemOverrides & Pick<ProblemInit, "code" | "title">,
+): Response {
+  return problem(422, { detail, ...overrides });
+}
+
+/**
+ * The refusal for a profile default whose target is not the user's own
+ * profile: `/{login}` only ever serves a banner of `login` itself, so such a
+ * default would silently show the standard banner instead.
+ */
+export function notOwnProfile(login: string): Response {
+  return unprocessable(
+    `Only a banner of your own profile (${login}) can be served at /${login}.`,
+    {
+      code: "default_not_own_profile",
+      title: "The profile default must show your own profile",
+      resolution: `Set the target to the account ${login}, or send isDefault: false.`,
+    },
+  );
+}
+
+/**
  * 429 with `Retry-After` and the `RateLimit` headers of the failed check.
  * `violated-policies` is the extension member the IETF rate-limit draft
  * defines for this case.

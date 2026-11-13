@@ -2,6 +2,8 @@
  * GET /api/banners/{id}     one saved banner of the signed-in user
  * PATCH /api/banners/{id}   change it; body:
  *                           `{ name?, target?, preset?, query?, isDefault? }`
+ *                           (the profile default must keep a target that is
+ *                           the user's own profile: 422 otherwise)
  * DELETE /api/banners/{id}  delete it (204)
  *
  * A banner that belongs to someone else answers 404 like one that does not
@@ -10,7 +12,7 @@
 import { revalidateTag } from "next/cache";
 import { z } from "zod";
 import { loginChanged, withUser } from "@/lib/auth/session";
-import { canonicalQuery } from "@/lib/banner";
+import { canonicalQuery, isProfileOf } from "@/lib/banner";
 import {
   bannerPatchSchema,
   deleteBanner,
@@ -21,7 +23,7 @@ import {
   updateBanner,
 } from "@/lib/db/banners";
 import { entityCacheTag } from "@/lib/http/cache-headers";
-import { methodGuards, notFound } from "@/lib/http/problem";
+import { methodGuards, notFound, notOwnProfile } from "@/lib/http/problem";
 import { getEntitlements, proRequired } from "@/lib/pro";
 
 const { notAllowed, options } = methodGuards(["GET", "PATCH", "DELETE"]);
@@ -90,6 +92,18 @@ export async function PATCH(
       // Clearing is open to everyone: someone who lost Pro must still be able
       // to take their default down.
       const wanted = isDefault ?? wasDefault;
+      // `/{login}` only serves a banner of the user's own profile: a default
+      // may not be set on, or moved to, any other target. Saying
+      // `isDefault: false` with the new target is how to do both at once.
+      // (A rename leaves alone a default stored before this check existed.)
+      const checksTarget =
+        isDefault === true || (wanted && patch.target !== undefined);
+      if (
+        checksTarget &&
+        !isProfileOf(patch.target ?? current.target, user.login)
+      ) {
+        return notOwnProfile(user.login);
+      }
       if (wanted !== wasDefault) {
         if (!(await setDefaultBanner(user, wanted ? id : null))) {
           return loginChanged();

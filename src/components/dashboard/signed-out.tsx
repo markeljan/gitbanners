@@ -5,8 +5,8 @@ import { Icon } from "@astryxdesign/core/Icon";
 import { Text } from "@astryxdesign/core/Text";
 import { Link2, Save, Star } from "lucide-react";
 import { SignInButton } from "@/components/account/sign-in-button";
+import { useProRepo } from "@/components/providers";
 import { FREE, PRO } from "@/lib/pro/entitlements";
-import { site } from "@/lib/site";
 
 export interface SignedOutProps {
   /** False when this deployment cannot sign anyone in (no account setup). */
@@ -22,6 +22,7 @@ const RETURN_TO = "/dashboard";
  * the server, so it is the page's HTML for visitors, crawlers and agents.
  */
 export function SignedOut({ signInAvailable, host }: SignedOutProps) {
+  const repo = useProRepo();
   const points = [
     {
       icon: Save,
@@ -36,7 +37,7 @@ export function SignedOut({ signInAvailable, host }: SignedOutProps) {
     {
       icon: Star,
       title: "Pro costs one star",
-      text: `Star ${site.repo.slug} on GitHub to hide the mark, animate the contribution graph, refresh faster and choose the banner served at your own ${host}/{login}.svg.`,
+      text: `Star ${repo.slug} on GitHub to hide the mark, animate the contribution graph, keep up to ${PRO.maxSavedBanners} banners and choose the banner served at your own ${host}/{login}.svg.`,
     },
   ];
   return (

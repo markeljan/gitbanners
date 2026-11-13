@@ -1,6 +1,10 @@
+import { proRepoLink } from "@/lib/pro/repo";
 import { site } from "@/lib/site";
 import { FACTS, quota } from "./facts";
 import type { ContentPage } from "./types";
+
+/** The repository the server checks for Pro. */
+const proRepo = proRepoLink();
 
 export const terms: ContentPage = {
   path: "/terms",
@@ -61,7 +65,7 @@ export const terms: ContentPage = {
           type: "list",
           items: [
             "Signing in uses your GitHub account. You are responsible for what is done with it here.",
-            `Pro is unlocked by starring the [${site.repo.slug}](${site.repo.url}) repository and lasts as long as the star does. It is not sold, and it carries no guarantee of service.`,
+            `Pro is unlocked by starring the [${proRepo.slug}](${proRepo.url}) repository and lasts as long as the star does. It is not sold, and it carries no guarantee of service.`,
             "You can delete your account at any time from the dashboard. The [privacy page](/privacy) says what is stored and for how long.",
           ],
         },

@@ -7,6 +7,7 @@ import { IconButton } from "@astryxdesign/core/IconButton";
 import { Text } from "@astryxdesign/core/Text";
 import { Redo2, RotateCcw, Undo2 } from "lucide-react";
 import { useEffect, useEffectEvent } from "react";
+import { useSignInAvailable } from "@/components/providers";
 import { signInHref } from "@/components/site/links";
 import { StudioControls } from "./controls";
 import { StudioOutput } from "./output";
@@ -38,7 +39,18 @@ function isTextEntry(target: EventTarget | null): boolean {
 
 function SavedNotice({ studio }: { studio: StudioValue }) {
   const { state, me, saved } = studio;
+  const signInAvailable = useSignInAvailable();
   if (!state.bannerId) return null;
+  if (me.status === "anonymous" && !signInAvailable) {
+    return (
+      <Banner
+        status="info"
+        title="Accounts are not available on this deployment"
+        description="Saved banners belong to the account that saved them. You can keep editing here and copy the banner's link."
+        container="card"
+      />
+    );
+  }
   if (me.status === "anonymous") {
     return (
       <Banner
