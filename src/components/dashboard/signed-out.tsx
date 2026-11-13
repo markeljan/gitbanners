@@ -37,7 +37,7 @@ export function SignedOut({ signInAvailable, host }: SignedOutProps) {
     {
       icon: Star,
       title: "Pro costs one star",
-      text: `Star ${repo.slug} on GitHub to hide the mark, animate the contribution graph, refresh faster and choose the banner served at your own ${host}/{login}.svg.`,
+      text: `Star ${repo.slug} on GitHub to hide the mark, animate the contribution graph, keep up to ${PRO.maxSavedBanners} banners and choose the banner served at your own ${host}/{login}.svg.`,
     },
   ];
   return (

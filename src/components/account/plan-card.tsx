@@ -10,7 +10,7 @@ import { Text } from "@astryxdesign/core/Text";
 import { RefreshCw } from "lucide-react";
 import { GithubMark } from "@/components/github-mark";
 import { useProRepo, useSiteHost } from "@/components/providers";
-import { duration } from "@/content/format";
+import { edgeRefreshText } from "@/content/facts";
 import { FREE, PRO } from "@/lib/pro/entitlements";
 import { site } from "@/lib/site";
 import { ProBadge } from "./pro-badge";
@@ -34,7 +34,7 @@ export function proFeatures(login: string, host: string): string[] {
     "Animated contribution graph in saved SVG banners",
     `${PRO.maxSavedBanners} saved banners instead of ${FREE.maxSavedBanners}`,
     `Your own default banner at ${host}/${login}.svg`,
-    `Saved banners refresh every ${duration(PRO.refreshSeconds)} instead of every ${duration(FREE.refreshSeconds)}`,
+    edgeRefreshText(),
   ];
 }
 

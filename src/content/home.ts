@@ -1,5 +1,8 @@
+import { FREE, PRO } from "@/lib/pro/entitlements";
 import { proRepoLink } from "@/lib/pro/repo";
 import { site } from "@/lib/site";
+import { FACTS } from "./facts";
+import { duration } from "./format";
 import type { ContentPage } from "./types";
 
 const host = new URL(site.url).host;
@@ -26,7 +29,7 @@ export const home: ContentPage = {
       blocks: [
         {
           type: "p",
-          text: `\`${host}/you\` is a page. Add \`.svg\` or \`.png\` and it is the image. GitHub data refreshes every 15 minutes, so a banner you pasted once keeps telling the truth.`,
+          text: `\`${host}/you\` is a page. Add \`.svg\` or \`.png\` and it is the image. GitHub data refreshes every ${FACTS.dataRefreshMinutes} minutes, so a banner you pasted once keeps telling the truth.`,
         },
         {
           type: "table",
@@ -193,7 +196,16 @@ export const home: ContentPage = {
             ["GitBanners mark on saved banners", "Shown", "Removable"],
             ["Animated contribution graph (SVG)", "No", "Yes"],
             ["Your own default banner at your profile URL", "No", "Yes"],
-            ["Refresh at the edge", "15 minutes", "5 minutes"],
+            [
+              "Saved banners redrawn at the edge",
+              `Every ${duration(FREE.refreshSeconds)}`,
+              `Every ${duration(PRO.refreshSeconds)}`,
+            ],
+            [
+              "GitHub data refreshed",
+              `Every ${FACTS.dataRefreshMinutes} minutes`,
+              `Every ${FACTS.dataRefreshMinutes} minutes`,
+            ],
             ["Price", "$0", "One GitHub star"],
           ],
         },

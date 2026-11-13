@@ -49,7 +49,7 @@ export const FAQ: readonly FaqEntry[] = [
   {
     id: "pro",
     question: "What does Pro add, and what does it cost?",
-    answer: `Pro removes the GitBanners mark from saved banners, adds animated SVG, 50 saved banners instead of 3, your own default banner at your profile URL and faster refresh. It costs one star: sign in with GitHub and star the [${proRepo.slug}](${proRepo.url}) repository.`,
+    answer: `Pro removes the GitBanners mark from saved banners, adds animated SVG, 50 saved banners instead of 3, your own default banner at your profile URL, and redraws saved banners at the edge more often (the GitHub data itself refreshes on the same schedule for everyone). It costs one star: sign in with GitHub and star the [${proRepo.slug}](${proRepo.url}) repository.`,
   },
   {
     id: "readme-stats-alternative",

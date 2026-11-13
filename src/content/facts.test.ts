@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { SESSION_MAX_AGE, SIGN_IN_TX_MAX_AGE } from "@/lib/auth/session-token";
 import { CACHE } from "@/lib/http/cache-headers";
-import { PRO_FRESH_MS } from "@/lib/pro";
+import { FREE, PRO, PRO_FRESH_MS } from "@/lib/pro";
 import { POLICIES } from "@/lib/ratelimit";
 import nextConfig from "../../next.config";
-import { FACTS, quota } from "./facts";
+import { edgeRefreshText, FACTS, quota } from "./facts";
 import { duration, longDate } from "./format";
 
 describe("facts quoted in the copy", () => {
@@ -26,6 +26,24 @@ describe("facts quoted in the copy", () => {
     );
     expect<number>(CACHE.banner.edge).toBe(FACTS.dataRefreshMinutes * 60);
     expect<number>(CACHE.banner.sie).toBe(FACTS.lastGoodDays * 86_400);
+  });
+});
+
+describe("what Pro's refresh is", () => {
+  test("refreshSeconds is the CDN lifetime of a saved banner, per plan", () => {
+    expect<number>(FREE.refreshSeconds).toBe(CACHE.banner.edge);
+    expect<number>(PRO.refreshSeconds).toBe(CACHE.bannerPro.edge);
+  });
+
+  test("the copy does not sell it as fresher GitHub data", () => {
+    // Saved banners of every plan are drawn from the same cached data.
+    const config = nextConfig("phase-production-build");
+    expect(config.cacheLife?.github?.revalidate).toBe(FREE.refreshSeconds);
+    const text = edgeRefreshText();
+    expect(text).toContain(`at the edge every ${duration(PRO.refreshSeconds)}`);
+    expect(text).toContain(
+      `GitHub data behind them refreshes every ${FACTS.dataRefreshMinutes} minutes on both plans`,
+    );
   });
 });
 

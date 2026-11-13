@@ -2,7 +2,7 @@ import { PRESETS, SIZES, THEMES } from "@/lib/banner";
 import { FREE, PRO } from "@/lib/pro/entitlements";
 import { proRepoLink } from "@/lib/pro/repo";
 import { site } from "@/lib/site";
-import { FACTS, quota } from "./facts";
+import { edgeRefreshText, FACTS, quota } from "./facts";
 import { duration } from "./format";
 import type {
   Block,
@@ -48,7 +48,7 @@ export const PLANS: readonly Plan[] = [
       `Hide the small ${site.name} mark on your saved banners.`,
       "Animate the contribution graph of a saved SVG banner.",
       "Choose which saved banner is served at your own profile URL, such as `/your-login.svg`.",
-      `Saved banners refresh every ${duration(PRO.refreshSeconds)} instead of every ${duration(FREE.refreshSeconds)}.`,
+      edgeRefreshText(),
     ],
   },
 ];
@@ -156,6 +156,11 @@ export const COMPARISON: Extract<Block, { type: "table" }> = {
       `Every ${duration(FREE.refreshSeconds)}`,
       `Every ${duration(PRO.refreshSeconds)}`,
     ],
+    [
+      "Refresh of the GitHub data behind a banner",
+      `Every ${FACTS.dataRefreshMinutes} minutes`,
+      `Every ${FACTS.dataRefreshMinutes} minutes`,
+    ],
   ],
 };
 
@@ -164,7 +169,7 @@ const [free, pro] = PLANS;
 export const pricing: ContentPage = {
   path: "/pricing",
   title: "Pricing",
-  description: `${site.name} is free for public GitHub data. Pro costs one star on the repository: ${PRO.maxSavedBanners} saved banners, no brand mark, animated SVG, faster refresh.`,
+  description: `${site.name} is free for public GitHub data. Pro costs one star on the repository: ${PRO.maxSavedBanners} saved banners, no brand mark, animated SVG, a shorter edge cache.`,
   updated: "2026-11-13",
   heading: "Pricing",
   lead: `Every banner, preset, size and theme is free and needs no account. Pro is not for sale: it costs one star on the ${site.name} repository.`,
