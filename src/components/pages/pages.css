@@ -108,9 +108,15 @@
     width: 100%;
     height: 100%;
   }
+  /* minmax(0, …): a scrolling swatch row or a long snippet must not widen the page. */
   .gb-entity-tools {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--spacing-5);
+  }
+  .gb-entity > *,
+  .gb-entity-section > * {
+    min-width: 0;
   }
   .gb-entity-themes {
     display: flex;
