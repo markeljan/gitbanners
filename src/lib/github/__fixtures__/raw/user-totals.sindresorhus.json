@@ -1,0 +1,13 @@
+{
+  "data": {
+    "user": {
+      "contributionsCollection": {
+        "totalCommitContributions": 5079,
+        "totalPullRequestContributions": 955,
+        "totalIssueContributions": 37,
+        "totalPullRequestReviewContributions": 81,
+        "totalRepositoriesWithContributedCommits": 532
+      }
+    }
+  }
+}

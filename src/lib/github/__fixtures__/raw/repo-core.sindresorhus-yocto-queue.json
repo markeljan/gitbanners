@@ -1,0 +1,52 @@
+{
+  "data": {
+    "repository": {
+      "name": "yocto-queue",
+      "nameWithOwner": "sindresorhus/yocto-queue",
+      "description": "Tiny queue data structure",
+      "homepageUrl": "",
+      "stargazerCount": 440,
+      "forkCount": 33,
+      "watchers": { "totalCount": 5 },
+      "openIssues": { "totalCount": 0 },
+      "openPullRequests": { "totalCount": 0 },
+      "primaryLanguage": { "name": "JavaScript", "color": "#f1e05a" },
+      "languages": {
+        "totalSize": 3504,
+        "edges": [
+          {
+            "size": 3331,
+            "node": { "name": "JavaScript", "color": "#f1e05a" }
+          },
+          { "size": 173, "node": { "name": "TypeScript", "color": "#3178c6" } }
+        ]
+      },
+      "licenseInfo": { "spdxId": "MIT" },
+      "repositoryTopics": {
+        "nodes": [
+          { "topic": { "name": "queue" } },
+          { "topic": { "name": "queue-data-stucture" } },
+          { "topic": { "name": "algorithms-and-data-structures" } },
+          { "topic": { "name": "npm-package" } }
+        ]
+      },
+      "latestRelease": {
+        "name": "",
+        "tagName": "v1.2.2",
+        "publishedAt": "2025-11-11T06:32:16Z"
+      },
+      "defaultBranchRef": { "target": { "history": { "totalCount": 18 } } },
+      "createdAt": "2020-11-24T05:48:34Z",
+      "pushedAt": "2026-09-18T19:18:16Z",
+      "isArchived": false,
+      "isFork": false,
+      "isPrivate": false,
+      "visibility": "PUBLIC",
+      "owner": {
+        "__typename": "User",
+        "login": "sindresorhus",
+        "avatarUrl": "https://avatars.githubusercontent.com/u/170270?s=128&u=34acd557a042ac478d273a4621570cadb6b0bd89&v=4"
+      }
+    }
+  }
+}

@@ -1,3 +1,5 @@
+"use no memo";
+
 // Dependency-free colour helpers: sRGB <-> OKLab, WCAG contrast, alpha flattening and the heatmap ramp.
 // Checked on 2026-11-12: hslToHex reproduces Atom One Dark's hex values, and heatRamp reproduces
 // GitHub's own dark and light contribution ramps to within a few RGB steps.

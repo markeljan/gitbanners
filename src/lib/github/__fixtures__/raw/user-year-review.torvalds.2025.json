@@ -1,0 +1,35 @@
+{
+  "data": {
+    "user": {
+      "contributionsCollection": {
+        "commitContributionsByRepository": [
+          {
+            "repository": {
+              "nameWithOwner": "torvalds/linux",
+              "isPrivate": false,
+              "visibility": "PUBLIC"
+            },
+            "contributions": { "totalCount": 2786 }
+          },
+          {
+            "repository": {
+              "nameWithOwner": "torvalds/GuitarPedal",
+              "isPrivate": false,
+              "visibility": "PUBLIC"
+            },
+            "contributions": { "totalCount": 80 }
+          },
+          {
+            "repository": {
+              "nameWithOwner": "torvalds/1590A",
+              "isPrivate": false,
+              "visibility": "PUBLIC"
+            },
+            "contributions": { "totalCount": 56 }
+          }
+        ]
+      },
+      "previous": { "contributionCalendar": { "totalContributions": 2892 } }
+    }
+  }
+}

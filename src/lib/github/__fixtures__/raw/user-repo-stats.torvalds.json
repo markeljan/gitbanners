@@ -1,0 +1,23 @@
+{
+  "data": {
+    "user": {
+      "repositories": {
+        "pageInfo": {
+          "hasNextPage": false,
+          "endCursor": "Y3Vyc29yOnYyOpLNAYHOSvG-mg=="
+        },
+        "nodes": [
+          { "stargazerCount": 255542 },
+          { "stargazerCount": 4533 },
+          { "stargazerCount": 2493 },
+          { "stargazerCount": 2200 },
+          { "stargazerCount": 1084 },
+          { "stargazerCount": 593 },
+          { "stargazerCount": 583 },
+          { "stargazerCount": 402 },
+          { "stargazerCount": 385 }
+        ]
+      }
+    }
+  }
+}

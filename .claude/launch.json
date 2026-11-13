@@ -1,0 +1,20 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "start",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "GITHUB_TOKEN=${GITHUB_TOKEN:-$(gh auth token 2>/dev/null)} PORT=3100 exec bunx next start -p 3100"
+      ],
+      "port": 3100
+    }
+  ]
+}

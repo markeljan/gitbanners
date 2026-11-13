@@ -1,0 +1,309 @@
+{
+  "data": {
+    "organization": {
+      "repositories": {
+        "nodes": [
+          { "stargazerCount": 143499, "forkCount": 32802 },
+          { "stargazerCount": 44752, "forkCount": 3573 },
+          { "stargazerCount": 32490, "forkCount": 1405 },
+          { "stargazerCount": 31333, "forkCount": 2490 },
+          { "stargazerCount": 27906, "forkCount": 5600 },
+          { "stargazerCount": 24295, "forkCount": 1074 },
+          { "stargazerCount": 21047, "forkCount": 6781 },
+          { "stargazerCount": 16584, "forkCount": 3914 },
+          { "stargazerCount": 14310, "forkCount": 5449 },
+          { "stargazerCount": 14186, "forkCount": 404 },
+          { "stargazerCount": 10632, "forkCount": 453 },
+          { "stargazerCount": 9915, "forkCount": 707 },
+          { "stargazerCount": 9844, "forkCount": 328 },
+          { "stargazerCount": 7770, "forkCount": 265 },
+          { "stargazerCount": 7766, "forkCount": 733 },
+          { "stargazerCount": 7709, "forkCount": 1750 },
+          { "stargazerCount": 6728, "forkCount": 1059 },
+          { "stargazerCount": 5873, "forkCount": 653 },
+          { "stargazerCount": 5760, "forkCount": 333 },
+          { "stargazerCount": 5563, "forkCount": 349 },
+          { "stargazerCount": 5165, "forkCount": 1853 },
+          { "stargazerCount": 4798, "forkCount": 2238 },
+          { "stargazerCount": 4034, "forkCount": 1227 },
+          { "stargazerCount": 3757, "forkCount": 118 },
+          { "stargazerCount": 3583, "forkCount": 117 },
+          { "stargazerCount": 3020, "forkCount": 408 },
+          { "stargazerCount": 3005, "forkCount": 762 },
+          { "stargazerCount": 2781, "forkCount": 130 },
+          { "stargazerCount": 2664, "forkCount": 315 },
+          { "stargazerCount": 2522, "forkCount": 295 },
+          { "stargazerCount": 2508, "forkCount": 400 },
+          { "stargazerCount": 2474, "forkCount": 355 },
+          { "stargazerCount": 2174, "forkCount": 445 },
+          { "stargazerCount": 1967, "forkCount": 22 },
+          { "stargazerCount": 1918, "forkCount": 59 },
+          { "stargazerCount": 1886, "forkCount": 119 },
+          { "stargazerCount": 1683, "forkCount": 194 },
+          { "stargazerCount": 1623, "forkCount": 572 },
+          { "stargazerCount": 1398, "forkCount": 95 },
+          { "stargazerCount": 1321, "forkCount": 92 },
+          { "stargazerCount": 1304, "forkCount": 41 },
+          { "stargazerCount": 1294, "forkCount": 58 },
+          { "stargazerCount": 1286, "forkCount": 24 },
+          { "stargazerCount": 1054, "forkCount": 225 },
+          { "stargazerCount": 1025, "forkCount": 47 },
+          { "stargazerCount": 915, "forkCount": 94 },
+          { "stargazerCount": 836, "forkCount": 70 },
+          { "stargazerCount": 803, "forkCount": 58 },
+          { "stargazerCount": 748, "forkCount": 86 },
+          { "stargazerCount": 729, "forkCount": 303 },
+          { "stargazerCount": 709, "forkCount": 75 },
+          { "stargazerCount": 661, "forkCount": 46 },
+          { "stargazerCount": 643, "forkCount": 78 },
+          { "stargazerCount": 640, "forkCount": 125 },
+          { "stargazerCount": 629, "forkCount": 92 },
+          { "stargazerCount": 629, "forkCount": 29 },
+          { "stargazerCount": 619, "forkCount": 124 },
+          { "stargazerCount": 619, "forkCount": 38 },
+          { "stargazerCount": 600, "forkCount": 106 },
+          { "stargazerCount": 582, "forkCount": 47 },
+          { "stargazerCount": 574, "forkCount": 93 },
+          { "stargazerCount": 569, "forkCount": 25 },
+          { "stargazerCount": 527, "forkCount": 82 },
+          { "stargazerCount": 521, "forkCount": 56 },
+          { "stargazerCount": 517, "forkCount": 127 },
+          { "stargazerCount": 512, "forkCount": 360 },
+          { "stargazerCount": 508, "forkCount": 154 },
+          { "stargazerCount": 464, "forkCount": 194 },
+          { "stargazerCount": 460, "forkCount": 222 },
+          { "stargazerCount": 451, "forkCount": 80 },
+          { "stargazerCount": 449, "forkCount": 93 },
+          { "stargazerCount": 443, "forkCount": 58 },
+          { "stargazerCount": 337, "forkCount": 27 },
+          { "stargazerCount": 335, "forkCount": 78 },
+          { "stargazerCount": 329, "forkCount": 46 },
+          { "stargazerCount": 312, "forkCount": 41 },
+          { "stargazerCount": 280, "forkCount": 196 },
+          { "stargazerCount": 278, "forkCount": 26 },
+          { "stargazerCount": 262, "forkCount": 15 },
+          { "stargazerCount": 225, "forkCount": 15 },
+          { "stargazerCount": 224, "forkCount": 51 },
+          { "stargazerCount": 203, "forkCount": 9 },
+          { "stargazerCount": 195, "forkCount": 15 },
+          { "stargazerCount": 195, "forkCount": 30 },
+          { "stargazerCount": 191, "forkCount": 59 },
+          { "stargazerCount": 178, "forkCount": 34 },
+          { "stargazerCount": 169, "forkCount": 16 },
+          { "stargazerCount": 166, "forkCount": 46 },
+          { "stargazerCount": 166, "forkCount": 34 },
+          { "stargazerCount": 158, "forkCount": 15 },
+          { "stargazerCount": 144, "forkCount": 29 },
+          { "stargazerCount": 140, "forkCount": 22 },
+          { "stargazerCount": 138, "forkCount": 49 },
+          { "stargazerCount": 135, "forkCount": 7 },
+          { "stargazerCount": 134, "forkCount": 39 },
+          { "stargazerCount": 126, "forkCount": 32 },
+          { "stargazerCount": 122, "forkCount": 9 },
+          { "stargazerCount": 117, "forkCount": 25 },
+          { "stargazerCount": 115, "forkCount": 6 },
+          { "stargazerCount": 110, "forkCount": 9 }
+        ]
+      },
+      "languageRepos": {
+        "nodes": [
+          {
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "languages": {
+              "totalSize": 84618537,
+              "edges": [
+                {
+                  "size": 40031162,
+                  "node": { "name": "JavaScript", "color": "#f1e05a" }
+                },
+                {
+                  "size": 29569337,
+                  "node": { "name": "TypeScript", "color": "#3178c6" }
+                },
+                {
+                  "size": 13684149,
+                  "node": { "name": "Rust", "color": "#dea584" }
+                },
+                {
+                  "size": 654676,
+                  "node": { "name": "MDX", "color": "#fcb32c" }
+                },
+                {
+                  "size": 587878,
+                  "node": { "name": "CSS", "color": "#663399" }
+                },
+                {
+                  "size": 42021,
+                  "node": { "name": "Shell", "color": "#89e051" }
+                },
+                { "size": 14477, "node": { "name": "Go", "color": "#00ADD8" } },
+                {
+                  "size": 11530,
+                  "node": { "name": "Python", "color": "#3572A5" }
+                }
+              ]
+            }
+          },
+          {
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "languages": {
+              "totalSize": 315095,
+              "edges": [
+                {
+                  "size": 309298,
+                  "node": { "name": "TypeScript", "color": "#3178c6" }
+                },
+                {
+                  "size": 2976,
+                  "node": { "name": "Shell", "color": "#89e051" }
+                },
+                { "size": 1242, "node": { "name": "NSIS", "color": null } },
+                { "size": 836, "node": { "name": "HTML", "color": "#e34c26" } },
+                {
+                  "size": 624,
+                  "node": { "name": "JavaScript", "color": "#f1e05a" }
+                },
+                {
+                  "size": 119,
+                  "node": { "name": "Batchfile", "color": "#C1F12E" }
+                }
+              ]
+            }
+          },
+          {
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "languages": {
+              "totalSize": 638112,
+              "edges": [
+                {
+                  "size": 635240,
+                  "node": { "name": "TypeScript", "color": "#3178c6" }
+                },
+                {
+                  "size": 2872,
+                  "node": { "name": "JavaScript", "color": "#f1e05a" }
+                }
+              ]
+            }
+          },
+          {
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "languages": {
+              "totalSize": 18969876,
+              "edges": [
+                {
+                  "size": 15573304,
+                  "node": { "name": "Rust", "color": "#dea584" }
+                },
+                {
+                  "size": 1851508,
+                  "node": { "name": "TypeScript", "color": "#3178c6" }
+                },
+                {
+                  "size": 1156340,
+                  "node": { "name": "MDX", "color": "#fcb32c" }
+                },
+                {
+                  "size": 323291,
+                  "node": { "name": "JavaScript", "color": "#f1e05a" }
+                },
+                {
+                  "size": 25246,
+                  "node": { "name": "PowerShell", "color": "#012456" }
+                },
+                {
+                  "size": 17423,
+                  "node": { "name": "Shell", "color": "#89e051" }
+                },
+                {
+                  "size": 12854,
+                  "node": { "name": "CSS", "color": "#663399" }
+                },
+                {
+                  "size": 5090,
+                  "node": { "name": "Dockerfile", "color": "#384d54" }
+                }
+              ]
+            }
+          },
+          {
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "languages": {
+              "totalSize": 38598958,
+              "edges": [
+                {
+                  "size": 32526299,
+                  "node": { "name": "TypeScript", "color": "#3178c6" }
+                },
+                {
+                  "size": 5715832,
+                  "node": { "name": "MDX", "color": "#fcb32c" }
+                },
+                {
+                  "size": 310622,
+                  "node": { "name": "JavaScript", "color": "#f1e05a" }
+                },
+                {
+                  "size": 14165,
+                  "node": { "name": "CSS", "color": "#663399" }
+                },
+                {
+                  "size": 12995,
+                  "node": { "name": "Shell", "color": "#89e051" }
+                },
+                {
+                  "size": 12342,
+                  "node": { "name": "Vue", "color": "#41b883" }
+                },
+                {
+                  "size": 4125,
+                  "node": { "name": "Open Policy Agent", "color": "#7d9199" }
+                },
+                {
+                  "size": 1056,
+                  "node": { "name": "Dockerfile", "color": "#384d54" }
+                }
+              ]
+            }
+          },
+          {
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "languages": {
+              "totalSize": 454350,
+              "edges": [
+                {
+                  "size": 354095,
+                  "node": { "name": "JavaScript", "color": "#f1e05a" }
+                },
+                {
+                  "size": 95592,
+                  "node": { "name": "TypeScript", "color": "#3178c6" }
+                },
+                { "size": 2682, "node": { "name": "CSS", "color": "#663399" } },
+                {
+                  "size": 1703,
+                  "node": { "name": "HTML", "color": "#e34c26" }
+                },
+                { "size": 174, "node": { "name": "Pug", "color": "#a86454" } },
+                {
+                  "size": 80,
+                  "node": { "name": "CoffeeScript", "color": "#244776" }
+                },
+                {
+                  "size": 24,
+                  "node": { "name": "Batchfile", "color": "#C1F12E" }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,480 @@
+{
+  "kind": "repo",
+  "owner": {
+    "login": "vercel",
+    "avatarUrl": "https://avatars.githubusercontent.com/u/14985020?s=128&v=4",
+    "kind": "org"
+  },
+  "name": "next.js",
+  "fullName": "vercel/next.js",
+  "description": "The React Framework",
+  "homepageUrl": "https://nextjs.org",
+  "stars": 143499,
+  "forks": 32802,
+  "watchers": 1620,
+  "openIssues": 1131,
+  "openPullRequests": 2824,
+  "language": { "name": "JavaScript", "color": "#f1e05a" },
+  "languages": [
+    {
+      "name": "JavaScript",
+      "color": "#f1e05a",
+      "percent": 47.3,
+      "bytes": 40031162
+    },
+    {
+      "name": "TypeScript",
+      "color": "#3178c6",
+      "percent": 34.9,
+      "bytes": 29569337
+    },
+    { "name": "Rust", "color": "#dea584", "percent": 16.2, "bytes": 13684149 },
+    { "name": "MDX", "color": "#fcb32c", "percent": 0.8, "bytes": 654676 },
+    { "name": "CSS", "color": "#663399", "percent": 0.7, "bytes": 587878 },
+    { "name": "Shell", "color": "#89e051", "percent": 0.1, "bytes": 42021 }
+  ],
+  "license": "MIT",
+  "topics": [
+    "react",
+    "server-rendering",
+    "universal",
+    "node",
+    "components",
+    "browser",
+    "nextjs",
+    "vercel"
+  ],
+  "createdAt": "2016-10-05T23:32:51Z",
+  "pushedAt": "2026-11-13T07:27:10Z",
+  "isArchived": false,
+  "isFork": false,
+  "latestRelease": {
+    "tag": "v16.4.6",
+    "name": "v16.4.6",
+    "publishedAt": "2026-11-09T20:27:17Z"
+  },
+  "commits": 36800,
+  "activity": {
+    "total": 6213,
+    "weeks": [
+      {
+        "week": "2025-11-16",
+        "commits": 100,
+        "days": [1, 15, 13, 17, 21, 28, 5]
+      },
+      { "week": "2025-11-23", "commits": 74, "days": [2, 17, 9, 24, 15, 5, 2] },
+      {
+        "week": "2025-11-30",
+        "commits": 104,
+        "days": [4, 22, 23, 17, 24, 13, 1]
+      },
+      { "week": "2025-12-07", "commits": 61, "days": [0, 3, 17, 6, 16, 15, 4] },
+      {
+        "week": "2025-12-14",
+        "commits": 88,
+        "days": [1, 27, 16, 14, 11, 16, 3]
+      },
+      { "week": "2025-12-21", "commits": 20, "days": [0, 7, 5, 2, 0, 2, 4] },
+      { "week": "2025-12-28", "commits": 15, "days": [4, 5, 1, 1, 0, 0, 4] },
+      {
+        "week": "2026-01-04",
+        "commits": 106,
+        "days": [3, 10, 23, 27, 22, 21, 0]
+      },
+      {
+        "week": "2026-01-11",
+        "commits": 121,
+        "days": [8, 35, 14, 21, 9, 28, 6]
+      },
+      {
+        "week": "2026-01-18",
+        "commits": 108,
+        "days": [0, 21, 19, 21, 22, 21, 4]
+      },
+      {
+        "week": "2026-01-25",
+        "commits": 137,
+        "days": [4, 24, 22, 20, 32, 30, 5]
+      },
+      {
+        "week": "2026-02-01",
+        "commits": 84,
+        "days": [0, 12, 17, 17, 13, 21, 4]
+      },
+      {
+        "week": "2026-02-08",
+        "commits": 147,
+        "days": [12, 13, 19, 37, 25, 33, 8]
+      },
+      {
+        "week": "2026-02-15",
+        "commits": 116,
+        "days": [0, 16, 31, 21, 16, 27, 5]
+      },
+      {
+        "week": "2026-02-22",
+        "commits": 168,
+        "days": [2, 20, 37, 24, 47, 32, 6]
+      },
+      {
+        "week": "2026-03-01",
+        "commits": 152,
+        "days": [7, 21, 36, 41, 18, 24, 5]
+      },
+      {
+        "week": "2026-03-08",
+        "commits": 133,
+        "days": [0, 24, 24, 12, 27, 35, 11]
+      },
+      {
+        "week": "2026-03-15",
+        "commits": 156,
+        "days": [3, 31, 39, 19, 37, 27, 0]
+      },
+      {
+        "week": "2026-03-22",
+        "commits": 77,
+        "days": [3, 10, 14, 14, 16, 11, 9]
+      },
+      {
+        "week": "2026-03-29",
+        "commits": 96,
+        "days": [1, 13, 24, 20, 10, 22, 6]
+      },
+      {
+        "week": "2026-04-05",
+        "commits": 167,
+        "days": [5, 18, 31, 40, 33, 28, 12]
+      },
+      {
+        "week": "2026-04-12",
+        "commits": 151,
+        "days": [8, 30, 26, 38, 22, 21, 6]
+      },
+      { "week": "2026-04-19", "commits": 60, "days": [0, 16, 14, 3, 3, 19, 5] },
+      {
+        "week": "2026-04-26",
+        "commits": 81,
+        "days": [0, 14, 23, 18, 14, 11, 1]
+      },
+      {
+        "week": "2026-05-03",
+        "commits": 98,
+        "days": [0, 10, 17, 20, 27, 21, 3]
+      },
+      { "week": "2026-05-10", "commits": 56, "days": [3, 8, 16, 13, 8, 8, 0] },
+      {
+        "week": "2026-05-17",
+        "commits": 77,
+        "days": [2, 17, 15, 17, 18, 7, 1]
+      },
+      {
+        "week": "2026-05-24",
+        "commits": 88,
+        "days": [0, 5, 15, 19, 19, 29, 1]
+      },
+      {
+        "week": "2026-05-31",
+        "commits": 100,
+        "days": [2, 12, 21, 25, 17, 21, 2]
+      },
+      {
+        "week": "2026-06-07",
+        "commits": 94,
+        "days": [11, 19, 26, 11, 12, 13, 2]
+      },
+      {
+        "week": "2026-06-14",
+        "commits": 94,
+        "days": [0, 19, 16, 25, 22, 11, 1]
+      },
+      {
+        "week": "2026-06-21",
+        "commits": 103,
+        "days": [0, 19, 22, 31, 18, 13, 0]
+      },
+      {
+        "week": "2026-06-28",
+        "commits": 110,
+        "days": [2, 22, 25, 24, 25, 10, 2]
+      },
+      {
+        "week": "2026-07-05",
+        "commits": 88,
+        "days": [0, 17, 22, 16, 16, 17, 0]
+      },
+      {
+        "week": "2026-07-12",
+        "commits": 82,
+        "days": [4, 17, 13, 21, 18, 9, 0]
+      },
+      {
+        "week": "2026-07-19",
+        "commits": 156,
+        "days": [1, 14, 45, 24, 25, 22, 25]
+      },
+      {
+        "week": "2026-07-26",
+        "commits": 134,
+        "days": [2, 27, 39, 21, 26, 18, 1]
+      },
+      {
+        "week": "2026-08-02",
+        "commits": 140,
+        "days": [2, 24, 21, 35, 21, 33, 4]
+      },
+      {
+        "week": "2026-08-09",
+        "commits": 141,
+        "days": [2, 38, 24, 28, 14, 25, 10]
+      },
+      {
+        "week": "2026-08-16",
+        "commits": 114,
+        "days": [8, 4, 24, 29, 18, 30, 1]
+      },
+      {
+        "week": "2026-08-23",
+        "commits": 195,
+        "days": [2, 39, 53, 20, 42, 33, 6]
+      },
+      { "week": "2026-08-30", "commits": 60, "days": [0, 17, 14, 8, 13, 6, 2] },
+      {
+        "week": "2026-09-06",
+        "commits": 122,
+        "days": [0, 7, 23, 39, 28, 22, 3]
+      },
+      {
+        "week": "2026-09-13",
+        "commits": 139,
+        "days": [0, 31, 31, 25, 18, 28, 6]
+      },
+      {
+        "week": "2026-09-20",
+        "commits": 211,
+        "days": [1, 10, 39, 74, 31, 50, 6]
+      },
+      {
+        "week": "2026-09-27",
+        "commits": 184,
+        "days": [4, 29, 22, 13, 52, 56, 8]
+      },
+      {
+        "week": "2026-10-04",
+        "commits": 186,
+        "days": [3, 37, 43, 35, 13, 46, 9]
+      },
+      {
+        "week": "2026-10-11",
+        "commits": 142,
+        "days": [0, 31, 27, 33, 37, 13, 1]
+      },
+      {
+        "week": "2026-10-18",
+        "commits": 200,
+        "days": [0, 41, 32, 42, 42, 28, 15]
+      },
+      {
+        "week": "2026-10-25",
+        "commits": 189,
+        "days": [0, 28, 54, 32, 26, 45, 4]
+      },
+      {
+        "week": "2026-11-01",
+        "commits": 212,
+        "days": [3, 29, 54, 51, 40, 22, 13]
+      },
+      {
+        "week": "2026-11-08",
+        "commits": 176,
+        "days": [9, 31, 31, 39, 54, 12, 0]
+      }
+    ]
+  },
+  "starHistory": [
+    { "week": "2026-04-19", "stars": 137533 },
+    { "week": "2026-04-26", "stars": 137692 },
+    { "week": "2026-05-03", "stars": 137856 },
+    { "week": "2026-05-10", "stars": 138055 },
+    { "week": "2026-05-17", "stars": 138197 },
+    { "week": "2026-05-24", "stars": 138325 },
+    { "week": "2026-05-31", "stars": 138518 },
+    { "week": "2026-06-07", "stars": 138666 },
+    { "week": "2026-06-14", "stars": 138801 },
+    { "week": "2026-06-21", "stars": 138995 },
+    { "week": "2026-06-28", "stars": 139173 },
+    { "week": "2026-07-05", "stars": 139761 },
+    { "week": "2026-07-12", "stars": 139974 },
+    { "week": "2026-07-19", "stars": 140141 },
+    { "week": "2026-07-26", "stars": 140282 },
+    { "week": "2026-08-02", "stars": 140742 },
+    { "week": "2026-08-09", "stars": 140902 },
+    { "week": "2026-08-16", "stars": 141080 },
+    { "week": "2026-08-23", "stars": 141240 },
+    { "week": "2026-08-30", "stars": 141386 },
+    { "week": "2026-09-06", "stars": 141553 },
+    { "week": "2026-09-13", "stars": 141701 },
+    { "week": "2026-09-20", "stars": 142039 },
+    { "week": "2026-09-27", "stars": 142462 },
+    { "week": "2026-10-04", "stars": 142627 },
+    { "week": "2026-10-11", "stars": 142804 },
+    { "week": "2026-10-18", "stars": 142966 },
+    { "week": "2026-10-25", "stars": 143128 },
+    { "week": "2026-11-01", "stars": 143373 },
+    { "week": "2026-11-08", "stars": 143499 }
+  ],
+  "contributors": [
+    {
+      "login": "ijjk",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/22380829?v=4",
+      "contributions": 3296
+    },
+    {
+      "login": "timneutkens",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/6324199?v=4",
+      "contributions": 2873
+    },
+    {
+      "login": "sokra",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/1365881?v=4",
+      "contributions": 2765
+    },
+    {
+      "login": "huozhi",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/4800338?v=4",
+      "contributions": 1347
+    },
+    {
+      "login": "Timer",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/616428?v=4",
+      "contributions": 1239
+    },
+    {
+      "login": "eps1lon",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/12292047?v=4",
+      "contributions": 896
+    },
+    {
+      "login": "mischnic",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/4586894?v=4",
+      "contributions": 877
+    },
+    {
+      "login": "ztanner",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/1939140?v=4",
+      "contributions": 738
+    },
+    {
+      "login": "kdy1",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/29931815?v=4",
+      "contributions": 736
+    },
+    {
+      "login": "shuding",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/3676859?v=4",
+      "contributions": 676
+    },
+    {
+      "login": "bgw",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/180404?v=4",
+      "contributions": 656
+    },
+    {
+      "login": "unstubbable",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/761683?v=4",
+      "contributions": 636
+    },
+    {
+      "login": "wbinnssmith",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/755844?v=4",
+      "contributions": 609
+    },
+    {
+      "login": "styfle",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/229881?v=4",
+      "contributions": 576
+    },
+    {
+      "login": "devjiwonchoi",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/120007119?v=4",
+      "contributions": 570
+    },
+    {
+      "login": "lukesandberg",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/210140?v=4",
+      "contributions": 510
+    },
+    {
+      "login": "arunoda",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/50838?v=4",
+      "contributions": 397
+    },
+    {
+      "login": "kwonoj",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/1210596?v=4",
+      "contributions": 390
+    },
+    {
+      "login": "ForsakenHarmony",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/8845940?v=4",
+      "contributions": 357
+    },
+    {
+      "login": "leerob",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/9113740?v=4",
+      "contributions": 355
+    },
+    {
+      "login": "balazsorban44",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/18369201?v=4",
+      "contributions": 331
+    },
+    {
+      "login": "icyJoseph",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/21013447?v=4",
+      "contributions": 323
+    },
+    {
+      "login": "acdlite",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/3624098?v=4",
+      "contributions": 314
+    },
+    {
+      "login": "wyattjoh",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/633002?v=4",
+      "contributions": 285
+    },
+    {
+      "login": "gnoff",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/2716369?v=4",
+      "contributions": 280
+    },
+    {
+      "login": "alexkirsz",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/1621758?v=4",
+      "contributions": 280
+    },
+    {
+      "login": "lubieowoce",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/13698226?v=4",
+      "contributions": 271
+    },
+    {
+      "login": "delbaoliveira",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/32464864?v=4",
+      "contributions": 267
+    },
+    {
+      "login": "nkzawa",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/775227?v=4",
+      "contributions": 239
+    },
+    {
+      "login": "jridgewell",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/112982?v=4",
+      "contributions": 234
+    }
+  ],
+  "contributorCount": 420,
+  "fetchedAt": "2026-11-13T07:31:57Z"
+}

@@ -1,3 +1,5 @@
+"use no memo";
+
 import type {
   BannerPreset,
   EntityKind,
@@ -91,7 +93,7 @@ export const PRESETS = [
     kind: "repo",
     name: "Contributors",
     description: "The people behind the repository, as an avatar grid.",
-    sections: ["header", "contributors"],
+    sections: ["header", "stats", "contributors"],
   },
   {
     id: "social",
@@ -145,6 +147,12 @@ export interface PresetDefaults {
   /** Repositories / contributors / people to show. null = fit the layout. */
   count: number | null;
   hide: readonly HideId[];
+  /**
+   * `bars` draws commit activity as the compact weekly bar chart even where
+   * the calendar would fit: for presets whose chart supports other content
+   * instead of leading. Left out, the size of the canvas decides.
+   */
+  chart?: "bars";
 }
 
 export const PRESET_DEFAULTS: Partial<Record<PresetKey, PresetDefaults>> = {
@@ -247,12 +255,13 @@ export const PRESET_DEFAULTS: Partial<Record<PresetKey, PresetDefaults>> = {
     stats: ["release", "openIssues", "openPullRequests", "watchers"],
     count: null,
     hide: ["topics"],
+    chart: "bars",
   },
   "org/overview": {
     size: "readme",
     width: null,
     stats: ["repositories", "stars", "members", "followers"],
-    count: 12,
+    count: null,
     hide: [],
   },
   "org/repos": {
@@ -274,6 +283,35 @@ export const PRESET_DEFAULTS: Partial<Record<PresetKey, PresetDefaults>> = {
 /** Preset ids per kind, in picker order. The first one is the default. */
 export function presetsFor(kind: EntityKind): readonly BannerPreset[] {
   return PRESETS.filter((p) => p.kind === kind);
+}
+
+/**
+ * The preset `id` names for this kind, or the kind's default when the id is
+ * unknown or belongs to another kind. Never an error: a mistyped preset in an
+ * embedded image URL must still draw a banner.
+ */
+export function getPreset(
+  kind: EntityKind,
+  id: string | null | undefined,
+): BannerPreset {
+  const presets = presetsFor(kind);
+  return presets.find((preset) => preset.id === id) ?? presets[0];
+}
+
+/** The preset behind the bare URL of a kind (`/{owner}`, `/{owner}/{repo}`). */
+export function defaultPresetId(kind: EntityKind): string {
+  return getPreset(kind, null).id;
+}
+
+/**
+ * What the preset resolves to when the URL carries no options, or `null` for
+ * a preset without an entry (it then inherits `DEFAULT_OPTIONS`).
+ */
+export function presetDefaults(
+  kind: EntityKind,
+  id: string,
+): PresetDefaults | null {
+  return PRESET_DEFAULTS[`${kind}/${id}` as PresetKey] ?? null;
 }
 
 /**

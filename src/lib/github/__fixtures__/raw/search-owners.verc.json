@@ -1,0 +1,44 @@
+{
+  "data": {
+    "search": {
+      "nodes": [
+        {
+          "__typename": "Organization",
+          "login": "vercel",
+          "name": "Vercel",
+          "avatarUrl": "https://avatars.githubusercontent.com/u/14985020?s=64&v=4"
+        },
+        {
+          "__typename": "Organization",
+          "login": "vercel-labs",
+          "name": "Vercel Labs",
+          "avatarUrl": "https://avatars.githubusercontent.com/u/108547162?s=64&v=4"
+        },
+        {
+          "__typename": "User",
+          "login": "verciless",
+          "name": "Marshal <𝟑 .ᐟ",
+          "avatarUrl": "https://avatars.githubusercontent.com/u/121318141?s=64&u=1168bba6eb39143775499a17913f6d7e98813544&v=4"
+        },
+        {
+          "__typename": "Organization",
+          "login": "vercidium-patreon",
+          "name": "Vercidium",
+          "avatarUrl": "https://avatars.githubusercontent.com/u/159610392?s=64&v=4"
+        },
+        {
+          "__typename": "User",
+          "login": "Vercidium",
+          "name": "Vercidium",
+          "avatarUrl": "https://avatars.githubusercontent.com/u/12014138?s=64&u=88e6bee9bf99cd2a9a58902a3b010291547fae4e&v=4"
+        },
+        {
+          "__typename": "Organization",
+          "login": "vercel-community",
+          "name": "Vercel Community",
+          "avatarUrl": "https://avatars.githubusercontent.com/u/88905828?s=64&v=4"
+        }
+      ]
+    }
+  }
+}

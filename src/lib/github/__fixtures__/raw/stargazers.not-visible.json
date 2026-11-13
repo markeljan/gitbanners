@@ -1,0 +1,12 @@
+{
+  "data": {
+    "repository": {
+      "stargazerCount": 143499,
+      "stargazers": {
+        "totalCount": 0,
+        "pageInfo": { "hasNextPage": false, "endCursor": null },
+        "edges": []
+      }
+    }
+  }
+}

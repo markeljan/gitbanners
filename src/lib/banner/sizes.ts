@@ -1,3 +1,5 @@
+"use no memo";
+
 import type { BannerSize, SizeId } from "@/lib/banner/types";
 
 /**
@@ -213,12 +215,30 @@ export const GITHUB_HEATMAP = {
   rows: 7,
 } as const;
 
-export interface HeatmapGeometry {
+/** A heatmap grid sized to a box: cell metrics plus the pixels it occupies. */
+export interface HeatmapFit {
   cell: number;
   gap: number;
   radius: number;
   width: number;
   height: number;
+}
+
+/**
+ * Corner radius for a cell: GitHub's 0.2 of the cell edge, in whole pixels,
+ * except that 2 px becomes 2.25 px.
+ *
+ * The quarter pixel is invisible but decides whether the SVG can be animated:
+ * the renderer writes a rounded cell as a path whose control points are
+ * `radius * 0.4477`, drops the separator in front of any such number below 1
+ * ("1.1.9"), and the animation matcher in `src/lib/render/animate-heatmap.ts`
+ * expects that separator. 2.25 is the smallest tidy radius whose control
+ * point stays at or above 1. Cells under 8 px keep their 1 px radius and
+ * cannot be animated until the matcher accepts both spellings.
+ */
+export function cellRadius(cell: number): number {
+  const radius = Math.max(1, Math.round(cell * 0.2));
+  return radius === 2 ? 2.25 : radius;
 }
 
 /** Largest GitHub-proportioned heatmap (gap 0.3 cell, radius 0.2 cell) that fits the box. */
@@ -227,10 +247,11 @@ export function fitHeatmap(
   maxHeight: number,
   cols: number = GITHUB_HEATMAP.cols,
   rows: number = GITHUB_HEATMAP.rows,
-): HeatmapGeometry {
+): HeatmapFit {
   const byWidth = maxWidth / (cols + (cols - 1) * 0.3);
   const byHeight = maxHeight / (rows + (rows - 1) * 0.3);
-  let cell = Math.max(2, Math.floor(Math.min(byWidth, byHeight)));
+  const smallest = Math.min(byWidth, byHeight);
+  let cell = Number.isFinite(smallest) ? Math.max(2, Math.floor(smallest)) : 2;
   let gap = Math.max(1, Math.round(cell * 0.3));
   // Rounding the gap up can overflow by a few pixels: step the cell down until it fits.
   while (
@@ -244,7 +265,7 @@ export function fitHeatmap(
   return {
     cell,
     gap,
-    radius: Math.max(1, Math.round(cell * 0.2)),
+    radius: cellRadius(cell),
     width: cols * cell + (cols - 1) * gap,
     height: rows * cell + (rows - 1) * gap,
   };

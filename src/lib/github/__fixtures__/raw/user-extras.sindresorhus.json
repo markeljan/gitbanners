@@ -1,0 +1,184 @@
+{
+  "data": {
+    "user": {
+      "pinnedItems": {
+        "nodes": [
+          {
+            "name": "type-fest",
+            "owner": { "login": "sindresorhus" },
+            "description": "A collection of essential TypeScript types",
+            "stargazerCount": 17502,
+            "forkCount": 747,
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "isFork": false,
+            "isArchived": false,
+            "primaryLanguage": { "name": "TypeScript", "color": "#3178c6" }
+          },
+          {
+            "name": "ky",
+            "owner": { "login": "sindresorhus" },
+            "description": "🌳 Tiny & elegant JavaScript HTTP client based on the Fetch API",
+            "stargazerCount": 17177,
+            "forkCount": 515,
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "isFork": false,
+            "isArchived": false,
+            "primaryLanguage": { "name": "TypeScript", "color": "#3178c6" }
+          },
+          {
+            "name": "awesome",
+            "owner": { "login": "sindresorhus" },
+            "description": "😎 Awesome lists about all kinds of interesting topics [NOTE: Pull requests are temporarily disabled until I have a chance to catch up with the existing ones]",
+            "stargazerCount": 536108,
+            "forkCount": 38372,
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "isFork": false,
+            "isArchived": false,
+            "primaryLanguage": null
+          },
+          {
+            "name": "awesome-chatgpt",
+            "owner": { "login": "sindresorhus" },
+            "description": "🤖 Awesome list for ChatGPT — an artificial intelligence chatbot developed by OpenAI [SUBMISSIONS ARE TEMPORARILY PAUSED BECAUSE OF TOO MANY LOW QUALITY SUBMISSIONS]",
+            "stargazerCount": 6500,
+            "forkCount": 490,
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "isFork": false,
+            "isArchived": false,
+            "primaryLanguage": null
+          },
+          {
+            "name": "KeyboardShortcuts",
+            "owner": { "login": "sindresorhus" },
+            "description": "⌨️ Add user-customizable global keyboard shortcuts (hotkeys) to your macOS app in minutes",
+            "stargazerCount": 2741,
+            "forkCount": 252,
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "isFork": false,
+            "isArchived": false,
+            "primaryLanguage": { "name": "Swift", "color": "#F05138" }
+          },
+          {
+            "name": "Defaults",
+            "owner": { "login": "sindresorhus" },
+            "description": "💾 Swifty and modern UserDefaults",
+            "stargazerCount": 2511,
+            "forkCount": 163,
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "isFork": false,
+            "isArchived": false,
+            "primaryLanguage": { "name": "Swift", "color": "#F05138" }
+          }
+        ]
+      },
+      "topRepos": {
+        "nodes": [
+          {
+            "name": "awesome",
+            "owner": { "login": "sindresorhus" },
+            "description": "😎 Awesome lists about all kinds of interesting topics [NOTE: Pull requests are temporarily disabled until I have a chance to catch up with the existing ones]",
+            "stargazerCount": 536108,
+            "forkCount": 38372,
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "isFork": false,
+            "isArchived": false,
+            "primaryLanguage": null,
+            "languages": { "totalSize": 0, "edges": [] }
+          },
+          {
+            "name": "awesome-nodejs",
+            "owner": { "login": "sindresorhus" },
+            "description": ":zap: Delightful Node.js packages and resources [BECAUSE OF TOO MUCH SPAM AND LOW-QUALITY SUBMISSIONS, SUBMISSIONS ARE PAUSED TEMPORARILY]",
+            "stargazerCount": 67480,
+            "forkCount": 6253,
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "isFork": false,
+            "isArchived": false,
+            "primaryLanguage": null,
+            "languages": { "totalSize": 0, "edges": [] }
+          },
+          {
+            "name": "awesome-electron",
+            "owner": { "login": "sindresorhus" },
+            "description": "Useful resources for creating apps with Electron [SUBMISSIONS ARE TEMPORARILY PAUSED BECAUSE I'M TIRED OF REVIEWING LOW-QUALITY STUFF]",
+            "stargazerCount": 27356,
+            "forkCount": 2065,
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "isFork": false,
+            "isArchived": false,
+            "primaryLanguage": null,
+            "languages": { "totalSize": 0, "edges": [] }
+          },
+          {
+            "name": "quick-look-plugins",
+            "owner": { "login": "sindresorhus" },
+            "description": "List of useful Quick Look plugins for developers",
+            "stargazerCount": 18808,
+            "forkCount": 551,
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "isFork": false,
+            "isArchived": false,
+            "primaryLanguage": null,
+            "languages": { "totalSize": 0, "edges": [] }
+          },
+          {
+            "name": "type-fest",
+            "owner": { "login": "sindresorhus" },
+            "description": "A collection of essential TypeScript types",
+            "stargazerCount": 17502,
+            "forkCount": 747,
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "isFork": false,
+            "isArchived": false,
+            "primaryLanguage": { "name": "TypeScript", "color": "#3178c6" },
+            "languages": {
+              "totalSize": 3850515,
+              "edges": [
+                {
+                  "size": 3560679,
+                  "node": { "name": "TypeScript", "color": "#3178c6" }
+                },
+                {
+                  "size": 289836,
+                  "node": { "name": "JavaScript", "color": "#f1e05a" }
+                }
+              ]
+            }
+          },
+          {
+            "name": "ky",
+            "owner": { "login": "sindresorhus" },
+            "description": "🌳 Tiny & elegant JavaScript HTTP client based on the Fetch API",
+            "stargazerCount": 17177,
+            "forkCount": 515,
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "isFork": false,
+            "isArchived": false,
+            "primaryLanguage": { "name": "TypeScript", "color": "#3178c6" },
+            "languages": {
+              "totalSize": 1083178,
+              "edges": [
+                {
+                  "size": 1083178,
+                  "node": { "name": "TypeScript", "color": "#3178c6" }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}

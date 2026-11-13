@@ -1,44 +1,140 @@
 /**
  * Deterministic SVG post-process: tag heatmap cells so CSS can animate them.
- * Works on the SVG text of takumi-js 2.20 `renderSvg` and satori 0.63 output.
- * Cells are rounded rects of a known size/radius whose fill is one of the heat palette colors.
+ *
+ * Works on the SVG text Takumi 2.20 writes. A heatmap cell is a rounded square
+ * of a known size and corner radius whose fill is one of the heat colours:
+ *
+ *   <path d="M12 10h6c1.1 0 2 .9 2 2v6c0 1.1-.9 2-2 2h-6c-1.1 0-2-.9-2-2v-6c0-1.1.9-2 2-2Z" fill="#2ea043"/>
+ *
+ * (a plain `<rect>` when the radius is 0). The writer minifies numbers: at most
+ * two decimals, no leading zero, and no separator before a sign or a leading
+ * dot, so the path is tokenised and compared numerically instead of as text.
  */
 export type HeatmapSpec = {
-  cell: number; // px, e.g. 20
-  radius: number; // px, e.g. 5
-  gap: number; // px, e.g. 5
-  colors: string[]; // heat palette, level 0..n (lowercase hex as written in the JSX)
-  expected?: number; // weeks * 7 — if given and the match count differs, the SVG is returned untouched
+  /** Cell edge in px. */
+  cell: number;
+  /** Corner radius in px (0 for square cells). */
+  radius: number;
+  /** Gap between cells in px. */
+  gap: number;
+  /** Heat palette, level 0..n, as hex colours (any case, 3 or 6 digits). */
+  colors: readonly string[];
+  /** weeks * 7. When given and the match count differs, nothing is changed. */
+  expected?: number;
 };
 
-const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-/** number formatting used by takumi's SVG writer: max 2 decimals, no leading zero, no trailing zeros */
-const n = (v: number) => {
-  const s = (Math.round(v * 100) / 100).toString();
-  return s.startsWith("0.")
-    ? s.slice(1)
-    : s.startsWith("-0.")
-      ? `-${s.slice(2)}`
-      : s;
+export type AnimateResult = {
+  svg: string;
+  cells: number;
+  engine: "takumi" | "none";
 };
 
-function takumiCellRe({ cell: w, radius: r, colors }: HeatmapSpec) {
-  const k = r * 0.5522847498; // cubic-bezier circle constant
-  const a = n(k);
-  const b = n(r - k);
-  const s = w - 2 * r;
-  // M{x+r} {y} h{s} c{k} 0 {r} {r-k} {r} {r} v{s} c0 {k}-{r-k} {r}-{r} {r} h-{s} c-{k} 0-{r}-{r-k}-{r}-{r} v-{s} c0-{k} {r-k}-{r} {r}-{r} Z
-  const tail = `h${s}c${a} 0 ${r} ${b} ${r} ${r}v${s}c0 ${a}-${b} ${r}-${r} ${r}h-${s}c-${a} 0-${r}-${b}-${r}-${r}v-${s}c0-${a} ${b}-${r} ${r}-${r}Z`;
-  return new RegExp(
-    `<path d="M(-?[\\d.]+) (-?[\\d.]+)${esc(tail)}" fill="(${colors.map(esc).join("|")})"/>`,
-    "g",
-  );
+/** Circle approximation constant of a cubic Bézier quarter arc. */
+const KAPPA = 0.5522847498;
+/** The writer rounds to 2 decimals; allow one unit of rounding on each side. */
+const EPSILON = 0.011;
+
+const NUMBER = "-?(?:\\d+\\.?\\d*|\\.\\d+)";
+const NUMBERS_RE = new RegExp(NUMBER, "g");
+/** Candidate rounded squares: M x y h c v c h c v c Z and a solid hex fill. */
+const ROUNDED_RE = new RegExp(
+  `<path d="M(${NUMBER}) ?(${NUMBER})h(${NUMBER})c([-\\d. ]+)v(${NUMBER})c([-\\d. ]+)h(${NUMBER})c([-\\d. ]+)v(${NUMBER})c([-\\d. ]+)Z" fill="(#[0-9a-fA-F]{3,6})"/>`,
+  "g",
+);
+const RECT_RE = new RegExp(
+  `<rect x="(${NUMBER})" y="(${NUMBER})" width="(${NUMBER})" height="(${NUMBER})" fill="(#[0-9a-fA-F]{3,6})"/>`,
+  "g",
+);
+
+function canonicalHex(color: string): string {
+  const hex = color.trim().toLowerCase();
+  if (/^#[0-9a-f]{3}$/.test(hex)) {
+    return `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`;
+  }
+  return hex;
 }
-function satoriCellRe({ cell: w, colors }: HeatmapSpec) {
-  return new RegExp(
-    `<path x="(-?[\\d.]+)" y="(-?[\\d.]+)" width="${w}" height="${w}" fill="(${colors.map(esc).join("|")})" d="[^"]+"/>`,
-    "g",
-  );
+
+const near = (a: number, b: number) => Math.abs(a - b) <= EPSILON;
+
+function curveIs(text: string, expected: readonly number[]): boolean {
+  const found = text.match(NUMBERS_RE);
+  if (found?.length !== expected.length) return false;
+  return expected.every((value, i) => near(Number(found[i]), value));
+}
+
+type Cell = {
+  /** Offset of the tag in the SVG text. */
+  index: number;
+  /** Length of the tag's opening keyword, e.g. `<path`. */
+  keyword: number;
+  x: number;
+  y: number;
+  level: number;
+};
+
+function findCells(svg: string, spec: HeatmapSpec): Cell[] {
+  const levels = new Map<string, number>();
+  spec.colors.forEach((color, level) => {
+    // The first level wins when two levels share a colour.
+    const key = canonicalHex(color);
+    if (!levels.has(key)) levels.set(key, level);
+  });
+  const { cell, radius: r } = spec;
+  const cells: Cell[] = [];
+
+  if (r <= 0) {
+    for (const m of svg.matchAll(RECT_RE)) {
+      const level = levels.get(canonicalHex(m[5]));
+      if (level === undefined) continue;
+      if (!near(Number(m[3]), cell) || !near(Number(m[4]), cell)) continue;
+      cells.push({
+        index: m.index,
+        keyword: 5,
+        x: Number(m[1]),
+        y: Number(m[2]),
+        level,
+      });
+    }
+    return cells;
+  }
+
+  const k = r * KAPPA;
+  const side = cell - 2 * r;
+  const corners = [
+    [k, 0, r, r - k, r, r],
+    [0, k, -(r - k), r, -r, r],
+    [-k, 0, -r, -(r - k), -r, -r],
+    [0, -k, r - k, -r, r, -r],
+  ] as const;
+  for (const m of svg.matchAll(ROUNDED_RE)) {
+    const level = levels.get(canonicalHex(m[11]));
+    if (level === undefined) continue;
+    if (
+      !near(Number(m[3]), side) ||
+      !near(Number(m[5]), side) ||
+      !near(Number(m[7]), -side) ||
+      !near(Number(m[9]), -side)
+    ) {
+      continue;
+    }
+    if (
+      !curveIs(m[4], corners[0]) ||
+      !curveIs(m[6], corners[1]) ||
+      !curveIs(m[8], corners[2]) ||
+      !curveIs(m[10], corners[3])
+    ) {
+      continue;
+    }
+    // The path starts at the end of the top-left corner: left edge + radius.
+    cells.push({
+      index: m.index,
+      keyword: 5,
+      x: Number(m[1]) - r,
+      y: Number(m[2]),
+      level,
+    });
+  }
+  return cells;
 }
 
 export const HEATMAP_CSS = (stepMs = 14) =>
@@ -52,37 +148,44 @@ export const HEATMAP_CSS = (stepMs = 14) =>
     "",
   );
 
-export function animateHeatmap(
-  svg: string,
-  spec: HeatmapSpec,
-): { svg: string; cells: number; engine: "takumi" | "satori" | "none" } {
-  const isSatori = svg.includes("satori_");
-  const re = isSatori ? satoriCellRe(spec) : takumiCellRe(spec);
-  const pitch = spec.cell + spec.gap;
-  const offset = isSatori ? 0 : spec.radius; // takumi's M x is the left edge + radius
-  // pass 1: find the grid origin so (col,row) are stable indices
-  let minX = Infinity;
-  let minY = Infinity;
-  let cells = 0;
-  for (const m of svg.matchAll(re)) {
-    cells++;
-    minX = Math.min(minX, +m[1] - offset);
-    minY = Math.min(minY, +m[2]);
+/**
+ * Adds a staggered "pop in" animation to every heatmap cell and a soft pulse
+ * to the cells of the highest level. Returns the SVG untouched when no cell
+ * matches or when the count differs from `spec.expected`.
+ *
+ * Inline styles and a `<style>` element are allowed by the CSP GitHub's image
+ * proxy applies to SVGs (`style-src 'unsafe-inline'`); scripts are not needed.
+ */
+export function animateHeatmap(svg: string, spec: HeatmapSpec): AnimateResult {
+  const cells = findCells(svg, spec);
+  const count = cells.length;
+  if (count === 0 || (spec.expected !== undefined && count !== spec.expected)) {
+    return { svg, cells: count, engine: "none" };
   }
-  if (cells === 0 || (spec.expected !== undefined && cells !== spec.expected))
-    return { svg, cells, engine: "none" };
-  // pass 2: add class + custom properties (inline style is allowed by GitHub camo CSP: style-src 'unsafe-inline')
-  const out = svg.replace(re, (tag, x, y, fill) => {
-    const c = Math.round((+x - offset - minX) / pitch);
-    const r = Math.round((+y - minY) / pitch);
-    const lvl = spec.colors.indexOf(fill);
-    return `${tag.slice(0, 5)} class="gb-c${lvl === spec.colors.length - 1 ? " gb-l4" : ""}" style="--c:${c};--r:${r}"${tag.slice(5)}`;
-  });
-  // inject <style> right after the opening <svg ...> tag
-  const i = out.indexOf(">") + 1;
+  const pitch = spec.cell + spec.gap;
+  let minX = Number.POSITIVE_INFINITY;
+  let minY = Number.POSITIVE_INFINITY;
+  for (const cell of cells) {
+    minX = Math.min(minX, cell.x);
+    minY = Math.min(minY, cell.y);
+  }
+  const top = spec.colors.length - 1;
+  let out = "";
+  let cursor = 0;
+  for (const cell of cells) {
+    const at = cell.index + cell.keyword;
+    const column = Math.round((cell.x - minX) / pitch);
+    const row = Math.round((cell.y - minY) / pitch);
+    const glow = cell.level === top ? " gb-l4" : "";
+    out += `${svg.slice(cursor, at)} class="gb-c${glow}" style="--c:${column};--r:${row}"`;
+    cursor = at;
+  }
+  out += svg.slice(cursor);
+  // The style element goes right after the opening <svg ...> tag.
+  const open = out.indexOf(">") + 1;
   return {
-    svg: `${out.slice(0, i)}<style>${HEATMAP_CSS()}</style>${out.slice(i)}`,
-    cells,
-    engine: isSatori ? "satori" : "takumi",
+    svg: `${out.slice(0, open)}<style>${HEATMAP_CSS()}</style>${out.slice(open)}`,
+    cells: count,
+    engine: "takumi",
   };
 }

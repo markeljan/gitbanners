@@ -1,0 +1,68 @@
+{
+  "data": {
+    "search": {
+      "nodes": [
+        {
+          "nameWithOwner": "vercel/next.js",
+          "description": "The React Framework",
+          "stargazerCount": 143499,
+          "isPrivate": false,
+          "visibility": "PUBLIC",
+          "owner": {
+            "avatarUrl": "https://avatars.githubusercontent.com/u/14985020?s=64&v=4"
+          }
+        },
+        {
+          "nameWithOwner": "vercel/next-forge",
+          "description": "Production-grade Turborepo template for Next.js apps.",
+          "stargazerCount": 7766,
+          "isPrivate": false,
+          "visibility": "PUBLIC",
+          "owner": {
+            "avatarUrl": "https://avatars.githubusercontent.com/u/14985020?s=64&v=4"
+          }
+        },
+        {
+          "nameWithOwner": "vercel/nextjs-subscription-payments",
+          "description": "Clone, deploy, and fully customize a SaaS subscription application with Next.js.",
+          "stargazerCount": 7709,
+          "isPrivate": false,
+          "visibility": "PUBLIC",
+          "owner": {
+            "avatarUrl": "https://avatars.githubusercontent.com/u/14985020?s=64&v=4"
+          }
+        },
+        {
+          "nameWithOwner": "vercel/next-learn",
+          "description": "Learn Next.js Starter Code",
+          "stargazerCount": 4798,
+          "isPrivate": false,
+          "visibility": "PUBLIC",
+          "owner": {
+            "avatarUrl": "https://avatars.githubusercontent.com/u/14985020?s=64&v=4"
+          }
+        },
+        {
+          "nameWithOwner": "vercel/next-app-router-playground",
+          "description": "A playground to explore Next.js features such as nested layouts, instant loading states, streaming, and component level data fetching.",
+          "stargazerCount": 3005,
+          "isPrivate": false,
+          "visibility": "PUBLIC",
+          "owner": {
+            "avatarUrl": "https://avatars.githubusercontent.com/u/14985020?s=64&v=4"
+          }
+        },
+        {
+          "nameWithOwner": "vercel/next-plugins",
+          "description": "Official Next.js plugins",
+          "stargazerCount": 2664,
+          "isPrivate": false,
+          "visibility": "PUBLIC",
+          "owner": {
+            "avatarUrl": "https://avatars.githubusercontent.com/u/14985020?s=64&v=4"
+          }
+        }
+      ]
+    }
+  }
+}

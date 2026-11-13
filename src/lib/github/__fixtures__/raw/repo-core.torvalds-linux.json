@@ -1,0 +1,52 @@
+{
+  "data": {
+    "repository": {
+      "name": "linux",
+      "nameWithOwner": "torvalds/linux",
+      "description": "Linux kernel source tree",
+      "homepageUrl": "",
+      "stargazerCount": 255542,
+      "forkCount": 67169,
+      "watchers": { "totalCount": 8565 },
+      "openIssues": { "totalCount": 0 },
+      "openPullRequests": { "totalCount": 0 },
+      "primaryLanguage": { "name": "C", "color": "#555555" },
+      "languages": {
+        "totalSize": 1515923895,
+        "edges": [
+          { "size": 1482215431, "node": { "name": "C", "color": "#555555" } },
+          {
+            "size": 9587449,
+            "node": { "name": "Assembly", "color": "#6E4C13" }
+          },
+          { "size": 7260182, "node": { "name": "Rust", "color": "#dea584" } },
+          { "size": 6636409, "node": { "name": "Shell", "color": "#89e051" } },
+          { "size": 5218651, "node": { "name": "Python", "color": "#3572A5" } },
+          {
+            "size": 3048968,
+            "node": { "name": "Makefile", "color": "#427819" }
+          },
+          { "size": 1118587, "node": { "name": "Perl", "color": "#0298c3" } },
+          { "size": 191265, "node": { "name": "C++", "color": "#f34b7d" } }
+        ]
+      },
+      "licenseInfo": { "spdxId": "NOASSERTION" },
+      "repositoryTopics": { "nodes": [] },
+      "latestRelease": null,
+      "defaultBranchRef": {
+        "target": { "history": { "totalCount": 1506660 } }
+      },
+      "createdAt": "2011-09-04T22:48:12Z",
+      "pushedAt": "2026-11-12T21:21:39Z",
+      "isArchived": false,
+      "isFork": false,
+      "isPrivate": false,
+      "visibility": "PUBLIC",
+      "owner": {
+        "__typename": "User",
+        "login": "torvalds",
+        "avatarUrl": "https://avatars.githubusercontent.com/u/1024025?s=128&v=4"
+      }
+    }
+  }
+}

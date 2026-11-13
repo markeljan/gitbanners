@@ -1,0 +1,104 @@
+{
+  "data": {
+    "repositoryOwner": {
+      "__typename": "Organization",
+      "login": "vercel",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/14985020?s=256&v=4",
+      "databaseId": 14985020,
+      "name": "Vercel",
+      "description": "Agentic infrastructure for every app and agent.",
+      "location": null,
+      "websiteUrl": "https://vercel.com",
+      "twitterUsername": "vercel",
+      "isVerified": true,
+      "createdAt": "2015-10-05T19:40:30Z",
+      "publicRepos": { "totalCount": 244 },
+      "topRepos": {
+        "nodes": [
+          {
+            "name": "next.js",
+            "owner": { "login": "vercel" },
+            "description": "The React Framework",
+            "stargazerCount": 143498,
+            "forkCount": 32802,
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "isFork": false,
+            "isArchived": false,
+            "primaryLanguage": { "name": "JavaScript", "color": "#f1e05a" }
+          },
+          {
+            "name": "hyper",
+            "owner": { "login": "vercel" },
+            "description": "A terminal built on web technologies",
+            "stargazerCount": 44752,
+            "forkCount": 3573,
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "isFork": false,
+            "isArchived": true,
+            "primaryLanguage": { "name": "TypeScript", "color": "#3178c6" }
+          },
+          {
+            "name": "swr",
+            "owner": { "login": "vercel" },
+            "description": "React Hooks for Data Fetching",
+            "stargazerCount": 32490,
+            "forkCount": 1405,
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "isFork": false,
+            "isArchived": false,
+            "primaryLanguage": { "name": "TypeScript", "color": "#3178c6" }
+          },
+          {
+            "name": "turborepo",
+            "owner": { "login": "vercel" },
+            "description": "The build system for coding agents.",
+            "stargazerCount": 31333,
+            "forkCount": 2490,
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "isFork": false,
+            "isArchived": false,
+            "primaryLanguage": { "name": "Rust", "color": "#dea584" }
+          },
+          {
+            "name": "ai",
+            "owner": { "login": "vercel" },
+            "description": "The AI Toolkit for TypeScript. From the creators of Next.js, the AI SDK is a free open-source library for building AI-powered applications and agents ",
+            "stargazerCount": 27906,
+            "forkCount": 5600,
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "isFork": false,
+            "isArchived": false,
+            "primaryLanguage": { "name": "TypeScript", "color": "#3178c6" }
+          },
+          {
+            "name": "pkg",
+            "owner": { "login": "vercel" },
+            "description": "Package your Node.js project into an executable",
+            "stargazerCount": 24295,
+            "forkCount": 1074,
+            "isPrivate": false,
+            "visibility": "PUBLIC",
+            "isFork": false,
+            "isArchived": true,
+            "primaryLanguage": { "name": "JavaScript", "color": "#f1e05a" }
+          }
+        ]
+      },
+      "pinnedItems": {
+        "nodes": [
+          { "nameWithOwner": "vercel/next.js" },
+          { "nameWithOwner": "vercel/vercel" },
+          { "nameWithOwner": "vercel/ai" },
+          { "nameWithOwner": "vercel/turborepo" },
+          { "nameWithOwner": "vercel/swr" },
+          { "nameWithOwner": "vercel/commerce" }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,307 @@
+[
+  {
+    "case": "user NOT_FOUND",
+    "query": "{ user(login: \"this-user-does-not-exist-zz9\") { login } }",
+    "httpStatus": 200,
+    "response": {
+      "data": {
+        "user": null
+      },
+      "errors": [
+        {
+          "type": "NOT_FOUND",
+          "path": ["user"],
+          "locations": [
+            {
+              "line": 1,
+              "column": 3
+            }
+          ],
+          "message": "Could not resolve to a User with the login of 'this-user-does-not-exist-zz9'."
+        }
+      ]
+    }
+  },
+  {
+    "case": "user() on an org login",
+    "query": "{ user(login: \"vercel\") { login } }",
+    "httpStatus": 200,
+    "response": {
+      "data": {
+        "user": null
+      },
+      "errors": [
+        {
+          "type": "NOT_FOUND",
+          "path": ["user"],
+          "locations": [
+            {
+              "line": 1,
+              "column": 3
+            }
+          ],
+          "message": "Could not resolve to a User with the login of 'vercel'."
+        }
+      ]
+    }
+  },
+  {
+    "case": "organization() on a user login",
+    "query": "{ organization(login: \"torvalds\") { login } }",
+    "httpStatus": 200,
+    "response": {
+      "data": {
+        "organization": null
+      },
+      "errors": [
+        {
+          "type": "NOT_FOUND",
+          "path": ["organization"],
+          "locations": [
+            {
+              "line": 1,
+              "column": 3
+            }
+          ],
+          "message": "Could not resolve to an Organization with the login of 'torvalds'."
+        }
+      ]
+    }
+  },
+  {
+    "case": "repositoryOwner unknown login (null, no error)",
+    "query": "{ repositoryOwner(login: \"this-user-does-not-exist-zz9\") { login } }",
+    "httpStatus": 200,
+    "response": {
+      "data": {
+        "repositoryOwner": null
+      }
+    }
+  },
+  {
+    "case": "repositoryOwner bot login",
+    "query": "{ repositoryOwner(login: \"dependabot[bot]\") { login } }",
+    "httpStatus": 200,
+    "response": {
+      "data": {
+        "repositoryOwner": null
+      },
+      "errors": [
+        {
+          "type": "NOT_FOUND",
+          "path": ["repositoryOwner"],
+          "locations": [
+            {
+              "line": 1,
+              "column": 3
+            }
+          ],
+          "message": "Could not resolve to a User or Organization with the username 'dependabot[bot]'."
+        }
+      ]
+    }
+  },
+  {
+    "case": "repository NOT_FOUND",
+    "query": "{ repository(owner: \"vercel\", name: \"nope-zz9\") { name } }",
+    "httpStatus": 200,
+    "response": {
+      "data": {
+        "repository": null
+      },
+      "errors": [
+        {
+          "type": "NOT_FOUND",
+          "path": ["repository"],
+          "locations": [
+            {
+              "line": 1,
+              "column": 3
+            }
+          ],
+          "message": "Could not resolve to a Repository with the name 'vercel/nope-zz9'."
+        }
+      ]
+    }
+  },
+  {
+    "case": "partial success",
+    "query": "{ a: user(login: \"torvalds\") { login } b: user(login: \"this-user-does-not-exist-zz9\") { login } }",
+    "httpStatus": 200,
+    "response": {
+      "data": {
+        "a": {
+          "login": "torvalds"
+        },
+        "b": null
+      },
+      "errors": [
+        {
+          "type": "NOT_FOUND",
+          "path": ["b"],
+          "locations": [
+            {
+              "line": 1,
+              "column": 40
+            }
+          ],
+          "message": "Could not resolve to a User with the login of 'this-user-does-not-exist-zz9'."
+        }
+      ]
+    }
+  },
+  {
+    "case": "syntax error",
+    "query": "{ user(login: \"torvalds\") { login ",
+    "httpStatus": 200,
+    "response": {
+      "errors": [
+        {
+          "message": "Expected NAME, actual: (none) (\"\") at [1, 29]",
+          "locations": [
+            {
+              "line": 1,
+              "column": 29
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "case": "undefined field",
+    "query": "{ user(login: \"torvalds\") { nope } }",
+    "httpStatus": 200,
+    "response": {
+      "errors": [
+        {
+          "path": ["query", "user", "nope"],
+          "extensions": {
+            "code": "undefinedField",
+            "typeName": "User",
+            "fieldName": "nope"
+          },
+          "locations": [
+            {
+              "line": 1,
+              "column": 29
+            }
+          ],
+          "message": "Field 'nope' doesn't exist on type 'User'"
+        }
+      ]
+    }
+  },
+  {
+    "case": "EXCESSIVE_PAGINATION",
+    "query": "{ user(login: \"torvalds\") { repositories(first: 101) { totalCount } } }",
+    "httpStatus": 200,
+    "response": {
+      "data": {
+        "user": null
+      },
+      "errors": [
+        {
+          "type": "EXCESSIVE_PAGINATION",
+          "path": ["user", "repositories"],
+          "locations": [
+            {
+              "line": 1,
+              "column": 29
+            }
+          ],
+          "message": "Requesting 101 records on the `repositories` connection exceeds the `first` limit of 100 records."
+        }
+      ]
+    }
+  },
+  {
+    "case": "MAX_NODE_LIMIT_EXCEEDED",
+    "query": "{ user(login: \"torvalds\") { repositories(first: 100) { nodes { stargazers(first: 100) { nodes { repositories(first: 100) { nodes { name } } } } } } } }",
+    "httpStatus": 200,
+    "response": {
+      "errors": [
+        {
+          "type": "MAX_NODE_LIMIT_EXCEEDED",
+          "locations": [
+            {
+              "line": 1,
+              "column": 97
+            }
+          ],
+          "message": "By the time this query traverses to the repositories connection, it is requesting up to 1,000,000 possible nodes which exceeds the maximum limit of 500,000."
+        }
+      ]
+    }
+  },
+  {
+    "case": "contributions span > 1 year",
+    "query": "{ user(login: \"torvalds\") { contributionsCollection(from: \"2024-01-01T00:00:00Z\", to: \"2025-06-01T00:00:00Z\") { contributionCalendar { totalContributions } } } }",
+    "httpStatus": 200,
+    "response": {
+      "data": {
+        "user": null
+      },
+      "errors": [
+        {
+          "type": "VALIDATION",
+          "path": ["user", "contributionsCollection"],
+          "locations": [
+            {
+              "line": 1,
+              "column": 29
+            }
+          ],
+          "message": "The total time spanned by 'from' and 'to' must not exceed 1 year"
+        }
+      ]
+    }
+  },
+  {
+    "case": "INSUFFICIENT_SCOPES (viewer.email without read:user/user:email)",
+    "query": "{ viewer { email } }",
+    "httpStatus": 200,
+    "response": {
+      "errors": [
+        {
+          "type": "INSUFFICIENT_SCOPES",
+          "locations": [
+            {
+              "line": 1,
+              "column": 12
+            }
+          ],
+          "message": "Your token has not been granted the required scopes to execute this query. The 'email' field requires one of the following scopes: ['user:email', 'read:user'], but your token has only been granted the: ['gist', 'read:org', 'repo', 'workflow'] scopes. Please modify your token's scopes at: https://github.com/settings/tokens."
+        }
+      ]
+    }
+  },
+  {
+    "case": "timeout (>10 s)",
+    "query": "(15 aliased contributionsCollection years with totals + calendars, cold)",
+    "httpStatus": 502,
+    "response": "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body>\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n",
+    "note": "Content-Type: text/html, no x-ratelimit-* headers; 504 also observed"
+  },
+  {
+    "case": "bad credentials",
+    "query": "{ __typename } with Authorization: bearer invalid",
+    "httpStatus": 401,
+    "response": {
+      "message": "Bad credentials",
+      "documentation_url": "https://docs.github.com/rest",
+      "status": "401"
+    },
+    "note": "identical body for GraphQL and REST"
+  },
+  {
+    "case": "unauthenticated GraphQL",
+    "query": "{ __typename } without Authorization",
+    "httpStatus": 403,
+    "response": {
+      "message": "API rate limit exceeded for <client-ip>. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)",
+      "documentation_url": "https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"
+    },
+    "note": "x-ratelimit-limit: 0, x-ratelimit-resource: graphql"
+  }
+]

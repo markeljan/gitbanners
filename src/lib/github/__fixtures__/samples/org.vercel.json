@@ -1,0 +1,462 @@
+{
+  "kind": "org",
+  "login": "vercel",
+  "id": 14985020,
+  "name": "Vercel",
+  "avatarUrl": "https://avatars.githubusercontent.com/u/14985020?s=256&v=4",
+  "description": "Agentic infrastructure for every app and agent.",
+  "location": null,
+  "websiteUrl": "https://vercel.com",
+  "twitter": "vercel",
+  "isVerified": true,
+  "createdAt": "2015-10-05T19:40:30Z",
+  "stats": {
+    "repositories": 244,
+    "stars": 530048,
+    "forks": 84229,
+    "members": 72,
+    "followers": 32117
+  },
+  "repos": [
+    {
+      "owner": "vercel",
+      "name": "next.js",
+      "description": "The React Framework",
+      "stars": 143499,
+      "forks": 32802,
+      "language": { "name": "JavaScript", "color": "#f1e05a" },
+      "isFork": false,
+      "isArchived": false,
+      "pinned": true
+    },
+    {
+      "owner": "vercel",
+      "name": "hyper",
+      "description": "A terminal built on web technologies",
+      "stars": 44752,
+      "forks": 3573,
+      "language": { "name": "TypeScript", "color": "#3178c6" },
+      "isFork": false,
+      "isArchived": true,
+      "pinned": false
+    },
+    {
+      "owner": "vercel",
+      "name": "swr",
+      "description": "React Hooks for Data Fetching",
+      "stars": 32490,
+      "forks": 1405,
+      "language": { "name": "TypeScript", "color": "#3178c6" },
+      "isFork": false,
+      "isArchived": false,
+      "pinned": true
+    },
+    {
+      "owner": "vercel",
+      "name": "turborepo",
+      "description": "The build system for coding agents.",
+      "stars": 31333,
+      "forks": 2490,
+      "language": { "name": "Rust", "color": "#dea584" },
+      "isFork": false,
+      "isArchived": false,
+      "pinned": true
+    },
+    {
+      "owner": "vercel",
+      "name": "ai",
+      "description": "The AI Toolkit for TypeScript. From the creators of Next.js, the AI SDK is a free open-source library for building AI-powered applications and agents",
+      "stars": 27906,
+      "forks": 5600,
+      "language": { "name": "TypeScript", "color": "#3178c6" },
+      "isFork": false,
+      "isArchived": false,
+      "pinned": true
+    },
+    {
+      "owner": "vercel",
+      "name": "pkg",
+      "description": "Package your Node.js project into an executable",
+      "stars": 24295,
+      "forks": 1074,
+      "language": { "name": "JavaScript", "color": "#f1e05a" },
+      "isFork": false,
+      "isArchived": true,
+      "pinned": false
+    }
+  ],
+  "languages": [
+    {
+      "name": "TypeScript",
+      "color": "#3178c6",
+      "percent": 45.3,
+      "bytes": 64987274
+    },
+    {
+      "name": "JavaScript",
+      "color": "#f1e05a",
+      "percent": 28.6,
+      "bytes": 41022666
+    },
+    { "name": "Rust", "color": "#dea584", "percent": 20.4, "bytes": 29257453 },
+    { "name": "MDX", "color": "#fcb32c", "percent": 5.2, "bytes": 7526848 },
+    { "name": "CSS", "color": "#663399", "percent": 0.4, "bytes": 617579 },
+    { "name": "Shell", "color": "#89e051", "percent": 0.1, "bytes": 75415 }
+  ],
+  "activity": {
+    "total": 14490,
+    "weeks": [
+      {
+        "week": "2025-11-16",
+        "commits": 201,
+        "days": [7, 34, 26, 31, 48, 44, 11]
+      },
+      {
+        "week": "2025-11-23",
+        "commits": 173,
+        "days": [9, 48, 37, 32, 21, 20, 6]
+      },
+      {
+        "week": "2025-11-30",
+        "commits": 252,
+        "days": [6, 45, 46, 60, 52, 30, 13]
+      },
+      {
+        "week": "2025-12-07",
+        "commits": 188,
+        "days": [15, 18, 30, 34, 49, 32, 10]
+      },
+      {
+        "week": "2025-12-14",
+        "commits": 210,
+        "days": [2, 55, 37, 34, 19, 38, 25]
+      },
+      {
+        "week": "2025-12-21",
+        "commits": 103,
+        "days": [13, 41, 30, 3, 0, 5, 11]
+      },
+      { "week": "2025-12-28", "commits": 55, "days": [6, 15, 10, 8, 9, 3, 4] },
+      {
+        "week": "2026-01-04",
+        "commits": 283,
+        "days": [5, 61, 69, 55, 42, 43, 8]
+      },
+      {
+        "week": "2026-01-11",
+        "commits": 273,
+        "days": [13, 93, 35, 30, 32, 57, 13]
+      },
+      {
+        "week": "2026-01-18",
+        "commits": 233,
+        "days": [3, 44, 45, 48, 46, 40, 7]
+      },
+      {
+        "week": "2026-01-25",
+        "commits": 301,
+        "days": [7, 49, 54, 44, 61, 53, 33]
+      },
+      {
+        "week": "2026-02-01",
+        "commits": 244,
+        "days": [17, 46, 48, 37, 36, 39, 21]
+      },
+      {
+        "week": "2026-02-08",
+        "commits": 385,
+        "days": [33, 36, 59, 90, 74, 72, 21]
+      },
+      {
+        "week": "2026-02-15",
+        "commits": 278,
+        "days": [2, 41, 60, 51, 49, 60, 15]
+      },
+      {
+        "week": "2026-02-22",
+        "commits": 384,
+        "days": [11, 44, 75, 48, 88, 85, 33]
+      },
+      {
+        "week": "2026-03-01",
+        "commits": 350,
+        "days": [14, 65, 72, 83, 55, 48, 13]
+      },
+      {
+        "week": "2026-03-08",
+        "commits": 339,
+        "days": [10, 76, 45, 39, 70, 86, 13]
+      },
+      {
+        "week": "2026-03-15",
+        "commits": 371,
+        "days": [21, 90, 83, 60, 63, 53, 1]
+      },
+      {
+        "week": "2026-03-22",
+        "commits": 206,
+        "days": [4, 51, 35, 21, 36, 36, 23]
+      },
+      {
+        "week": "2026-03-29",
+        "commits": 263,
+        "days": [16, 43, 71, 37, 48, 42, 6]
+      },
+      {
+        "week": "2026-04-05",
+        "commits": 296,
+        "days": [12, 46, 60, 57, 49, 55, 17]
+      },
+      {
+        "week": "2026-04-12",
+        "commits": 309,
+        "days": [8, 65, 45, 74, 63, 47, 7]
+      },
+      { "week": "2026-04-19", "commits": 91, "days": [1, 22, 26, 8, 7, 21, 6] },
+      {
+        "week": "2026-04-26",
+        "commits": 189,
+        "days": [0, 21, 45, 32, 51, 36, 4]
+      },
+      {
+        "week": "2026-05-03",
+        "commits": 255,
+        "days": [1, 45, 41, 40, 60, 63, 5]
+      },
+      {
+        "week": "2026-05-10",
+        "commits": 158,
+        "days": [3, 22, 43, 32, 23, 31, 4]
+      },
+      {
+        "week": "2026-05-17",
+        "commits": 249,
+        "days": [9, 80, 35, 56, 44, 20, 5]
+      },
+      {
+        "week": "2026-05-24",
+        "commits": 183,
+        "days": [4, 6, 30, 66, 29, 38, 10]
+      },
+      {
+        "week": "2026-05-31",
+        "commits": 180,
+        "days": [8, 28, 34, 39, 36, 32, 3]
+      },
+      {
+        "week": "2026-06-07",
+        "commits": 229,
+        "days": [14, 32, 48, 51, 44, 33, 7]
+      },
+      {
+        "week": "2026-06-14",
+        "commits": 190,
+        "days": [2, 42, 31, 54, 37, 20, 4]
+      },
+      {
+        "week": "2026-06-21",
+        "commits": 206,
+        "days": [8, 30, 42, 46, 39, 34, 7]
+      },
+      {
+        "week": "2026-06-28",
+        "commits": 280,
+        "days": [4, 53, 65, 52, 59, 31, 16]
+      },
+      {
+        "week": "2026-07-05",
+        "commits": 253,
+        "days": [5, 73, 41, 36, 45, 51, 2]
+      },
+      {
+        "week": "2026-07-12",
+        "commits": 209,
+        "days": [16, 43, 39, 39, 33, 28, 11]
+      },
+      {
+        "week": "2026-07-19",
+        "commits": 265,
+        "days": [1, 35, 70, 45, 48, 36, 30]
+      },
+      {
+        "week": "2026-07-26",
+        "commits": 363,
+        "days": [14, 59, 80, 94, 64, 43, 9]
+      },
+      {
+        "week": "2026-08-02",
+        "commits": 306,
+        "days": [2, 73, 46, 89, 35, 57, 4]
+      },
+      {
+        "week": "2026-08-09",
+        "commits": 312,
+        "days": [4, 69, 67, 67, 38, 51, 16]
+      },
+      {
+        "week": "2026-08-16",
+        "commits": 274,
+        "days": [15, 11, 48, 75, 45, 59, 21]
+      },
+      {
+        "week": "2026-08-23",
+        "commits": 446,
+        "days": [11, 104, 89, 77, 71, 75, 19]
+      },
+      {
+        "week": "2026-08-30",
+        "commits": 232,
+        "days": [12, 44, 50, 44, 54, 24, 4]
+      },
+      {
+        "week": "2026-09-06",
+        "commits": 311,
+        "days": [29, 14, 65, 91, 55, 49, 8]
+      },
+      {
+        "week": "2026-09-13",
+        "commits": 324,
+        "days": [3, 57, 68, 59, 56, 68, 13]
+      },
+      {
+        "week": "2026-09-20",
+        "commits": 516,
+        "days": [16, 59, 77, 132, 92, 81, 59]
+      },
+      {
+        "week": "2026-09-27",
+        "commits": 357,
+        "days": [33, 69, 52, 39, 74, 78, 12]
+      },
+      {
+        "week": "2026-10-04",
+        "commits": 473,
+        "days": [12, 82, 116, 75, 73, 98, 17]
+      },
+      {
+        "week": "2026-10-11",
+        "commits": 451,
+        "days": [9, 44, 132, 122, 97, 40, 7]
+      },
+      {
+        "week": "2026-10-18",
+        "commits": 400,
+        "days": [3, 82, 127, 65, 56, 43, 24]
+      },
+      {
+        "week": "2026-10-25",
+        "commits": 322,
+        "days": [1, 61, 79, 51, 57, 69, 4]
+      },
+      {
+        "week": "2026-11-01",
+        "commits": 454,
+        "days": [4, 76, 80, 113, 108, 56, 17]
+      },
+      {
+        "week": "2026-11-08",
+        "commits": 315,
+        "days": [13, 57, 70, 58, 104, 13, 0]
+      }
+    ]
+  },
+  "people": [
+    {
+      "login": "1st1",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/239003?v=4"
+    },
+    {
+      "login": "alex-grover",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/3088615?v=4"
+    },
+    {
+      "login": "anatrajkovska",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/35507539?v=4"
+    },
+    {
+      "login": "atinux",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/904724?v=4"
+    },
+    {
+      "login": "benjamincanac",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/739984?v=4"
+    },
+    {
+      "login": "bgw",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/180404?v=4"
+    },
+    {
+      "login": "bobmshannon",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/5983714?v=4"
+    },
+    {
+      "login": "calebboyd",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/5818726?v=4"
+    },
+    {
+      "login": "christopherkindl",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/53372002?v=4"
+    },
+    {
+      "login": "chriswdmr",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/7249920?v=4"
+    },
+    {
+      "login": "devjiwonchoi",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/120007119?v=4"
+    },
+    {
+      "login": "dieDeMiguel",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/55700336?v=4"
+    },
+    {
+      "login": "dominiksipowicz",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/1570963?v=4"
+    },
+    {
+      "login": "dvoytenko",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/726049?v=4"
+    },
+    {
+      "login": "ecklf",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/8146736?v=4"
+    },
+    {
+      "login": "emeraldsanto",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/33291795?v=4"
+    },
+    {
+      "login": "eps1lon",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/12292047?v=4"
+    },
+    {
+      "login": "evilrabbit",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/6880091?v=4"
+    },
+    {
+      "login": "fantix",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/1751601?v=4"
+    },
+    {
+      "login": "feugy",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/186268?v=4"
+    },
+    {
+      "login": "gdborton",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/4172067?v=4"
+    },
+    {
+      "login": "healeycodes",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/34559231?v=4"
+    },
+    {
+      "login": "HugoRCD",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/71938701?v=4"
+    },
+    {
+      "login": "icyJoseph",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/21013447?v=4"
+    }
+  ],
+  "fetchedAt": "2026-11-13T07:31:55Z"
+}
