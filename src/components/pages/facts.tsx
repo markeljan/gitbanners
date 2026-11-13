@@ -1,6 +1,7 @@
 import { Heading } from "@astryxdesign/core/Heading";
 import Link from "next/link";
 import { bannerPath, formatNumber } from "@/lib/banner";
+import { hasPageData } from "@/lib/github/cached";
 import {
   type Entity,
   isValidLogin,
@@ -13,9 +14,13 @@ function RepoLink({ repo }: { repo: RepoSummary }) {
   const target = { kind: "repo", owner: repo.owner, name: repo.name } as const;
   return (
     <li>
-      <Link href={bannerPath(target)} prefetch={false} className="gb-link">
-        {repo.owner}/{repo.name}
-      </Link>
+      {hasPageData(target) ? (
+        <Link href={bannerPath(target)} prefetch={false} className="gb-link">
+          {repo.owner}/{repo.name}
+        </Link>
+      ) : (
+        `${repo.owner}/${repo.name}`
+      )}
       {`: ${formatNumber(repo.stars)} stars`}
       {repo.language ? `, ${repo.language.name}` : ""}
       {repo.description ? `. ${repo.description}` : ""}

@@ -1,12 +1,14 @@
 import "server-only";
 
 import type { Metadata } from "next";
-import { notFound, permanentRedirect } from "next/navigation";
+import { cacheLife } from "next/cache";
+import { permanentRedirect } from "next/navigation";
+import { notFoundMetadata } from "@/components/site/not-found-view";
 import { SHOWCASE } from "@/content/showcase";
 import { showcasePaths } from "@/lib/agent/site-pages";
 import { type BannerPreset, targetOf } from "@/lib/banner";
 import { getEntity } from "@/lib/github/cached";
-import { asGitHubError } from "@/lib/github/errors";
+import { asGitHubError, type GitHubError } from "@/lib/github/errors";
 import { getSample, SAMPLES } from "@/lib/github/samples";
 import type { Entity } from "@/lib/github/schema";
 import { entityMetadata } from "./metadata";
@@ -18,6 +20,7 @@ import {
   prerenderedParams,
   targetKey,
 } from "./resolve";
+import { unavailableCopy } from "./unavailable";
 
 export interface LoadedPage {
   entity: Entity;
@@ -28,34 +31,87 @@ export interface LoadedPage {
   indexed: boolean;
 }
 
+/** What an owner or repository address turns into. */
+export type PageResult =
+  | { type: "page"; page: LoadedPage }
+  /** Not a banner page, or no such account, repository or preset. */
+  | { type: "not-found" }
+  /**
+   * GitHub throttles or cannot be reached, and no snapshot exists.
+   * `retryPath` is the address as it was asked for.
+   */
+  | { type: "unavailable"; error: GitHubError; retryPath: string };
+
 const INDEXED = indexedTargets(showcasePaths(), SAMPLES.map(targetOf));
 
 /**
- * The data of an owner or repository page, or the end of the request.
+ * Caps the lifetime of the page being rendered at the `minutes` profile
+ * (revalidate 60 s, the shortest a static route accepts; see `cached.ts`).
+ *
+ * A guard, not the mechanism: today a GitHub failure comes out of a
+ * `'use cache'` function, and Next records every error thrown in one as an
+ * error of the render, even when the page catches it. The render then
+ * answers 500 with `Cache-Control: no-store` and is never stored. Should
+ * that change, the unavailable view would otherwise be stored like a
+ * healthy page.
+ */
+async function keepBriefly(): Promise<void> {
+  "use cache";
+  cacheLife("minutes");
+}
+
+/**
+ * The data of an owner or repository page, or what to show instead.
  *
  * Runs at the top of the page and of `generateMetadata`, before anything is
- * rendered and outside every Suspense boundary: that is what makes an
- * unknown name a real 404 and a non-canonical spelling a real 308 on the
- * very first request (the routes are `ensureStatic = "navigation"`, so an
- * on-demand render blocks until this has run). Both callers share one
- * cached GitHub request.
+ * rendered and outside every Suspense boundary: that is what makes a
+ * non-canonical spelling a real 308 on the very first request (the routes
+ * are `ensureStatic = "navigation"`, so an on-demand render blocks until
+ * this has run). Both callers share one cached GitHub request.
  *
- * GitHub errors are not caught: they reach `src/app/[owner]/error.tsx`,
- * and an error is never stored as a page.
+ * Nothing but the redirect is thrown. Thrown from here, `notFound()` and
+ * GitHub errors replace the whole document with Next's empty error shell
+ * (no title, no `lang`, nothing without JavaScript) and a GitHub outage
+ * becomes an HTTP 500. Instead:
+ *
+ * - `not-found`: the page renders `NotFoundResponse`, a 404 with real HTML.
+ * - `unavailable`: the page renders `UnavailableView` as ordinary content
+ *   inside the layout, kept out of the search index by `loadMetadata`.
+ *   The data layer already served any snapshot it had, so there is no
+ *   better copy to show. A page cannot choose its status: Next answers
+ *   HTTP 500 with `no-store` because the failure came out of a cache
+ *   function (see `keepBriefly`), so it is never stored as the page and the
+ *   next request asks GitHub again. A 503 with `Retry-After` would need a
+ *   route handler in front of the page.
  */
-export async function loadPage(params: readonly string[]): Promise<LoadedPage> {
+export async function loadPage(params: readonly string[]): Promise<PageResult> {
   const segments = decodeSegments(params);
   const parsed = parsePagePath(segments);
-  if (!parsed) notFound();
-  const entity = await getEntity(parsed.target);
+  if (!parsed) return { type: "not-found" };
+  let entity: Entity | null;
+  try {
+    entity = await getEntity(parsed.target);
+  } catch (error) {
+    const github = asGitHubError(error);
+    if (!github) throw error;
+    await keepBriefly();
+    return {
+      type: "unavailable",
+      error: github,
+      retryPath: `/${params.join("/")}`,
+    };
+  }
   const decision = decidePage(segments, parsed, entity);
-  if (decision.type === "not-found") notFound();
+  if (decision.type === "not-found") return { type: "not-found" };
   if (decision.type === "redirect") permanentRedirect(decision.location);
   return {
-    entity: decision.entity,
-    preset: decision.preset,
-    path: decision.path,
-    indexed: INDEXED.has(targetKey(targetOf(decision.entity))),
+    type: "page",
+    page: {
+      entity: decision.entity,
+      preset: decision.preset,
+      path: decision.path,
+      indexed: INDEXED.has(targetKey(targetOf(decision.entity))),
+    },
   };
 }
 
@@ -83,21 +139,23 @@ export function restParams(): { owner: string; rest: string[] }[] {
 }
 
 /**
- * Metadata of an owner or repository page. When GitHub cannot be asked the
- * page itself shows the error boundary; the metadata must not fail too, or
- * the whole document is replaced by an empty error shell with no HTML for
- * people without JavaScript. Not-found and redirects still end the request.
+ * Metadata of an owner or repository page. Never throws `notFound()` or a
+ * GitHub error, for the reason given at {@link loadPage}; only the redirect
+ * ends the request.
  */
 export async function loadMetadata(
   params: readonly string[],
 ): Promise<Metadata> {
-  try {
-    return entityMetadata(await loadPage(params));
-  } catch (error) {
-    if (!asGitHubError(error)) throw error;
-    return {
-      title: "GitHub is not answering",
-      robots: { index: false, follow: false },
-    };
+  const result = await loadPage(params);
+  switch (result.type) {
+    case "page":
+      return entityMetadata(result.page);
+    case "not-found":
+      return notFoundMetadata;
+    case "unavailable":
+      return {
+        title: unavailableCopy(result.error).title,
+        robots: { index: false, follow: false },
+      };
   }
 }
