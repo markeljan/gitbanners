@@ -43,12 +43,15 @@ export async function GET(
   context: Context,
 ): Promise<Response> {
   const params = await context.params;
-  if (params.format !== "svg" && params.format !== "png") {
+  // The rewrite matches the suffix without regard to case: `/b/{id}.PNG`
+  // arrives as "PNG" and is the same image as `/b/{id}.png`.
+  const requested = params.format.toLowerCase();
+  if (requested !== "svg" && requested !== "png") {
     return notFound("Unknown image format.", {
       instance: request.nextUrl.pathname,
     });
   }
-  const format: ImageFormat = params.format;
+  const format: ImageFormat = requested;
   const query = request.nextUrl.searchParams;
   const scale = parseScale(query.get("scale")) ?? undefined;
   const download = query.get("download") === "1";

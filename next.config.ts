@@ -30,8 +30,10 @@ import { BLOCKED_SEGMENTS, RESERVED_SEGMENTS } from "./src/lib/reserved";
 // end of the whole path, not of the segment.
 const NOT_OWNER = [...RESERVED_SEGMENTS, ...BLOCKED_SEGMENTS].join("|");
 const NOT_RESERVED = `(?!(?:${NOT_OWNER})(?:/|\\.|$))`;
+// A GitHub login as GitHub spells it.
+const BARE_LOGIN = "[A-Za-z0-9][A-Za-z0-9-]*";
 // A GitHub login, optionally written `@login` to escape a collision with an app route.
-const LOGIN = "@?[A-Za-z0-9][A-Za-z0-9-]*";
+const LOGIN = `@?${BARE_LOGIN}`;
 const OWNER = `${NOT_RESERVED}${LOGIN}`;
 // A first segment containing a character that can never appear in a login.
 // "-" itself is not junk: a `beforeFiles` rewrite to an internal handler
@@ -57,6 +59,25 @@ const NEGOTIABLE = [
 const NOT_MACHINE = "(?!(?:api|mcp|embed|b|_next|-|\\.well-known)(?:/|$))";
 // What an agent guesses for a versioned API at the root: /v1, /v2/anything.
 const API_VERSION = "v[0-9]+";
+
+/** The four /embed rules for one spelling of the owner segment. */
+function embedRewrites(owner: string, to: string) {
+  return [
+    {
+      source: `/embed/${owner}.:format(${IMAGE_EXT})`,
+      destination: `/-/i/:format/${to}`,
+    },
+    {
+      source: `/embed/${owner}/:rest+.:format(${IMAGE_EXT})`,
+      destination: `/-/i/:format/${to}/:rest+`,
+    },
+    { source: `/embed/${owner}`, destination: `/-/i/auto/${to}` },
+    {
+      source: `/embed/${owner}/:rest+`,
+      destination: `/-/i/auto/${to}/:rest+`,
+    },
+  ];
+}
 
 const header = (value: string) => ({
   type: "header" as const,
@@ -181,19 +202,11 @@ const baseConfig: NextConfig = {
           destination: "/-/i/:format/:owner/:rest+",
         },
         // Embed endpoint: always the image. /embed/vercel, /embed/vercel/next.js.png
-        {
-          source: `/embed/:owner(${LOGIN}).:format(${IMAGE_EXT})`,
-          destination: "/-/i/:format/:owner",
-        },
-        {
-          source: `/embed/:owner(${LOGIN})/:rest+.:format(${IMAGE_EXT})`,
-          destination: "/-/i/:format/:owner/:rest+",
-        },
-        { source: `/embed/:owner(${LOGIN})`, destination: "/-/i/auto/:owner" },
-        {
-          source: `/embed/:owner(${LOGIN})/:rest+`,
-          destination: "/-/i/auto/:owner/:rest+",
-        },
+        // Below /embed/ nothing collides with an app route, so a bare login is
+        // always an owner: it reaches the handler `@`-escaped, and
+        // /embed/docs is the banner of the GitHub account "docs".
+        ...embedRewrites(`:owner(${BARE_LOGIN})`, "@:owner"),
+        ...embedRewrites(`:owner(@${BARE_LOGIN})`, ":owner"),
         // Markdown suffix: /vercel.md, /vercel/next.js.md, /pricing.md. Not
         // below the machine routes: /api/v1/repos/{owner}/notes.md is a
         // repository called "notes.md", not the Markdown version of a page.

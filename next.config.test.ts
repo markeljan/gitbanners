@@ -12,6 +12,7 @@ import { describe, expect, test } from "bun:test";
 // @ts-expect-error Next bundles path-to-regexp without type declarations.
 import * as bundled from "next/dist/compiled/path-to-regexp";
 import { CONTENT_PATHS } from "@/content/paths";
+import { bannerPath } from "@/lib/banner/path";
 import nextConfig from "./next.config";
 
 interface Condition {
@@ -229,16 +230,47 @@ describe("images", () => {
     }
   });
 
+  test("an upper-case suffix is the image too", () => {
+    // The rules match without regard to case and pass the suffix on as
+    // written; the image handlers read "SVG" as "svg".
+    expect(resolve("/markeljan.SVG")).toBe("/-/i/SVG/markeljan");
+    expect(resolve("/markeljan.Png", BROWSER)).toBe("/-/i/Png/markeljan");
+    expect(resolve("/vercel/next.js/contributors.SVG")).toBe(
+      "/-/i/SVG/vercel/next.js/contributors",
+    );
+    expect(resolve("/b/b0123456789a.PNG")).toBe("/-/i/saved/PNG/b0123456789a");
+    expect(resolve("/embed/markeljan.SVG")).toBe("/-/i/SVG/@markeljan");
+  });
+
   test("/embed is always the image", () => {
     for (const accept of [undefined, "*/*", "text/html", MARKDOWN, IMG]) {
-      expect(resolve("/embed/markeljan", accept)).toBe("/-/i/auto/markeljan");
+      expect(resolve("/embed/markeljan", accept)).toBe("/-/i/auto/@markeljan");
       expect(resolve("/embed/vercel/next.js", accept)).toBe(
-        "/-/i/auto/vercel/next.js",
+        "/-/i/auto/@vercel/next.js",
       );
       expect(resolve("/embed/vercel/next.js.png", accept)).toBe(
-        "/-/i/png/vercel/next.js",
+        "/-/i/png/@vercel/next.js",
       );
     }
+  });
+
+  test("/embed reaches logins named like an app route, escaped", () => {
+    // Nothing below /embed/ collides with a route, so "docs" is the GitHub
+    // account; the handler gets the `@` form it never refuses.
+    for (const login of ["docs", "pricing", "about", "api", "embed", "auth"]) {
+      expect(resolve(`/embed/${login}`)).toBe(`/-/i/auto/@${login}`);
+      expect(resolve(`/embed/${login}.svg`)).toBe(`/-/i/svg/@${login}`);
+      expect(resolve(`/embed/${login}/activity.png`)).toBe(
+        `/-/i/png/@${login}/activity`,
+      );
+      expect(resolve(`/embed/${login}/repo/contributors`)).toBe(
+        `/-/i/auto/@${login}/repo/contributors`,
+      );
+    }
+    // Written with the escape, it is escaped once, not twice.
+    expect(resolve("/embed/@docs")).toBe("/-/i/auto/@docs");
+    expect(resolve("/embed/@docs.svg")).toBe("/-/i/svg/@docs");
+    expect(resolve("/embed/@docs/activity")).toBe("/-/i/auto/@docs/activity");
   });
 
   test("a page URL asked for the way an <img> does is the image", () => {
@@ -251,6 +283,44 @@ describe("images", () => {
     // The app's own pages are never images.
     expect(resolve("/docs", IMG)).toBe("/docs");
     expect(resolve("/pricing", IMG)).toBe("/pricing");
+  });
+});
+
+describe("canonical banner pages", () => {
+  test("a repository whose name ends in .md is a page, not Markdown", () => {
+    const target = {
+      kind: "repo",
+      owner: "Jasonnor",
+      name: "README.md",
+    } as const;
+    const page = bannerPath(target);
+    expect(page).toBe("/jasonnor/README.md/overview");
+    for (const accept of [undefined, BROWSER]) {
+      expect(resolve(page, accept)).toBe(page);
+    }
+    // Its Markdown and image versions keep the name whole.
+    expect(resolve(`${page}.md`)).toBe("/-/md/jasonnor/README.md/overview");
+    expect(resolve(bannerPath(target, { format: "svg" }))).toBe(
+      "/-/i/svg/jasonnor/README.md/overview",
+    );
+  });
+
+  test("no canonical page path is taken by a rewrite", () => {
+    const targets = [
+      { kind: "owner", login: "vercel" },
+      { kind: "owner", login: "docs" },
+      { kind: "repo", owner: "vercel", name: "next.js" },
+      { kind: "repo", owner: "exelban", name: "stats" },
+      { kind: "repo", owner: "someone", name: "logo.svg" },
+      { kind: "repo", owner: "someone", name: "notes.md" },
+      { kind: "repo", owner: "someone", name: "CHANGELOG.MD" },
+    ] as const;
+    for (const target of targets) {
+      for (const preset of [null, "activity"]) {
+        const page = bannerPath(target, { preset });
+        expect(`${page}: ${resolve(page, BROWSER)}`).toBe(`${page}: ${page}`);
+      }
+    }
   });
 });
 
