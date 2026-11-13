@@ -112,8 +112,8 @@ export const SHOWCASE: readonly ShowcaseItem[] = [
     group: "repository",
     title: "Contributors",
     blurb: "The people behind a project, with avatars.",
-    path: "/facebook/react/contributors",
-    alt: "Contributors banner for facebook/react",
+    path: "/react/react/contributors",
+    alt: "Contributors banner for react/react",
     shape: "card",
   },
   {

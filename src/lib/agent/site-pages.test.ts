@@ -41,7 +41,7 @@ describe("showcase targets", () => {
     const paths = showcasePaths();
     expect(paths).toContain("/torvalds");
     expect(paths).toContain("/vercel/next.js");
-    expect(paths).toContain("/facebook/react");
+    expect(paths).toContain("/react/react");
     for (const path of paths) expect(path).not.toMatch(/\?|\.(svg|png)$/);
     expect(paths.length).toBeLessThanOrEqual(SHOWCASE.length);
     expect(paths.length).toBeGreaterThanOrEqual(8);

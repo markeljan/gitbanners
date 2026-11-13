@@ -34,7 +34,7 @@ fences_ok()     { [ $(( $(grep -c '^```' "$TMP/b") % 2 )) -eq 0 ] && ok "$1: cod
 warnings()      { [ -s "$TMP/w" ] && while IFS= read -r line; do warn "$1" "$line"; done < "$TMP/w"; : > "$TMP/w"; }
 : > "$TMP/w"
 PROBE="__ora-404-probe-$(LC_ALL=C tr -dc 'a-z0-9' </dev/urandom | head -c 8)"
-CONTENT_PAGES="/docs /pricing /about /contact /privacy /terms"
+CONTENT_PAGES="/docs /docs/migrate /pricing /about /contact /privacy /terms"
 
 echo "== essential: markdown-negotiation-vary"
 req -H 'Accept: text/markdown' "$BASE/";            expect_status "GET / (Accept: text/markdown)" 200
@@ -427,7 +427,7 @@ scan() { # label, curl args...
   grep -q '{{[A-Za-z_]*}}' "$TMP/b" && bad "$label still serves a placeholder" "$(grep -o '{{[A-Za-z_]*}}' "$TMP/b" | sort -u | tr '\n' ' ')" || true
 }
 for p in / $CONTENT_PAGES; do scan "$p (html)" -H 'Accept: text/html' "$BASE$p"; done
-for p in /index.md /docs.md /pricing.md /about.md /contact.md /privacy.md /terms.md /vercel.md /vercel/next.js.md "/$PROBE.md"; do scan "$p" "$BASE$p"; done
+for p in /index.md /docs.md /docs/migrate.md /pricing.md /about.md /contact.md /privacy.md /terms.md /vercel.md /vercel/next.js.md "/$PROBE.md"; do scan "$p" "$BASE$p"; done
 for p in /llms.txt /llms-full.txt /docs/llms.txt /api/llms.txt /openapi.json /server.json /mcp/server-card /.well-known/api-catalog /.well-known/ai-catalog.json /.well-known/ard.json /.well-known/agent-skills/index.json /.well-known/agent-skills/gitbanners/SKILL.md /robots.txt /sitemap.xml /api /api/v1/options /api/v1/orank-probe-test "/$PROBE" /mcp; do scan "$p" "$BASE$p"; done
 for f in mcp-init mcp-tools; do grep -qi "$WORD" "$TMP/$f" && bad "MCP $f names the sign-in protocol" "remove the word" || ok "MCP $f: clean"; done
 req -H 'Accept: text/html' "$BASE/"; HIT=""; N=0

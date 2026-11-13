@@ -15,6 +15,9 @@ function ownLinks(markdown: string): string[] {
 
 /** Documents this branch serves besides the content pages. */
 const SERVED = new Set([
+  "/studio",
+  "/gallery",
+  "/themes",
   "/llms.txt",
   "/llms-full.txt",
   "/docs/llms.txt",

@@ -44,6 +44,9 @@ Do not use ${N} to read private GitHub data, to write to GitHub, or as a general
 
 - [${N} home](${url("/")}): type a GitHub login and get a banner
 - [Pricing](${url("/pricing")}): Free and Pro, which costs one GitHub star ([Markdown](${url("/pricing.md")}))
+- [README doctor](${url("/docs/migrate")}): fix broken github-readme-stats, trophy and activity graph images in a README ([Markdown](${url("/docs/migrate.md")}))
+- [Studio](${url("/studio")}): build and customise a banner interactively
+- [Gallery](${url("/gallery")}) and [themes](${url("/themes")}): every banner layout and colour theme
 - [About](${url("/about")}): what it is and who runs it
 - [Contact](${url("/contact")})
 - [Privacy](${url("/privacy")}): what is read, what is stored, how to delete it

@@ -185,7 +185,6 @@ describe("Markdown negotiation", () => {
       "/api/v1/orank-probe-test",
       // App pages without a Markdown version answer HTML rather than 404.
       "/studio",
-      "/docs/migrate",
     ]) {
       for (const accept of [MARKDOWN, "application/json", IMG]) {
         expect(`${path} ${accept}: ${resolve(path, accept)}`).toBe(

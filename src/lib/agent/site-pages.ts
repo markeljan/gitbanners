@@ -46,9 +46,23 @@ export function showcasePaths(): string[] {
   return [...paths];
 }
 
+/** Interactive pages without a content-registry entry. */
+const APP_PAGES = ["/studio", "/gallery", "/themes"] as const;
+
+function appPages(): SitePage[] {
+  return APP_PAGES.map((path) => ({
+    path,
+    updated: CONTENT_UPDATED,
+    changeFrequency: "weekly" as const,
+    priority: path === "/studio" ? 0.8 : 0.6,
+    banner: false,
+  }));
+}
+
 export function sitePages(): SitePage[] {
   return [
     ...contentPages(),
+    ...appPages(),
     ...showcasePaths().map((path) => ({
       path,
       // Banner pages follow GitHub; the date says when the page itself last changed.
