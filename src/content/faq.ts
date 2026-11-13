@@ -3,6 +3,9 @@ import type { FaqEntry } from "./types";
 
 const host = new URL(site.url).host;
 
+/** Heading of the FAQ section, in HTML and in Markdown. */
+export const FAQ_HEADING = "Frequently asked questions";
+
 /** Shown on the homepage and emitted as FAQPage structured data. */
 export const FAQ: readonly FaqEntry[] = [
   {
@@ -53,9 +56,9 @@ export const FAQ: readonly FaqEntry[] = [
       "Yes. Cards that point at a paused or rate-limited server show a broken image. Swap the image URL for a GitBanners one, or paste your README into the [README doctor](/docs/migrate) and copy the fixed version.",
   },
   {
-    id: "agents",
+    id: "ai-agents",
     question: "Can AI agents use GitBanners?",
     answer:
-      "Yes. Every page has a Markdown version (add `.md` or send `Accept: text/markdown`), there is a keyless JSON API described by [OpenAPI](/openapi.json), an [MCP server](/mcp) with read-only tools, and an [llms.txt](/llms.txt) index.",
+      "Yes. Content pages and banner pages have a Markdown version (add `.md` or send `Accept: text/markdown`), there is a keyless JSON API described by [OpenAPI](/openapi.json), an [MCP server](/docs#mcp) with read-only tools, and an [llms.txt](/llms.txt) index.",
   },
 ];

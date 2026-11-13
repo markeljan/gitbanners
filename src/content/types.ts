@@ -23,6 +23,11 @@ export type Block =
       type: "table";
       head: readonly string[];
       rows: readonly (readonly Inline[])[];
+      /**
+       * Anchor id per row, in row order, so a URL fragment can point at one
+       * row (`/docs#error-not_found`). HTML only; Markdown has no anchors.
+       */
+      rowIds?: readonly string[];
     }
   /** A highlighted aside. */
   | { type: "note"; text: Inline }

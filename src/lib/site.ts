@@ -29,6 +29,26 @@ const repoSlug =
   process.env.NEXT_PUBLIC_GITBANNERS_REPO ?? "markeljan/gitbanners";
 const [repoOwner = "markeljan", repoName = "gitbanners"] = repoSlug.split("/");
 
+/**
+ * Where the project is based, for structured data and the contact page.
+ * Nothing is published unless the maintainer sets it: a country
+ * (`NEXT_PUBLIC_CONTACT_COUNTRY`, ISO 3166-1 alpha-2 such as "DE") and
+ * optionally `NEXT_PUBLIC_CONTACT_LOCALITY` and `NEXT_PUBLIC_CONTACT_REGION`.
+ */
+function resolveAddress(): {
+  locality: string | null;
+  region: string | null;
+  country: string;
+} | null {
+  const country = process.env.NEXT_PUBLIC_CONTACT_COUNTRY?.trim();
+  if (!country) return null;
+  return {
+    locality: process.env.NEXT_PUBLIC_CONTACT_LOCALITY?.trim() || null,
+    region: process.env.NEXT_PUBLIC_CONTACT_REGION?.trim() || null,
+    country,
+  };
+}
+
 export const site = {
   name: "GitBanners",
   /** Short product phrase. Also used as the JSON-LD/OG headline. */
@@ -45,6 +65,13 @@ export const site = {
   },
   /** Optional public contact address. Leave unset to route contact through GitHub. */
   contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL || null,
+  /** Who runs the project: one person on GitHub, not a company. */
+  maintainer: {
+    login: "markeljan",
+    url: "https://github.com/markeljan",
+  },
+  /** Optional public location of the maintainer. `null` unless configured. */
+  address: resolveAddress(),
   /** Login used for first-paint demos and documentation examples. */
   exampleLogin: "markeljan",
   api: {

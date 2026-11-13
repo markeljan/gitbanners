@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { JsonLd } from "@/components/content/json-ld";
 import { Hero } from "@/components/home/hero";
 import { HomePreviewProvider } from "@/components/home/preview";
 import {
@@ -12,16 +13,12 @@ import {
   Themes,
   UrlPatterns,
 } from "@/components/home/sections";
+import { FAQ } from "@/content/faq";
 import { home } from "@/content/home";
+import { homeJsonLd } from "@/lib/agent/jsonld";
+import { pageMetadata } from "@/lib/agent/metadata";
 
-export const metadata: Metadata = {
-  title: { absolute: home.title },
-  description: home.description,
-  alternates: {
-    canonical: "/",
-    types: { "text/markdown": "/index.md" },
-  },
-};
+export const metadata: Metadata = pageMetadata(home);
 
 /**
  * The homepage. A static shell: the copy, the first banner and the gallery
@@ -31,6 +28,7 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <HomePreviewProvider>
+      <JsonLd data={homeJsonLd(FAQ)} />
       <Hero heading={home.heading} lead={home.lead} />
       <UrlPatterns />
       <Showcase />

@@ -8,6 +8,7 @@ import { AuthNotice } from "@/components/site/auth-notice";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
 import { DEFAULT_MODE, themeInitScript } from "@/components/theme";
+import { WebMcp } from "@/lib/agent/webmcp";
 import { site } from "@/lib/site";
 
 const figtree = Figtree({
@@ -92,6 +93,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <SiteFooter />
           <AuthNotice />
         </Providers>
+        <WebMcp />
         <Analytics />
         <SpeedInsights />
       </body>

@@ -207,9 +207,9 @@ export const home: ContentPage = {
         {
           type: "list",
           items: [
-            "Every page has a Markdown version: add `.md` to the URL or send `Accept: text/markdown`.",
+            "Every content page and banner page has a Markdown version: add `.md` to the URL or send `Accept: text/markdown`.",
             "A keyless JSON API under `/api/v1`, described by [OpenAPI](/openapi.json), with standard rate-limit headers and problem+json errors.",
-            "An [MCP server](/mcp) with read-only tools for profiles, repositories, search and banner URLs.",
+            "An [MCP server](/docs#mcp) with read-only tools for profiles, repositories, search and banner URLs.",
             "An [llms.txt](/llms.txt) index and a full-text [llms-full.txt](/llms-full.txt).",
           ],
         },
