@@ -31,6 +31,8 @@ export interface AccountErrorContext {
   max?: number;
   /** `owner/name` of the repository whose star unlocks Pro. */
   repo: string;
+  /** The request read data rather than changing it. */
+  reading?: boolean;
 }
 
 function seconds(count: number): string {
@@ -48,12 +50,14 @@ export function accountError(
 ): AccountMessage {
   const problem = error instanceof ApiProblem ? error : null;
   const retryAfter = problem?.retryAfter ?? null;
+  const reading = context.reading === true;
   switch (problem?.code) {
     case "unauthorized":
       return {
         title: "You are signed out",
-        message:
-          "Your session ended, so this change was not saved. Sign in with GitHub again to manage your banners.",
+        message: reading
+          ? "Your session ended. Sign in with GitHub again to see your banners."
+          : "Your session ended, so this change was not saved. Sign in with GitHub again to manage your banners.",
         action: "sign-in",
         retryAfter,
       };
@@ -83,7 +87,7 @@ export function accountError(
       };
     case "rate_limited":
       return {
-        title: "Too many changes at once",
+        title: reading ? "Too many requests" : "Too many changes at once",
         message:
           retryAfter !== null
             ? `Wait ${seconds(retryAfter)}, then try again.`
@@ -126,8 +130,9 @@ export function accountError(
     default:
       return {
         title: "Something went wrong",
-        message:
-          "The change could not be saved. Try again in a moment; if it keeps failing, reload the page.",
+        message: reading
+          ? "Your banners could not be loaded. Try again in a moment; if it keeps failing, reload the page."
+          : "The change could not be saved. Try again in a moment; if it keeps failing, reload the page.",
         action: "retry",
         retryAfter,
       };

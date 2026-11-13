@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   isOwnProfile,
   markDefault,
+  nameProblem,
   parseBannerBody,
   parseBannerList,
   presetName,
@@ -153,5 +154,18 @@ describe("facts for the UI", () => {
     expect(before.startsWith("/b/b000000000a1.svg?v=")).toBe(true);
     expect(after).not.toBe(before);
     expect(savedImageSrc({ id: "b1", updatedAt: "garbage" })).toBe("/b/b1.svg");
+  });
+});
+
+describe("nameProblem", () => {
+  test("accepts what the API accepts", () => {
+    expect(nameProblem("README header")).toBeNull();
+    expect(nameProblem("  padded  ")).toBeNull();
+    expect(nameProblem("x".repeat(60))).toBeNull();
+  });
+  test("refuses what the API refuses, with a sentence", () => {
+    expect(nameProblem("   ")).toBe("Give the banner a name.");
+    expect(nameProblem("x".repeat(61))).toBe("Use at most 60 characters.");
+    expect(nameProblem("two\nlines")).toBe("Use one line of text.");
   });
 });

@@ -126,6 +126,23 @@ export function replaceBanner(
   return list.map((banner) => (banner.id === next.id ? next : banner));
 }
 
+/** Longest name the API accepts (`MAX_NAME_LENGTH` in `src/lib/db/banners`). */
+export const MAX_NAME_LENGTH = 60;
+
+/**
+ * Why a draft name would be refused, as a sentence, or `null` when the API
+ * accepts it: the same rules as the server, checked before the round trip.
+ */
+export function nameProblem(draft: string): string | null {
+  const name = draft.trim();
+  if (!name) return "Give the banner a name.";
+  if (name.length > MAX_NAME_LENGTH) {
+    return `Use at most ${MAX_NAME_LENGTH} characters.`;
+  }
+  if (/\p{Cc}/u.test(name)) return "Use one line of text.";
+  return null;
+}
+
 // ── Facts for the UI ──────────────────────────────────────────────────────
 
 /** "vercel" or "vercel/next.js". */

@@ -1,0 +1,49 @@
+/* `/b/{id}`, the public page of a saved banner. Astryx tokens only. */
+@layer components {
+  .gb-saved-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-8);
+    padding-block: var(--spacing-8) var(--spacing-12);
+  }
+  .gb-saved-page-head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    max-width: var(--gb-prose-width);
+  }
+  .gb-saved-page-image {
+    display: flex;
+    justify-content: center;
+    padding: var(--spacing-4);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-container);
+    background: var(--color-background-muted);
+  }
+  .gb-saved-page-image img {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
+  .gb-saved-page-cols {
+    display: grid;
+    gap: var(--spacing-8);
+  }
+  @media (width >= 64rem) {
+    .gb-saved-page-cols {
+      grid-template-columns: minmax(0, 1fr) 18rem;
+    }
+  }
+  .gb-saved-page-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+    min-width: 0;
+  }
+  .gb-saved-page-links {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+}

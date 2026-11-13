@@ -90,6 +90,19 @@ describe("accountError", () => {
     }
   });
 
+  test("reads and writes are worded differently", () => {
+    const read = { ...context, reading: true };
+    expect(accountError(problem(401, "unauthorized"), read).message).toBe(
+      "Your session ended. Sign in with GitHub again to see your banners.",
+    );
+    expect(
+      accountError(problem(500, "internal_error"), read).message,
+    ).toContain("could not be loaded");
+    expect(
+      accountError(problem(500, "internal_error"), context).message,
+    ).toContain("could not be saved");
+  });
+
   test("no message says OAuth", () => {
     const codes = [
       "unauthorized",
