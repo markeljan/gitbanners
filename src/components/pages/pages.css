@@ -329,3 +329,20 @@
     max-width: 60%;
   }
 }
+
+@layer components {
+  /* On a phone the 24 swatches would be eight rows: one scrolling row instead. */
+  @media (width < 40rem) {
+    .gb-entity-themes .gb-swatches {
+      grid-auto-columns: 6.25rem;
+      grid-auto-flow: column;
+      grid-template-columns: none;
+      overflow-x: auto;
+      padding-block: var(--spacing-1);
+      scroll-snap-type: x proximity;
+    }
+    .gb-entity-themes .gb-swatch {
+      scroll-snap-align: start;
+    }
+  }
+}
