@@ -126,6 +126,12 @@ export interface UseMeResult {
   entitlements: Entitlements;
   /** Saved banners in use and allowed. */
   banners: { count: number; max: number };
+  /**
+   * Why `/api/me` failed (an `ApiProblem` from `fetchJson`), while the hint
+   * cookie exists. `status` is `anonymous` then: the session is unknown, not
+   * absent, so a page that cares (the dashboard) says so instead.
+   */
+  error: unknown;
   /** Ask `/api/me` again, for example after saving a banner. */
   refresh: () => void;
 }
@@ -156,6 +162,7 @@ export function useMe(): UseMeResult {
     pro: data?.pro ?? false,
     entitlements: data?.entitlements ?? FREE,
     banners: data?.banners ?? { count: 0, max: FREE.maxSavedBanners },
+    error: hinted ? error : undefined,
     refresh: () => {
       void mutate();
     },

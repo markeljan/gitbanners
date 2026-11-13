@@ -1,0 +1,39 @@
+/*
+ * Account pieces shared by the dashboard and other pages: the plan card.
+ * Built from Astryx tokens; app classes are prefixed `gb-`.
+ */
+@layer components {
+  .gb-plan {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+  }
+  .gb-plan-head {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+  }
+  .gb-plan-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .gb-plan-list > li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    gap: var(--spacing-2);
+  }
+  /* Optical alignment of the 16px glyph with the first line of 14px text. */
+  .gb-plan-list > li > :first-child {
+    margin-block-start: var(--spacing-0-5);
+  }
+  .gb-plan-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+}
