@@ -7,8 +7,12 @@ import type { VercelConfig } from "@vercel/config/v1";
  */
 export const config: VercelConfig = {
   framework: "nextjs",
-  // Vercel's default is a plain `bun install`, which would rewrite a drifted lockfile.
-  installCommand: "bun install --frozen-lockfile",
+  // The build image's own bun can be older than the one that wrote bun.lock
+  // (an unknown lockfile version fails the install), so install with the
+  // exact version package.json pins. `--frozen-lockfile` because the default
+  // plain install would rewrite a drifted lockfile.
+  installCommand:
+    "npx --yes bun@$(node -p \"require('./package.json').packageManager.split('@')[1]\") install --frozen-lockfile",
   // Next to api.github.com and the Redis store (us-east-1).
   regions: ["iad1"],
   functions: {
