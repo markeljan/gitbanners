@@ -104,7 +104,8 @@
     text-wrap: pretty;
   }
 
-  .gb-article a {
+  /* Text links. Design-system buttons rendered as links style themselves. */
+  .gb-article a:not(.astryx-button) {
     color: var(--color-text-accent);
     text-decoration-line: underline;
     text-decoration-thickness: from-font;
@@ -114,11 +115,11 @@
     transition: text-decoration-color var(--duration-fast) var(--ease-standard);
   }
 
-  .gb-article a:hover {
+  .gb-article a:not(.astryx-button):hover {
     text-decoration-color: currentcolor;
   }
 
-  .gb-article a:focus-visible {
+  .gb-article a:not(.astryx-button):focus-visible {
     outline: var(--focus-outline-width) solid var(--color-accent);
     outline-offset: var(--focus-outline-offset);
   }
@@ -323,7 +324,7 @@
 
   /* --- Heading links (`headingLinks`) -------------------------------- */
 
-  .gb-article .gb-anchor {
+  .gb-article a.gb-anchor {
     color: inherit;
     text-decoration-line: none;
   }

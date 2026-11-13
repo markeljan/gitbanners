@@ -10,7 +10,11 @@ import { getSample } from "@/lib/github/samples";
 import { site } from "@/lib/site";
 import { Inline } from "./inline";
 
-/** Highlighters the design system ships, by the `lang` hints content uses. */
+/**
+ * Highlighters the design system ships, by the `lang` hints content uses.
+ * CodeBlock prints the highlighter's name as the sample's language label and
+ * brings its own copy button.
+ */
 const LANGUAGES: Record<string, string> = {
   bash: "bash",
   sh: "bash",
@@ -20,20 +24,6 @@ const LANGUAGES: Record<string, string> = {
   ts: "ts",
   yaml: "yaml",
   yml: "yaml",
-};
-
-/** Label shown on a code sample that has no caption of its own. */
-const LANGUAGE_NAMES: Record<string, string> = {
-  bash: "Shell",
-  sh: "Shell",
-  html: "HTML",
-  json: "JSON",
-  md: "Markdown",
-  ts: "TypeScript",
-  yaml: "YAML",
-  yml: "YAML",
-  http: "HTTP headers",
-  text: "Text",
 };
 
 /**
@@ -133,7 +123,7 @@ export function BlockView({ block }: { block: Block }) {
           <CodeBlock
             code={block.code}
             language={LANGUAGES[block.lang] ?? "plaintext"}
-            title={block.caption ?? LANGUAGE_NAMES[block.lang]}
+            title={block.caption}
             width="100%"
           />
         </div>

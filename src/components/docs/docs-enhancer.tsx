@@ -66,12 +66,25 @@ export function DocsEnhancer() {
         96;
       let id = all[0]?.id ?? "";
       for (const element of all) {
-        if (element.getBoundingClientRect().top <= line + 8) id = element.id;
+        // A quarter down the screen: a heading just below the header counts.
+        const reading = Math.max(line, window.innerHeight / 4) + 8;
+        if (element.getBoundingClientRect().top <= reading) id = element.id;
         else break;
       }
       if (id === current) return;
       tocLinks.get(current)?.removeAttribute("aria-current");
-      tocLinks.get(id)?.setAttribute("aria-current", "location");
+      const link = tocLinks.get(id);
+      link?.setAttribute("aria-current", "location");
+      // Keep the marked link visible in a table of contents taller than
+      // the screen, without scrolling the page itself.
+      const toc = link?.closest<HTMLElement>(".gb-toc");
+      if (link && toc && toc.scrollHeight > toc.clientHeight) {
+        const box = link.getBoundingClientRect();
+        const frameBox = toc.getBoundingClientRect();
+        if (box.top < frameBox.top || box.bottom > frameBox.bottom) {
+          toc.scrollTop += box.top - frameBox.top - frameBox.height / 3;
+        }
+      }
       current = id;
       // The narrow picker lists level-2 sections: show the one containing `id`.
       const index = all.findIndex((element) => element.id === id);
