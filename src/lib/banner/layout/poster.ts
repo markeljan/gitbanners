@@ -160,7 +160,9 @@ function choose(ctx: Ctx, parts: Parts, roomy: boolean): Choice | null {
     .map((arrangement) => refine(ctx, parts, arrangement, roomy))
     .filter((choice): choice is Choice => choice !== null);
   const best = Math.max(0, ...choices.map((choice) => choice.bare));
-  return choices.find((choice) => choice.bare >= best * CELL_TOLERANCE) ?? null;
+  const good = choices.filter((choice) => choice.bare >= best * CELL_TOLERANCE);
+  // Among those, one that shows the name whole comes first.
+  return good.find((choice) => !choice.attempt.cramped) ?? good[0] ?? null;
 }
 
 /** How far the type may grow beyond the canvas' natural size. */
@@ -206,12 +208,27 @@ function solve(ctx: Ctx, parts: Parts): Attempt | null {
     }
     return best;
   }
-  // Nothing fits at the natural size, even stripped: only now shrink the type.
-  for (let size = unit - 1; size >= ABSOLUTE_MIN_TYPE - 3; size--) {
-    const smaller = choose(withRamp(ctx, size), parts, false);
-    if (smaller) return smaller.attempt;
+  // Nothing fits at the natural size, even stripped: only now shrink the
+  // type, to the largest size at which everything fits. Smaller type never
+  // needs more room, so that size is bisected instead of tried one by one,
+  // and a banner that does not fit at the smallest size is known at once
+  // (the caller then drops a section and asks again).
+  const at = (size: number) => choose(withRamp(ctx, size), parts, false);
+  let low = ABSOLUTE_MIN_TYPE - 3;
+  let best = low < unit ? at(low) : null;
+  if (!best) return null;
+  let high = unit;
+  while (high - low > 1) {
+    const middle = Math.floor((low + high) / 2);
+    const fitted = at(middle);
+    if (fitted) {
+      low = middle;
+      best = fitted;
+    } else {
+      high = middle;
+    }
   }
-  return null;
+  return best.attempt;
 }
 
 /**

@@ -30,9 +30,12 @@ export function fill(
   if (height <= 0 || region.width <= 0) return null;
 
   const flow = bands.filter((band) => !band.pinned);
-  // One band takes what the others leave. Should several ask for it, the
-  // first one gets it and the rest are planned like any other band.
-  const flexIndex = flow.findIndex((band) => band.flex);
+  // One band takes what the others leave: the graph when there is one, else
+  // the first band that knows how to fill a height. The rest take the height
+  // they ask for.
+  const graphIndex = flow.findIndex((band) => band.flex);
+  const flexIndex =
+    graphIndex >= 0 ? graphIndex : flow.findIndex((band) => band.fit);
   const blocks: (BandBlock | null)[] = flow.map((band, index) =>
     index === flexIndex ? null : band.plan(region.width, height),
   );
@@ -54,10 +57,11 @@ export function fill(
   const spaces = Math.max(0, flow.length - 1) + lead;
   const taken = blocks.reduce((sum, block) => sum + (block?.height ?? 0), 0);
   if (flexIndex >= 0) {
-    const block = flow[flexIndex].plan(
-      region.width,
-      flowHeight - taken - spaces * gaps.min,
-    );
+    const band = flow[flexIndex];
+    const left = flowHeight - taken - spaces * gaps.min;
+    const block = band.flex
+      ? band.plan(region.width, left, region.align)
+      : (band.fit?.(region.width, left) ?? null);
     if (!block) return null;
     blocks[flexIndex] = block;
   }

@@ -91,6 +91,19 @@ export function recentWeeks(activity: CommitActivity): RepoActivityWeek[] {
     }));
 }
 
+/**
+ * Commits in the weeks GitHub reported: its own total, or the sum of the
+ * weeks when that is missing.
+ */
+export function commitTotal(
+  activity: CommitActivity,
+  weeks: readonly RepoActivityWeek[],
+): number {
+  return isCount(activity.total)
+    ? Math.floor(activity.total)
+    : weeks.reduce((sum, week) => sum + week.commits, 0);
+}
+
 /** True when every week says how its commits spread over the weekdays. */
 function hasDays(weeks: readonly RepoActivityWeek[]): boolean {
   return weeks.length > 0 && weeks.every((week) => week.days !== null);
@@ -182,7 +195,7 @@ function blankCalendar(today: DateParts | null): Calendar {
 export const CALCULATING = "GitHub is calculating activity";
 
 /** "commits in the last year": what a commit graph counts. A custom title replaces it. */
-export function commitsLabel(ctx: Ctx): string {
+function commitsLabel(ctx: Ctx): string {
   return ctx.options.title ?? "commits in the last year";
 }
 
@@ -204,17 +217,20 @@ export function commitsCaption(ctx: Ctx, total: number | null): string | null {
 /** How a commit chart is drawn. */
 export type ChartStyle = "calendar" | "bars";
 
-/** Narrowest content box, in units of small text, that still shows calendar cells of a readable size. */
-const CALENDAR_MIN_WIDTH = 46;
+/**
+ * Narrowest content box, in canvas pixels, that still holds a year of
+ * calendar cells of a readable size (8 px with their gaps and weekday labels).
+ */
+const CALENDAR_MIN_WIDTH = 560;
 
 /** The chart a banner would use if its data allows both. */
 function preferredStyle(ctx: Ctx): ChartStyle {
-  const { canvas, entity, options, ramp } = ctx;
+  const { canvas, entity, options } = ctx;
   if (presetDefaults(entity.kind, options.preset)?.chart === "bars") {
     return "bars";
   }
   const room = canvas.width - canvas.inset.left - canvas.inset.right;
-  return room >= ramp.small * CALENDAR_MIN_WIDTH ? "calendar" : "bars";
+  return room >= CALENDAR_MIN_WIDTH ? "calendar" : "bars";
 }
 
 /**
@@ -273,9 +289,7 @@ export function graphOf(ctx: Ctx): Graph | null {
     };
   }
   const weeks = recentWeeks(activity);
-  const total = isCount(activity.total)
-    ? Math.floor(activity.total)
-    : weeks.reduce((sum, week) => sum + week.commits, 0);
+  const total = commitTotal(activity, weeks);
   return {
     grid: calendarGrid(commitCalendar(weeks, today)),
     total,

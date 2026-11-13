@@ -20,6 +20,8 @@ export interface AvatarGridSpec {
   width: number;
   /** Height the grid may take; `null` when the canvas grows with its content. */
   maxHeight: number | null;
+  /** Fill `maxHeight` as well as the people allow, instead of taking a natural size. */
+  stretch: boolean;
   /** People in the order they are shown. */
   people: readonly AvatarRef[];
   /** How many there are in all, shown or not; `null` when only the listed ones are known. */
@@ -44,22 +46,36 @@ interface Shape {
 
 /** Share of the avatar size left between two avatars. */
 const GAP_SHARE = 1 / 6;
+/**
+ * Avatar sizes of a grid that fills a box, as the number of them that would
+ * span its width: from faces that still read as faces to ones that do not
+ * outgrow the banner's own subject.
+ */
+const MOST_PER_ROW = 24;
+const FEWEST_PER_ROW = 10.5;
+/**
+ * The same limit for a handful of people who cannot fill a row: four faces
+ * may be larger than ten, but not posters of their own.
+ */
+const FEWEST_FACES = 6.5;
 
 function gapFor(size: number): number {
   return Math.max(2, Math.round(size * GAP_SHARE));
 }
 
 /**
- * A card sets avatars at four lines of small text (48 px on a README) and as
- * many per row as fit, then lets them grow by the pixel or two that makes
- * the row end exactly at the edge.
+ * The natural grid: avatars at four lines of small text on a card (48 px on
+ * a README), three on a poster, as many per row as fit, grown by the pixel
+ * or two that makes the row end exactly at the edge.
  */
-function cardShape(
+function naturalShape(
   ctx: Ctx,
   spec: AvatarGridSpec,
   items: number,
 ): Shape | null {
-  const nominal = Math.round(ctx.ramp.small * 4);
+  const nominal = Math.round(
+    ctx.ramp.small * (ctx.canvas.chrome === "card" ? 4 : 3),
+  );
   const gap = gapFor(nominal);
   const perRow = Math.floor((spec.width + gap) / (nominal + gap));
   if (perRow < 1) return null;
@@ -91,19 +107,17 @@ function cardShape(
 }
 
 /**
- * A fixed canvas has a box to fill: the grid that covers most of it with
- * whole rows wins, within avatar sizes that read as faces (not dots, and not
- * larger than the banner's own subject).
+ * A box to fill: the grid that covers most of it with whole rows wins,
+ * within avatar sizes that read as faces (not dots, and not larger than the
+ * banner's own subject).
  */
-function posterShape(
-  ctx: Ctx,
+function filledShape(
   spec: AvatarGridSpec,
   items: number,
   maxHeight: number,
 ): Shape | null {
-  const { unit } = ctx.canvas;
-  const smallest = Math.round(unit * 2);
-  const largest = Math.round(unit * 3.4);
+  const smallest = Math.round(spec.width / MOST_PER_ROW);
+  const largest = Math.round(spec.width / FEWEST_PER_ROW);
   let best: (Shape & { covered: number }) | null = null;
   for (let perRow = 1; perRow <= items; perRow++) {
     // Solve width = perRow * size + (perRow - 1) * size / 6 for the size.
@@ -118,7 +132,9 @@ function posterShape(
       Math.floor(items / perRow),
     );
     if (rows < 1) continue;
-    const covered = rows * perRow * size * size;
+    // A grid with a face for everyone needs no "+N": worth slightly smaller faces.
+    const everyone = rows * perRow === items && spec.count === null;
+    const covered = rows * perRow * size * size * (everyone ? 1.2 : 1);
     if (!best || covered > best.covered) {
       best = {
         size,
@@ -132,8 +148,15 @@ function posterShape(
     }
   }
   if (best) return best;
-  // Too few people for a full row at any size: one short row of large faces.
-  const size = Math.min(largest, maxHeight);
+  // Too few people for a full row at any size: one short row of faces, as
+  // large as that many of them can be without filling the row.
+  const size = Math.min(
+    maxHeight,
+    Math.max(
+      largest,
+      Math.round(spec.width / Math.max(FEWEST_FACES, items + 1.5)),
+    ),
+  );
   if (size < smallest) return null;
   const gap = gapFor(size);
   const perRow = Math.floor((spec.width + gap) / (size + gap));
@@ -172,9 +195,9 @@ export function planAvatarGrid(
   // One more place for the "+N" chip when not everyone gets a face.
   const items = wanted + (total > wanted ? 1 : 0);
   const shape =
-    spec.maxHeight === null
-      ? cardShape(ctx, spec, items)
-      : posterShape(ctx, spec, items, spec.maxHeight);
+    spec.maxHeight !== null && spec.stretch
+      ? filledShape(spec, items, spec.maxHeight)
+      : naturalShape(ctx, spec, items);
   if (!shape) return null;
   const { size, gap, perRow, rows, places } = shape;
   const height = rows * size + (rows - 1) * gap;
@@ -243,15 +266,15 @@ export function planAvatarGrid(
     return compact(nodes);
   };
 
-  const ideal = spec.width * spec.rows * Math.round(canvas.unit * 3.4);
+  const ideal =
+    spec.width * spec.rows * Math.round(spec.width / FEWEST_PER_ROW) * 1.2;
   return {
     width: shape.justified ? spec.width : Math.min(spec.width, rowWidth),
     height,
     at,
-    strain:
-      spec.maxHeight === null
-        ? 0
-        : 1 - Math.min(1, (places * size * size) / Math.max(1, ideal)),
+    strain: spec.stretch
+      ? 1 - Math.min(1, (places * size * size) / Math.max(1, ideal))
+      : 0,
   };
 }
 
@@ -264,6 +287,7 @@ export interface PeopleSpec {
   width: number;
   maxHeight: number | null;
   compact: 0 | 1 | 2;
+  stretch?: boolean;
 }
 
 function rowsFor(
@@ -271,7 +295,9 @@ function rowsFor(
   spec: PeopleSpec,
   section: keyof typeof CARD_ROWS,
 ): number {
-  if (spec.maxHeight !== null) return POSTER_ROWS[spec.compact];
+  // Filling a box, the grid may use every row; otherwise the level decides.
+  if (spec.maxHeight !== null)
+    return POSTER_ROWS[spec.stretch ? 0 : spec.compact];
   // An explicit count may need more rows than a card shows by default.
   return ctx.options.count === null ? CARD_ROWS[section] : 30;
 }
@@ -283,6 +309,7 @@ export function planPeople(ctx: Ctx, spec: PeopleSpec): AvatarGridPlan | null {
   return planAvatarGrid(ctx, {
     width: spec.width,
     maxHeight: spec.maxHeight,
+    stretch: spec.maxHeight !== null && spec.stretch === true,
     people: entity.people,
     total: entity.stats?.members ?? null,
     count: ctx.options.count,
@@ -311,6 +338,7 @@ export function planContributors(
   return planAvatarGrid(ctx, {
     width: spec.width,
     maxHeight: spec.maxHeight,
+    stretch: spec.maxHeight !== null && spec.stretch === true,
     people: byCommits,
     total: entity.contributorCount ?? null,
     count: ctx.options.count,

@@ -115,7 +115,12 @@ function headerItem(
   });
   const block: Block = {
     width,
-    height: header.height,
+    // Tiles are two lines tall. An identity cut down to its name (no avatar,
+    // no second line) is shorter than that, and must not let the next row in.
+    height: Math.max(
+      header.height,
+      merged ? header.titleTop + merged.height : 0,
+    ),
     at: (x, y) => [
       ...header.at(x, y),
       ...(merged ? merged.at(x + width - beside, y + header.titleTop) : []),

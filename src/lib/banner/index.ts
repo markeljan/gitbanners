@@ -14,7 +14,12 @@ export {
   collectImages,
 } from "@/lib/banner/build";
 export { type Canvas, type Rect, resolveCanvas } from "@/lib/banner/canvas";
-export { DEMO_NOW, demoEntity, identicon } from "@/lib/banner/demo";
+export {
+  DEMO_NOW,
+  type DemoOptions,
+  demoEntity,
+  identicon,
+} from "@/lib/banner/demo";
 export { DEFAULT_FONT_ID, FONTS, getFont } from "@/lib/banner/fonts";
 export { formatCount, formatNumber } from "@/lib/banner/format";
 export {

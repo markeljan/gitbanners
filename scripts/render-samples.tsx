@@ -9,10 +9,11 @@
  * system temp directory. README-sized samples are written as 2x PNG and as
  * SVG; fixed canvases as 1x PNG.
  *
- * The matrix: every user preset on every size in three themes, the default
- * banner in all themes, the generic organization and repository banners, and
- * the edge cases a layout has to survive. Real snapshots under
- * `src/lib/github/__fixtures__/samples/*.json` are added when they exist.
+ * The matrix: every preset of every kind on every size in three themes (the
+ * year in review once for a calendar year and once for the last 12 months),
+ * the default banner in all themes, and the edge cases a layout has to
+ * survive. Real snapshots under `src/lib/github/__fixtures__/samples/*.json`
+ * are added when they exist, in every preset of their kind.
  */
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -26,12 +27,19 @@ import {
   DEMO_NOW,
   demoEntity,
   parseOptions,
+  presetDefaults,
   presetsFor,
   resolveOptions,
   SIZE_IDS,
   THEMES,
 } from "@/lib/banner";
-import { type Entity, EntitySchema, type User } from "@/lib/github/schema";
+import {
+  type Entity,
+  EntitySchema,
+  type Org,
+  type Repo,
+  type User,
+} from "@/lib/github/schema";
 import {
   avatarDataUri,
   fallbackFontsFor,
@@ -40,7 +48,12 @@ import {
 } from "@/lib/render";
 
 const HOST = "gitbanners.vercel.app";
+/** Themes of the profile presets: GitHub's own two and a community one. */
 const MATRIX_THEMES = ["github-dark", "github-light", "dracula"] as const;
+/** Themes of the repository, organization and year-in-review presets. */
+const POSTER_THEMES = ["github-dark", "github-light", "tokyo-night"] as const;
+/** The calendar year the year-in-review samples are made for. */
+const WRAPPED_YEAR = 2026;
 const FIXTURES = join(process.cwd(), "src/lib/github/__fixtures__/samples");
 
 interface Sample {
@@ -85,10 +98,22 @@ function entitySample(
   };
 }
 
-function edgeUser(patch: (user: User) => void): User {
-  const user = demoEntity("user");
+function edgeUser(patch: (user: User) => void, year?: number): User {
+  const user = demoEntity("user", { year });
   patch(user);
   return user;
+}
+
+function edgeRepo(patch: (repo: Repo) => void): Repo {
+  const repo = demoEntity("repo");
+  patch(repo);
+  return repo;
+}
+
+function edgeOrg(patch: (org: Org) => void): Org {
+  const org = demoEntity("org");
+  patch(org);
+  return org;
 }
 
 function matrix(): Sample[] {
@@ -114,19 +139,323 @@ function matrix(): Sample[] {
       entitySample(`theme-${theme.id}`, user, "overview", `theme=${theme.id}`),
     );
   }
-  for (const kind of ["org", "repo"] as const) {
-    for (const size of ["readme", "x", "og"] as const) {
+  // The year in review: a calendar year with its extras, and the default range.
+  const year = demoEntity("user", { year: WRAPPED_YEAR });
+  for (const size of SIZE_IDS) {
+    for (const theme of POSTER_THEMES) {
       samples.push(
         entitySample(
-          `${kind}-overview@${size}`,
-          demoEntity(kind),
-          null,
-          `size=${size}`,
+          `user-wrapped@${size}.${theme}`,
+          year,
+          "wrapped",
+          `size=${size}&theme=${theme}&year=${WRAPPED_YEAR}`,
+        ),
+        entitySample(
+          `user-wrapped-12-months@${size}.${theme}`,
+          user,
+          "wrapped",
+          `size=${size}&theme=${theme}`,
         ),
       );
     }
   }
+  for (const kind of ["repo", "org"] as const) {
+    const entity = demoEntity(kind);
+    for (const preset of presetsFor(kind)) {
+      for (const size of SIZE_IDS) {
+        for (const theme of POSTER_THEMES) {
+          samples.push(
+            entitySample(
+              `${kind}-${preset.id}@${size}.${theme}`,
+              entity,
+              preset.id,
+              `size=${size}&theme=${theme}`,
+            ),
+          );
+        }
+      }
+    }
+  }
   return samples;
+}
+
+/** Repositories, organizations and years a layout has to survive. */
+function posterEdges(): Sample[] {
+  const longName = edgeRepo((r) => {
+    r.name = "a-repository-name-of-exactly-forty-chars";
+    r.owner = { ...r.owner, login: "an-organization-with-a-very-long-login" };
+    r.fullName = `${r.owner.login}/${r.name}`;
+  });
+  const noDescription = edgeRepo((r) => {
+    r.description = null;
+  });
+  const noLanguage = edgeRepo((r) => {
+    r.language = null;
+    r.languages = [];
+  });
+  const computing = edgeRepo((r) => {
+    r.activity = null;
+  });
+  const weeklyOnly = edgeRepo((r) => {
+    if (!r.activity) return;
+    r.activity = {
+      ...r.activity,
+      weeks: r.activity.weeks.map((week) => ({ ...week, days: null })),
+    };
+  });
+  const nobody = edgeRepo((r) => {
+    r.contributors = [];
+    r.contributorCount = 0;
+  });
+  const fewPeople = edgeRepo((r) => {
+    r.contributors = r.contributors.slice(0, 4);
+    r.contributorCount = 4;
+  });
+  const archivedFork = edgeRepo((r) => {
+    r.isArchived = true;
+    r.isFork = true;
+  });
+  const bare = edgeRepo((r) => {
+    r.description = null;
+    r.language = null;
+    r.languages = [];
+    r.license = null;
+    r.topics = [];
+    r.latestRelease = null;
+    r.commits = null;
+    r.activity = null;
+    r.starHistory = null;
+    r.contributors = [];
+    r.contributorCount = null;
+  });
+  const personal = edgeRepo((r) => {
+    r.owner = { ...r.owner, login: "mona-demo", kind: "user" };
+    r.fullName = "mona-demo/rocket";
+  });
+  const hiddenRoster = edgeOrg((o) => {
+    o.people = [];
+    o.stats = { ...o.stats, members: null };
+  });
+  const quietOrg = edgeOrg((o) => {
+    o.activity = null;
+    o.isVerified = false;
+    o.description = null;
+  });
+  const fewRepos = edgeOrg((o) => {
+    o.repos = o.repos.slice(0, 2);
+    o.people = o.people.slice(0, 5);
+    o.stats = { ...o.stats, members: 5 };
+  });
+  const quietYear = edgeUser((u) => {
+    const kept = new Map([
+      [40, 1],
+      [41, 2],
+      [200, 1],
+    ]);
+    u.calendar = {
+      ...u.calendar,
+      total: 4,
+      days: u.calendar.days.map((day, index) => {
+        const count = kept.get(index) ?? 0;
+        return { ...day, count, level: count > 1 ? 4 : count };
+      }),
+    };
+    u.stats = {
+      ...u.stats,
+      contributions: 4,
+      commits: 3,
+      pullRequests: 1,
+      issues: 0,
+      reviews: 0,
+    };
+    u.wrapped = { year: WRAPPED_YEAR, previousTotal: 0, topRepos: [] };
+  }, WRAPPED_YEAR);
+  const emptyYear = edgeUser((u) => {
+    u.calendar = {
+      ...u.calendar,
+      total: 0,
+      days: u.calendar.days.map((day) => ({ ...day, count: 0, level: 0 })),
+    };
+    u.stats = { ...u.stats, contributions: 0, commits: 0, pullRequests: 0 };
+    u.wrapped = null;
+    u.languages = [];
+  }, 2025);
+  const slowerYear = edgeUser((u) => {
+    if (!u.wrapped) return;
+    u.wrapped = {
+      ...u.wrapped,
+      previousTotal: Math.round(u.calendar.total * 1.4),
+      topRepos: [
+        {
+          fullName: "an-organization-with-a-very-long-login/a-long-repository",
+          commits: 1,
+        },
+        ...u.wrapped.topRepos,
+      ],
+    };
+  }, 2025);
+  const year = `year=${WRAPPED_YEAR}`;
+  return [
+    entitySample("edge-repo-no-description", noDescription, "overview"),
+    entitySample(
+      "edge-repo-no-description@social",
+      noDescription,
+      "social",
+      "theme=github-light",
+    ),
+    entitySample("edge-repo-no-language", noLanguage, "overview"),
+    entitySample("edge-repo-no-language@social", noLanguage, "social"),
+    entitySample("edge-repo-activity-computing", computing, "activity"),
+    entitySample(
+      "edge-repo-activity-computing@og",
+      computing,
+      "activity",
+      "size=og",
+    ),
+    entitySample("edge-repo-release-computing", computing, "release"),
+    entitySample(
+      "edge-repo-release-computing@x",
+      computing,
+      "release",
+      "size=x",
+    ),
+    entitySample("edge-repo-activity-weekly-only", weeklyOnly, "activity"),
+    entitySample(
+      "edge-repo-activity-weekly-only@og",
+      weeklyOnly,
+      "activity",
+      "size=og",
+    ),
+    entitySample(
+      "edge-repo-activity-narrow",
+      demoEntity("repo"),
+      "activity",
+      "width=495",
+    ),
+    entitySample("edge-repo-no-contributors", nobody, "contributors"),
+    entitySample(
+      "edge-repo-no-contributors@og",
+      nobody,
+      "contributors",
+      "size=og",
+    ),
+    entitySample("edge-repo-four-contributors", fewPeople, "contributors"),
+    entitySample(
+      "edge-repo-four-contributors@square",
+      fewPeople,
+      "contributors",
+      "size=square",
+    ),
+    entitySample(
+      "edge-repo-contributors-count-10",
+      demoEntity("repo"),
+      "contributors",
+      "count=10",
+    ),
+    entitySample("edge-repo-archived-fork", archivedFork, "overview"),
+    entitySample("edge-repo-archived-fork@social", archivedFork, "social"),
+    entitySample(
+      "edge-repo-archived-fork@x",
+      archivedFork,
+      "activity",
+      "size=x",
+    ),
+    entitySample("edge-repo-long-name", longName, "overview"),
+    entitySample("edge-repo-long-name-release", longName, "release"),
+    entitySample("edge-repo-long-name@social", longName, "social"),
+    entitySample("edge-repo-long-name@og", longName, "contributors", "size=og"),
+    entitySample("edge-repo-long-name@x", longName, "overview", "size=x"),
+    entitySample("edge-repo-bare", bare, "overview"),
+    entitySample("edge-repo-bare-activity", bare, "activity"),
+    entitySample("edge-repo-bare@social", bare, "social"),
+    entitySample("edge-repo-personal@social", personal, "social"),
+    entitySample(
+      "edge-repo-social-rounded",
+      demoEntity("repo"),
+      "social",
+      "radius=40&border=1&theme=tokyo-night",
+    ),
+    entitySample(
+      "edge-repo-hide-everything",
+      demoEntity("repo"),
+      "overview",
+      "hide=avatar,description,meta,topics",
+    ),
+    entitySample("edge-org-hidden-roster", hiddenRoster, "overview"),
+    entitySample(
+      "edge-org-hidden-roster@og",
+      hiddenRoster,
+      "overview",
+      "size=og",
+    ),
+    entitySample("edge-org-no-activity", quietOrg, "activity"),
+    entitySample("edge-org-no-activity@x", quietOrg, "activity", "size=x"),
+    entitySample("edge-org-two-repos", fewRepos, "repos"),
+    entitySample("edge-org-two-repos@square", fewRepos, "repos", "size=square"),
+    entitySample("edge-org-five-people", fewRepos, "overview"),
+    entitySample(
+      "edge-org-people-count-24",
+      demoEntity("org"),
+      "overview",
+      "count=24",
+    ),
+    entitySample("edge-wrapped-quiet-year", quietYear, "wrapped", year),
+    entitySample(
+      "edge-wrapped-quiet-year@square",
+      quietYear,
+      "wrapped",
+      `${year}&size=square`,
+    ),
+    entitySample(
+      "edge-wrapped-quiet-year@x",
+      quietYear,
+      "wrapped",
+      `${year}&size=x`,
+    ),
+    entitySample(
+      "edge-wrapped-quiet-year@readme",
+      quietYear,
+      "wrapped",
+      `${year}&size=readme`,
+    ),
+    entitySample("edge-wrapped-empty-year", emptyYear, "wrapped", "year=2025"),
+    entitySample(
+      "edge-wrapped-empty-year@square",
+      emptyYear,
+      "wrapped",
+      "year=2025&size=square",
+    ),
+    entitySample(
+      "edge-wrapped-slower-year",
+      slowerYear,
+      "wrapped",
+      "year=2025",
+    ),
+    entitySample(
+      "edge-wrapped-slower-year@square",
+      slowerYear,
+      "wrapped",
+      "year=2025&size=square",
+    ),
+    entitySample(
+      "edge-wrapped-narrow-card",
+      demoEntity("user", { year: WRAPPED_YEAR }),
+      "wrapped",
+      `${year}&size=readme&width=495`,
+    ),
+    entitySample(
+      "edge-wrapped-mono",
+      demoEntity("user", { year: WRAPPED_YEAR }),
+      "wrapped",
+      `${year}&font=mono&theme=vercel`,
+    ),
+    entitySample(
+      "edge-wrapped-count-5@square",
+      demoEntity("user", { year: WRAPPED_YEAR }),
+      "wrapped",
+      `${year}&size=square&count=5`,
+    ),
+  ];
 }
 
 function edges(): Sample[] {
@@ -359,6 +688,23 @@ async function fixtures(): Promise<Sample[]> {
           ),
         );
       }
+      // Every other preset of the kind: at its own size, as a card and as a
+      // link preview. Profile presets other than the year in review are
+      // covered by the demo matrix.
+      for (const preset of presetsFor(parsed.data.kind).slice(1)) {
+        if (parsed.data.kind === "user" && preset.id !== "wrapped") continue;
+        const own = presetDefaults(parsed.data.kind, preset.id)?.size;
+        for (const size of new Set([own ?? "readme", "readme", "og"])) {
+          samples.push(
+            entitySample(
+              `real-${slug}-${preset.id}@${size}`,
+              parsed.data,
+              preset.id,
+              `size=${size}`,
+            ),
+          );
+        }
+      }
     } catch {
       // A snapshot another task is still writing: skip it this run.
     }
@@ -385,9 +731,12 @@ async function environment(sample: Sample): Promise<RenderEnv> {
 
 const { filter, out } = args();
 await mkdir(out, { recursive: true });
-const samples = [...matrix(), ...edges(), ...(await fixtures())].filter(
-  (sample) => sample.name.includes(filter),
-);
+const samples = [
+  ...matrix(),
+  ...edges(),
+  ...posterEdges(),
+  ...(await fixtures()),
+].filter((sample) => sample.name.includes(filter));
 
 const rows: string[] = [];
 let failures = 0;
@@ -413,7 +762,7 @@ for (const sample of samples) {
     }
     rows.push(
       [
-        `${sample.name}.png`.padEnd(46),
+        `${sample.name}.png`.padEnd(58),
         `${built.width}x${built.height}`.padEnd(10),
         String(png.byteLength).padStart(8),
         `${(performance.now() - started).toFixed(0)} ms`.padStart(7),
@@ -421,12 +770,12 @@ for (const sample of samples) {
     );
   } catch (error) {
     failures += 1;
-    rows.push(`${sample.name.padEnd(46)}  FAILED  ${String(error)}`);
+    rows.push(`${sample.name.padEnd(58)}  FAILED  ${String(error)}`);
   }
 }
 console.log(
   [
-    `${"file".padEnd(46)}  ${"pixels".padEnd(10)}  ${"bytes".padStart(8)}  ${"time".padStart(7)}`,
+    `${"file".padEnd(58)}  ${"pixels".padEnd(10)}  ${"bytes".padStart(8)}  ${"time".padStart(7)}`,
     ...rows,
   ].join("\n"),
 );

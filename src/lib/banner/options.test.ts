@@ -370,6 +370,39 @@ describe("parseOptions", () => {
     expect(parseOptions({ size: ["x", "og"] })).toEqual({ size: "og" });
   });
 
+  test("the work is bounded by the options, not by the query's length", () => {
+    // A megabyte of list entries, colours and title: read as far as a real
+    // value could reach, then ignored. Nothing here may take long enough to
+    // matter to a request (the whole test is a few milliseconds).
+    const started = performance.now();
+    const huge = {
+      hide: `${"nope,".repeat(200_000)}bio`,
+      stats: `stars,${"stars,".repeat(200_000)}forks`,
+      heat: "ff0000,".repeat(150_000),
+      title: `${" ".repeat(500_000)}Late title`,
+      show: Array.from({ length: 5000 }, () => "header"),
+    };
+    expect(parseOptions(huge)).toEqual({
+      stats: ["stars"],
+      sections: ["header"],
+    });
+    expect(parse(`title=${"a".repeat(400_000)}`).title?.length).toBe(
+      OPTION_LIMITS.title,
+    );
+    expect(
+      normalizeOptions({
+        stats: Array.from({ length: 300_000 }, () => "stars" as const),
+      }),
+    ).toEqual({ stats: ["stars"] });
+    expect(performance.now() - started).toBeLessThan(250);
+    // Real lists are untouched by the cap: every id at once still parses.
+    expect(parse(`stats=${STAT_IDS.join(",")}`).stats).toEqual(STAT_IDS);
+    expect(parse(`show=${SECTION_IDS.join(",")}`).sections).toEqual(
+      SECTION_IDS,
+    );
+    expect(parse(`hide=${HIDE_IDS.join(",")}`).hide).toEqual(HIDE_IDS);
+  });
+
   test("never throws, whatever it is fed", () => {
     const next = prng(7);
     const alphabet = "abc019,%#&=+ -._~/\\'\"<>{}[]()é漢🚀";

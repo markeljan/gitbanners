@@ -22,7 +22,8 @@ export interface LanguagesSpec {
   count: number | null;
 }
 
-interface Share {
+/** One language of the mix, cleaned up for drawing. */
+export interface Share {
   name: string;
   color: string;
   percent: number;
@@ -30,7 +31,11 @@ interface Share {
 
 const DEFAULT_COUNT = 6;
 
-function sharesOf(ctx: Ctx, count: number): Share[] {
+/**
+ * The entity's languages, largest first: at most `count` by name, the rest
+ * summed up as "Other". Names and colours are made safe to draw.
+ */
+export function sharesOf(ctx: Ctx, count: number): Share[] {
   const { entity, palette } = ctx;
   const source: readonly LanguageShare[] = Array.isArray(entity.languages)
     ? entity.languages
@@ -56,7 +61,7 @@ function percentLabel(percent: number): string {
 }
 
 /** Whole-pixel segment widths that add up to exactly `width`. */
-function segmentWidths(
+export function segmentWidths(
   shares: readonly Share[],
   width: number,
   gap: number,

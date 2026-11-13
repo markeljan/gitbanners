@@ -225,20 +225,13 @@ export interface HeatmapFit {
 }
 
 /**
- * Corner radius for a cell: GitHub's 0.2 of the cell edge, in whole pixels,
- * except that 2 px becomes 2.25 px.
- *
- * The quarter pixel is invisible but decides whether the SVG can be animated:
- * the renderer writes a rounded cell as a path whose control points are
- * `radius * 0.4477`, drops the separator in front of any such number below 1
- * ("1.1.9"), and the animation matcher in `src/lib/render/animate-heatmap.ts`
- * expects that separator. 2.25 is the smallest tidy radius whose control
- * point stays at or above 1. Cells under 8 px keep their 1 px radius and
- * cannot be animated until the matcher accepts both spellings.
+ * Corner radius for a cell, in whole pixels: GitHub's 0.2 of the cell edge
+ * (2 px on its own 10 px cells), at least 1 px so small cells keep the soft
+ * look. A cell of 2 px is drawn square: a 1 px radius would make it a dot,
+ * which is not the shape the SVG animation looks for either.
  */
 export function cellRadius(cell: number): number {
-  const radius = Math.max(1, Math.round(cell * 0.2));
-  return radius === 2 ? 2.25 : radius;
+  return cell < 3 ? 0 : Math.max(1, Math.round(cell * 0.2));
 }
 
 /** Largest GitHub-proportioned heatmap (gap 0.3 cell, radius 0.2 cell) that fits the box. */
@@ -251,9 +244,15 @@ export function fitHeatmap(
   const byWidth = maxWidth / (cols + (cols - 1) * 0.3);
   const byHeight = maxHeight / (rows + (rows - 1) * 0.3);
   const smallest = Math.min(byWidth, byHeight);
-  let cell = Number.isFinite(smallest) ? Math.max(2, Math.floor(smallest)) : 2;
+  // Gaps are whole pixels: one rounded down leaves room for a cell a pixel
+  // larger than the exact proportion allows (14 px cells with 4 px gaps are
+  // 950 px wide, where 13.85 px cells with 4.15 px gaps would be). Start one
+  // above the estimate, so a box of exactly a heatmap's size gets that
+  // heatmap back, and step down until it fits.
+  let cell = Number.isFinite(smallest)
+    ? Math.max(2, Math.floor(smallest) + 1)
+    : 2;
   let gap = Math.max(1, Math.round(cell * 0.3));
-  // Rounding the gap up can overflow by a few pixels: step the cell down until it fits.
   while (
     cell > 2 &&
     (cols * cell + (cols - 1) * gap > maxWidth ||

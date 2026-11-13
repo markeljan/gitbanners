@@ -43,7 +43,7 @@ import { plainText } from "@/lib/banner/text";
  * repository.
  */
 
-interface Fact {
+export interface Fact {
   text: string;
   /** Defaults to the muted colour. */
   color?: string;
@@ -52,12 +52,13 @@ interface Fact {
 }
 
 /** A state pill beside the name: "Archived", "Fork", "Verified". */
-interface Label {
+export interface Label {
   text: string;
   color: string;
 }
 
-interface Identity {
+/** Who a banner is about, whatever kind of entity that is. */
+export interface Identity {
   avatarUrl: string | null;
   /** Users are circles, organizations rounded squares. */
   round: boolean;
@@ -103,7 +104,8 @@ function topicsOf(ctx: Ctx, topics: unknown): string[] {
   return topics.map(plainText).filter(Boolean).slice(0, MAX_TOPICS);
 }
 
-function identityOf(ctx: Ctx): Identity {
+/** Reduces the banner's entity to what an identity block shows. */
+export function identityOf(ctx: Ctx): Identity {
   const { entity, palette, ramp, hide } = ctx;
   const strong = { color: palette.colors.text, weight: ramp.strong };
   if (entity.kind === "repo") {
@@ -292,6 +294,13 @@ export interface HeaderPlan extends Block {
   /** Top of the name's line box, relative to the block: things beside the name align to it. */
   titleTop: number;
   /**
+   * Bottom of the lowest line box, relative to the block. The block's height
+   * ends where the ink does (so the space under it looks even), which is a
+   * few pixels above this: a box that must hold every line box, such as the
+   * strip above a profile photo, has to be at least this tall.
+   */
+  extent: number;
+  /**
    * How much the name had to give to fit its line: 0 when it is set at full
    * size, up to 1 when it is shrunk to the floor and still cut.
    */
@@ -323,6 +332,24 @@ function labelLead(ctx: Ctx): number {
 function labelsWidth(ctx: Ctx, identity: Identity): number {
   const row = pillRow(ctx, "label", identity.labels, Number.POSITIVE_INFINITY);
   return row ? row.width + labelLead(ctx) : 0;
+}
+
+/**
+ * Width the identity wants when nothing limits it: the avatar, then the
+ * wider of the name (with its state pills) and the handle. The facts after
+ * the handle do not count: they come and go with the room there is.
+ */
+export function identityWidth(ctx: Ctx): number {
+  const { ramp } = ctx;
+  const identity = identityOf(ctx);
+  const { textX } = textStart(ctx);
+  const title = identity.title.map((run) => run.text).join("");
+  const name =
+    boxOf(ctx, title, ramp.title, ramp.strong) + labelsWidth(ctx, identity);
+  const handle = identity.handle
+    ? boxOf(ctx, identity.handle.text, ramp.body)
+    : 0;
+  return textX + Math.max(name, handle);
 }
 
 /**
@@ -361,24 +388,37 @@ export function planHeader(ctx: Ctx, spec: HeaderSpec): HeaderPlan {
   const { avatar, textX } = textStart(ctx);
   const lineWidth = Math.max(0, spec.width - textX - spec.reserve);
 
-  const titleText = identity.title.map((run) => run.text).join("");
   const nameLine = titleLine(ramp.title);
   const fitting = { weight: ramp.strong, mono: ctx.font.id === "mono" };
-  // State pills follow the name. The name keeps room for a few words before
-  // a pill is allowed to take any.
+  const floor = Math.round(ramp.title * 0.72);
+  const whole = identity.title.map((run) => run.text).join("");
+  // `owner/name` that would be cut even at the smallest size gives up the
+  // owner, not the end of the name: the name is what the banner is about.
+  // The owner moves to the head of the facts.
+  const [prefix, ...rest] = identity.title;
+  const dropped =
+    prefix !== undefined &&
+    rest.length > 0 &&
+    widthOf(ctx, whole, floor, ramp.strong) > lineWidth
+      ? prefix
+      : null;
+  const title = dropped ? rest : identity.title;
+  const titleText = title.map((run) => run.text).join("");
+  // State pills follow the name, in the room it leaves at its full size: a
+  // name is never shrunk or cut to make room for one.
   const lead = labelLead(ctx);
   const labels = pillRow(
     ctx,
     "label",
     identity.labels,
-    lineWidth - lead - ramp.small * 8,
+    lineWidth - lead - boxOf(ctx, titleText, ramp.title, ramp.strong),
   );
   const titleRoom = lineWidth - (labels ? labels.width + lead : 0);
   const nameSize = fitFontSize(
     titleText,
     titleRoom,
     ramp.title,
-    Math.round(ramp.title * 0.72),
+    floor,
     fitting,
   );
   // With pills after it the name's box ends where its text does.
@@ -387,7 +427,18 @@ export function planHeader(ctx: Ctx, spec: HeaderSpec): HeaderPlan {
     : lineWidth;
   const subSize = ramp.body;
   const subLine = textLineHeight(subSize);
-  const sub = secondLine(ctx, identity, subSize, lineWidth);
+  // What found no room on the name's line is still said, at the head of the
+  // facts: the owner, then the states (in their colours).
+  const displaced: Fact[] = [
+    ...(dropped ? [{ text: dropped.text.replace(/\/$/, "") }] : []),
+    ...identity.labels.slice(labels?.items.length ?? 0),
+  ];
+  const sub = secondLine(
+    ctx,
+    { ...identity, facts: [...displaced, ...identity.facts] },
+    subSize,
+    lineWidth,
+  );
   const subTop = nameLine + ramp.lead;
 
   const bioSize = ramp.body;
@@ -462,7 +513,7 @@ export function planHeader(ctx: Ctx, spec: HeaderSpec): HeaderPlan {
         x: x + textX,
         y: y + titleTop + nameShift,
         width: nameWidth,
-        text: identity.title,
+        text: title,
         size: nameSize,
         line: nameLine - nameShift,
         weight: ramp.strong,
@@ -549,11 +600,22 @@ export function planHeader(ctx: Ctx, spec: HeaderSpec): HeaderPlan {
 
   const cut =
     widthOf(ctx, titleText, nameSize, ramp.strong) > titleRoom ? 0.5 : 0;
+  // The description of a repository or an organization says what the banner
+  // is about: type that grows until it is cut has grown too far. (A person's
+  // bio is a tagline; an ellipsis there is no loss worth smaller type.)
+  const clipped =
+    ctx.entity.kind !== "user" && bio && bioEstimate > bioLines * bioWidth
+      ? 0.25
+      : 0;
   return {
     width: spec.width,
     height,
     at,
     titleTop,
-    strain: (ramp.title - nameSize) / ramp.title + cut,
+    extent: Math.max(
+      height,
+      titleTop + (sub.runs.length ? subTop + subLine : nameLine),
+    ),
+    strain: (ramp.title - nameSize) / ramp.title + cut + clipped,
   };
 }

@@ -25,7 +25,12 @@ import { ownerFromSegment, ownerPath } from "@/lib/reserved";
  */
 
 const IMAGE_SUFFIX = /\.(svg|png)$/i;
-const GIT_SUFFIX = /\.git$/i;
+/**
+ * Clone URLs end in ".git"; GitHub itself never lets a repository name end
+ * that way, so every trailing ".git" goes ("repo.git.git" is "repo" too, and
+ * parsing a printed path always gives the same name back).
+ */
+const GIT_SUFFIX = /(?:\.git)+$/i;
 /** Preset ids are short slugs. Anything else in that position is not a banner URL. */
 const PRESET_RE = /^[a-z][a-z0-9-]{0,39}$/;
 
@@ -39,6 +44,12 @@ function parseRepo(segment: string): string | null {
   return isValidRepoName(name) ? name : null;
 }
 
+/** A preset segment as presets are spelled: `Activity` is `activity`. */
+function presetOf(segment: string): string {
+  // Names reach this from entity data too; anything that is not text is no preset.
+  return typeof segment === "string" ? segment.toLowerCase() : "";
+}
+
 /**
  * Parses URL-decoded path segments (everything after the origin).
  *
@@ -49,12 +60,21 @@ function parseRepo(segment: string): string | null {
  * The preset is not checked against the entity kind here (the kind is only
  * known after GitHub answers): `resolveOptions` does that.
  *
+ * Presets are matched without regard to case, like everything else in the
+ * grammar: GitHub does not tell `Stats` from `stats`, so the two spellings
+ * must not address different banners, and a capital letter in an embedded
+ * image URL must not turn the image into a "not found" card. Logins and
+ * repository names are passed on as written; GitHub resolves their case.
+ *
  * Returns `null` for anything that cannot be a banner: no or too many
  * segments, a reserved first segment without "@", invalid characters.
  */
 export function parseBannerPath(
   segments: readonly string[],
 ): ParsedBannerPath | null {
+  // Route params are only typed: an optional catch-all hands over
+  // `undefined` when the path ends early, and that is not a banner either.
+  if (!Array.isArray(segments)) return null;
   if (segments.length < 1 || segments.length > 3) return null;
   if (segments.some((segment) => typeof segment !== "string" || !segment)) {
     return null;
@@ -72,17 +92,18 @@ export function parseBannerPath(
   if (second === undefined) {
     return { target: { kind: "owner", login: owner }, preset: null, format };
   }
-  if (third === undefined && OWNER_PRESET_IDS.has(second)) {
-    return { target: { kind: "owner", login: owner }, preset: second, format };
+  if (third === undefined && OWNER_PRESET_IDS.has(presetOf(second))) {
+    return {
+      target: { kind: "owner", login: owner },
+      preset: presetOf(second),
+      format,
+    };
   }
   const name = parseRepo(second);
   if (!name) return null;
-  if (third !== undefined && !PRESET_RE.test(third)) return null;
-  return {
-    target: { kind: "repo", owner, name },
-    preset: third ?? null,
-    format,
-  };
+  const preset = third === undefined ? null : presetOf(third);
+  if (preset !== null && !PRESET_RE.test(preset)) return null;
+  return { target: { kind: "repo", owner, name }, preset, format };
 }
 
 /**
@@ -91,7 +112,7 @@ export function parseBannerPath(
  * suffix (`logo.svg`). Such repositories are always written with their preset.
  */
 function needsPresetSegment(name: string): boolean {
-  return OWNER_PRESET_IDS.has(name) || IMAGE_SUFFIX.test(name);
+  return OWNER_PRESET_IDS.has(presetOf(name)) || IMAGE_SUFFIX.test(name);
 }
 
 /**
@@ -112,7 +133,7 @@ export function bannerPath(
   // Users and organizations share one default preset id, so the kind of an
   // owner does not need to be known to write its URL.
   const fallback = defaultPresetId(target.kind === "repo" ? "repo" : "user");
-  const asked = opts.preset ?? "";
+  const asked = presetOf(opts.preset ?? "");
   let path: string;
   if (target.kind === "repo") {
     const preset = PRESET_RE.test(asked) ? asked : fallback;

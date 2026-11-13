@@ -8,6 +8,7 @@ import {
   titleLine,
 } from "@/lib/banner/context";
 import {
+  baselineOffset,
   CAP_HEIGHT,
   capOffset,
   compact,
@@ -24,6 +25,12 @@ import {
   toIsoDate,
 } from "@/lib/banner/format";
 import { ICONS } from "@/lib/banner/icons";
+import {
+  type Brand,
+  brandTop,
+  fitBrand,
+  planBrand,
+} from "@/lib/banner/sections/footer";
 import type { User } from "@/lib/github/schema";
 
 /**
@@ -85,18 +92,39 @@ export interface StreakSpec {
   width: number;
   /** Height the figures may take; `null` when the canvas grows with its content. */
   maxHeight: number | null;
+  /** How much of their size the digits give up on a fixed canvas, 0 (none) to 2. */
+  compact?: 0 | 1 | 2;
+}
+
+/** The figures, and the same with the brand mark at the end of their last line. */
+export interface StreakPlan extends Block {
+  /** `null` when the mark does not fit beside the dates of the last figure. */
+  withBrand(brand: Brand): Block | null;
+}
+
+/**
+ * Size of the digits as a multiple of the title size. The streak is this
+ * section's headline, so its digits are larger than the numbers of a stat
+ * row: a quarter on a card, up to two fifths on a poster, where a layout
+ * that needs the height for the graph asks for less (`compact`).
+ */
+function figureScale(ctx: Ctx, compact: 0 | 1 | 2): number {
+  if (ctx.canvas.chrome === "card") return 1.25;
+  return compact === 0 ? 1.4 : compact === 1 ? 1.2 : 1;
 }
 
 /**
  * Plans the two streak figures: side by side, or one above the other when
  * the box is too narrow for both. Users only; `null` when they do not fit.
  */
-export function planStreak(ctx: Ctx, spec: StreakSpec): Block | null {
+export function planStreak(ctx: Ctx, spec: StreakSpec): StreakPlan | null {
   const { entity, ramp, palette } = ctx;
   if (entity.kind !== "user" || spec.width <= 0) return null;
   const items = figures(ctx, entity);
 
-  const valueSize = ramp.title;
+  const valueSize = Math.round(
+    ramp.title * figureScale(ctx, spec.compact ?? 0),
+  );
   const valueLine = titleLine(valueSize);
   const labelSize = ramp.body;
   const detailSize = ramp.small;
@@ -138,7 +166,19 @@ export function planStreak(ctx: Ctx, spec: StreakSpec): Block | null {
   const height = stacked ? 2 * rowHeight + rowGap : rowHeight;
   if (spec.maxHeight !== null && height > spec.maxHeight) return null;
 
-  const at = (x: number, y: number): Node[] => {
+  // The dates of the last figure are a quiet line: the brand mark can end
+  // it, on their baseline, when they leave it room.
+  const lastIndex = items.length - 1;
+  const lastPlace = places[lastIndex];
+  const lastDetail = boxOf(ctx, items[lastIndex].detail, detailSize);
+  const tailRoom =
+    spec.width -
+    lastPlace.x -
+    measured[lastIndex].indent -
+    lastDetail -
+    ramp.small * 2;
+
+  const draw = (x: number, y: number, mark: Mark | null): Node[] => {
     const nodes: (Node | null)[] = [];
     items.forEach((item, index) => {
       const place = places[index];
@@ -146,6 +186,11 @@ export function planStreak(ctx: Ctx, spec: StreakSpec): Block | null {
       const top = y + place.y;
       const room = place.room;
       const indent = measured[index].indent;
+      // Beside the mark the dates keep to their own width.
+      const detailRoom =
+        mark && index === lastIndex
+          ? Math.min(room - indent, lastDetail)
+          : room - indent;
       const text: TextRun[] = [
         {
           text: item.value,
@@ -187,7 +232,7 @@ export function planStreak(ctx: Ctx, spec: StreakSpec): Block | null {
         textLine({
           x: left + indent,
           y: top + detailTop,
-          width: Math.max(0, room - indent),
+          width: Math.max(0, detailRoom),
           text: item.detail,
           size: detailSize,
           line: detailLine,
@@ -195,8 +240,31 @@ export function planStreak(ctx: Ctx, spec: StreakSpec): Block | null {
         }),
       );
     });
+    if (mark) {
+      nodes.push(
+        ...planBrand(ctx, mark.text, mark.width).at(
+          x + spec.width - mark.width,
+          y +
+            lastPlace.y +
+            brandTop(ctx, detailTop + baselineOffset(detailSize, detailLine)),
+        ),
+      );
+    }
     return compact(nodes);
   };
 
-  return { width: spec.width, height, at };
+  return {
+    width: spec.width,
+    height,
+    at: (x, y) => draw(x, y, null),
+    withBrand(brand) {
+      const mark = fitBrand(ctx, brand, tailRoom);
+      return mark
+        ? { width: spec.width, height, at: (x, y) => draw(x, y, mark) }
+        : null;
+    },
+  };
 }
+
+/** The brand mark in the form that fits, with its width. */
+type Mark = NonNullable<ReturnType<typeof fitBrand>>;

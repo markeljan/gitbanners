@@ -152,7 +152,7 @@ describe("fitHeatmap", () => {
     expect(fitHeatmap(768, Number.POSITIVE_INFINITY)).toMatchObject({
       cell: 11,
       gap: 3,
-      radius: 2.25,
+      radius: 2,
       width: 739,
       height: 95,
     });
@@ -183,6 +183,51 @@ describe("fitHeatmap", () => {
       width: 422,
       height: 54,
     });
+  });
+
+  test("is the largest that fits: one pixel more per cell would not", () => {
+    const fits = (
+      cell: number,
+      cols: number,
+      width: number,
+      height: number,
+    ) => {
+      const gap = Math.max(1, Math.round(cell * 0.3));
+      return (
+        cols * cell + (cols - 1) * gap <= width && 7 * cell + 6 * gap <= height
+      );
+    };
+    for (let width = 150; width <= 3000; width += 13) {
+      for (const height of [20, 60, 150, 400, Number.POSITIVE_INFINITY]) {
+        for (const cols of [14, 27, 53, 54]) {
+          const fit = fitHeatmap(width, height, cols);
+          if (fit.cell > 2) {
+            expect(fits(fit.cell, cols, width, height)).toBe(true);
+          }
+          expect({
+            width,
+            height,
+            cols,
+            larger: fits(fit.cell + 1, cols, width, height),
+          }).toEqual({ width, height, cols, larger: false });
+        }
+      }
+    }
+    // Rounded gaps leave room the exact proportion does not see: 14 px
+    // cells with 4 px gaps are 950 px wide, 13.85 px ones would be too.
+    expect(fitHeatmap(950, 1000)).toMatchObject({ cell: 14, gap: 4 });
+  });
+
+  test("a box of a heatmap's own size gets that heatmap back", () => {
+    // Layouts lay everything out a second time at the graph's width (its
+    // "measure"); the graph must not shrink when asked to fit itself.
+    for (let width = 150; width <= 3000; width += 29) {
+      for (const cols of [27, 53, 54]) {
+        const fit = fitHeatmap(width, Number.POSITIVE_INFINITY, cols);
+        if (fit.cell <= 2) continue;
+        expect(fitHeatmap(fit.width, fit.height, cols)).toEqual(fit);
+      }
+    }
   });
 
   test("always fits the box it was given, down to the 2 px floor", () => {

@@ -87,7 +87,13 @@ describe("parseBannerPath", () => {
       ["exelban", "stats", "overview"],
       parsed(repo("exelban", "stats"), "overview"),
     ],
-    [["exelban", "Stats"], parsed(repo("exelban", "Stats"))],
+    // GitHub does not tell `Stats` from `stats`: neither do presets.
+    [["exelban", "Stats"], parsed(owner("exelban"), "stats")],
+    [["exelban", "STATS.PNG"], parsed(owner("exelban"), "stats", "png")],
+    [
+      ["exelban", "Stats", "Overview"],
+      parsed(repo("exelban", "Stats"), "overview"),
+    ],
     // owner + repository + preset
     [
       ["vercel", "next.js", "contributors.png"],
@@ -125,7 +131,14 @@ describe("parseBannerPath", () => {
     [["vercel", ".."], null],
     [["vercel", "next js"], null],
     [["vercel", "a".repeat(101)], null],
-    [["vercel", "next.js", "Contributors"], null],
+    [
+      ["vercel", "next.js", "Contributors"],
+      parsed(repo("vercel", "next.js"), "contributors"),
+    ],
+    [["vercel", "next.js", "Con tributors"], null],
+    // every trailing ".git" goes: GitHub never lets a name end that way
+    [["vercel", "next.js.git.git"], parsed(repo("vercel", "next.js"))],
+    [["vercel", "next.js.GIT"], parsed(repo("vercel", "next.js"))],
     [["vercel", "next.js", "v1.2"], null],
     [["vercel", "next.js", "../../etc"], null],
     [["vercel", ".git"], null],
@@ -152,6 +165,10 @@ describe("parseBannerPath", () => {
   });
 
   test("never throws on hostile input", () => {
+    // Not even an array: an optional catch-all route param can be undefined.
+    for (const input of [undefined, null, 42, "vercel/next.js", {}]) {
+      expect(parseBannerPath(input as never)).toBeNull();
+    }
     const hostile: unknown[] = [
       [null],
       [undefined, "x"],
@@ -224,6 +241,25 @@ describe("bannerPath", () => {
     for (const id of OWNER_PRESET_IDS) {
       expect(bannerPath(repo("someone", id))).toBe(`/someone/${id}/overview`);
     }
+    // In any spelling: `/exelban/Stats` alone would be the profile preset.
+    expect(bannerPath(repo("exelban", "Stats"))).toBe(
+      "/exelban/Stats/overview",
+    );
+    expect(parseBannerPath(["exelban", "Stats", "overview"])?.target).toEqual(
+      repo("exelban", "Stats"),
+    );
+  });
+
+  test("presets are written in lower case, whatever was asked", () => {
+    expect(bannerPath(owner("torvalds"), { preset: "Activity" })).toBe(
+      "/torvalds/activity",
+    );
+    expect(bannerPath(owner("torvalds"), { preset: "OVERVIEW" })).toBe(
+      "/torvalds",
+    );
+    expect(
+      bannerPath(repo("vercel", "next.js"), { preset: "Contributors" }),
+    ).toBe("/vercel/next.js/contributors");
   });
 
   test("a preset that could not be parsed back is not written", () => {
@@ -249,6 +285,8 @@ describe("bannerPath", () => {
       owner("a-b-c"),
       repo("vercel", "next.js"),
       repo("exelban", "stats"),
+      repo("exelban", "Stats"),
+      repo("someone", "WRAPPED"),
       repo("someone", "logo.svg"),
       repo("someone", "shot.PNG"),
       repo("github", ".github"),

@@ -36,6 +36,18 @@ export interface ReposSpec {
   lines: 0 | 1 | 2;
   /** Keep to one row of cards, whatever `count` says. */
   singleRow: boolean;
+  /**
+   * `maxHeight` is what the canvas has left and the cards are its main
+   * content: show as many of them as fit and shorten descriptions first,
+   * instead of dropping rows to keep the descriptions.
+   */
+  fill?: boolean;
+}
+
+/** The cards with how much of what was asked for they show, for layouts that compare candidates. */
+export interface ReposPlan extends Block {
+  /** 0 when every card and description line asked for is there; rises as they are given up. */
+  strain?: number;
 }
 
 interface CardMetrics {
@@ -99,6 +111,61 @@ function nameRuns(ctx: Ctx, repo: RepoSummary): TextRun[] {
       ];
 }
 
+/** Sizes of a card's last line: language, stars, forks. */
+interface FootMetrics {
+  /** Space between two items. */
+  itemGap: number;
+  /** The least of it, before a long language name is cut instead. */
+  tightGap: number;
+  /** Space between a glyph (or the language dot) and its text. */
+  glyphGap: number;
+  glyph: number;
+  dot: number;
+}
+
+function footMetricsOf(m: CardMetrics): FootMetrics {
+  return {
+    itemGap: Math.round(m.textSize * 1.3),
+    tightGap: Math.round(m.textSize * 0.7),
+    glyphGap: Math.round(m.textSize * 0.35),
+    glyph: Math.round(m.textSize * 1.15),
+    dot: Math.round(m.textSize * 0.85),
+  };
+}
+
+/** Width of a count with its glyph, e.g. the star and "18.4k". */
+function countWidth(ctx: Ctx, m: CardMetrics, value: number): number {
+  const f = footMetricsOf(m);
+  return f.glyph + f.glyphGap + boxOf(ctx, formatCount(value), m.textSize);
+}
+
+/**
+ * True when the card's last line has room for the fork count after the
+ * whole language name and the stars. Cards of one banner decide this
+ * together (see `planRepos`): forks on some cards and not on others reads as
+ * missing data.
+ */
+function forksFit(
+  ctx: Ctx,
+  repo: RepoSummary,
+  m: CardMetrics,
+  inner: number,
+): boolean {
+  const f = footMetricsOf(m);
+  const language = plainText(repo.language?.name);
+  // The gap after the language may tighten to make the room (see `drawCard`).
+  const lead = language
+    ? f.dot + f.glyphGap + boxOf(ctx, language, m.textSize) + f.tightGap
+    : 0;
+  return (
+    lead +
+      countWidth(ctx, m, repo.stars) +
+      f.itemGap +
+      countWidth(ctx, m, repo.forks) <=
+    inner
+  );
+}
+
 function drawCard(
   ctx: Ctx,
   repo: RepoSummary,
@@ -108,6 +175,7 @@ function drawCard(
   width: number,
   height: number,
   descriptionLines: number,
+  showForks: boolean,
 ): Node[] {
   const { ramp, palette } = ctx;
   const { muted } = palette.colors;
@@ -156,25 +224,37 @@ function drawCard(
       : null,
   ];
 
-  // Footer: language, stars, forks, each only while it still fits whole.
-  const itemGap = Math.round(m.textSize * 1.3);
-  const glyphGap = Math.round(m.textSize * 0.35);
+  // Footer: language, stars, forks. Stars are what a repository is ranked
+  // by, so on a narrow card they keep their place: the gap before them
+  // tightens first, then the language name is cut short. Forks are shown on
+  // every card of the banner or on none (`showForks`).
+  const { itemGap, tightGap, glyphGap, glyph, dot } = footMetricsOf(m);
+  const forks = showForks && repo.forks > 0;
+  // What follows the language and must stay whole: the stars, and the forks
+  // when this banner shows them.
+  const countsWidth =
+    countWidth(ctx, m, repo.stars) +
+    (forks ? itemGap + countWidth(ctx, m, repo.forks) : 0);
   let cursor = left;
   const right = left + inner;
   const language = plainText(repo.language?.name);
   if (language) {
-    const dot = Math.round(m.textSize * 0.85);
-    const labelWidth = Math.min(
-      boxOf(ctx, language, m.textSize),
-      Math.max(0, right - cursor - dot - glyphGap),
-    );
+    const lead = dot + glyphGap;
+    const natural = boxOf(ctx, language, m.textSize);
+    const beforeStars = right - cursor - lead - tightGap - countsWidth;
+    // A name cut to less than a few letters says nothing: then it keeps the
+    // line to itself, as far as it goes.
+    const labelWidth =
+      beforeStars >= Math.min(natural, m.textSize * 3)
+        ? Math.min(natural, beforeStars)
+        : Math.min(natural, Math.max(0, right - cursor - lead));
     nodes.push(
       box(cursor, centre(dot), dot, dot, {
         borderRadius: dot / 2,
         backgroundColor: normalizeHex(repo.language?.color) ?? muted,
       }),
       textLine({
-        x: cursor + dot + glyphGap,
+        x: cursor + lead,
         y: footTop,
         width: labelWidth,
         text: language,
@@ -183,15 +263,18 @@ function drawCard(
         color: muted,
       }),
     );
-    cursor += dot + glyphGap + labelWidth + itemGap;
+    cursor += lead + labelWidth;
+    cursor += Math.min(
+      itemGap,
+      Math.max(tightGap, right - cursor - countsWidth),
+    );
   }
   const counts = [
-    { glyph: ICONS.star, value: repo.stars, always: true },
-    { glyph: ICONS["repo-forked"], value: repo.forks, always: false },
+    { glyph: ICONS.star, value: repo.stars, shown: true },
+    { glyph: ICONS["repo-forked"], value: repo.forks, shown: forks },
   ];
-  const glyph = Math.round(m.textSize * 1.15);
   for (const item of counts) {
-    if (!item.always && !(item.value > 0)) continue;
+    if (!item.shown) continue;
     const text = formatCount(item.value);
     const textWidth = boxOf(ctx, text, m.textSize);
     if (cursor + glyph + glyphGap + textWidth > right) break;
@@ -265,13 +348,57 @@ function isLoading(ctx: Ctx): boolean {
   return ctx.entity.kind === "user" && ctx.entity.complete === false;
 }
 
+/** What a card is worth to the reader: its name, and more with each line that says what it is for. */
+function cardWorth(lines: number): number {
+  return 1 + 0.45 * lines;
+}
+
+/** One way of setting the cards: how many per row, how many rows, how many description lines. */
+interface Filling {
+  perRow: number;
+  rows: number;
+  lines: number;
+}
+
+/**
+ * The way of filling a box of `maxHeight` that shows the most: every option
+ * (cards per row, with the most description lines it may use) is tried with
+ * fewer rows and fewer lines until it fits. A card counts, and a card that
+ * says what the repository is for counts for more. The first best wins, so
+ * earlier options are preferred on a tie. `null` when not one card fits.
+ */
+function bestFilling(
+  m: CardMetrics,
+  gap: number,
+  wanted: number,
+  maxHeight: number,
+  options: readonly { perRow: number; lines: number }[],
+): Filling | null {
+  let best: (Filling & { worth: number }) | null = null;
+  for (const option of options) {
+    for (let rows = Math.ceil(wanted / option.perRow); rows >= 1; rows--) {
+      for (let lines = option.lines; lines >= 0; lines--) {
+        if (rows * cardHeight(m, lines) + (rows - 1) * gap > maxHeight) {
+          continue;
+        }
+        const cards = Math.min(wanted, rows * option.perRow);
+        const worth = cards * cardWorth(lines);
+        if (!best || worth > best.worth) {
+          best = { perRow: option.perRow, rows, lines, worth };
+        }
+      }
+    }
+  }
+  return best;
+}
+
 /**
  * Plans the repository cards: as many per row as stay readable, the
  * description shortened (2 lines, 1, none) until the rows fit the height.
  * Returns `null` when the owner has no repositories to show; while they are
  * still loading, placeholder cards keep their place.
  */
-export function planRepos(ctx: Ctx, spec: ReposSpec): Block | null {
+export function planRepos(ctx: Ctx, spec: ReposSpec): ReposPlan | null {
   const repos = reposOf(ctx);
   const pending = repos.length === 0 && isLoading(ctx);
   if ((repos.length === 0 && !pending) || spec.width <= 0) return null;
@@ -279,18 +406,30 @@ export function planRepos(ctx: Ctx, spec: ReposSpec): Block | null {
   const m = metricsOf(ctx);
   const gap = Math.round(ramp.small * 1.33);
   const minWidth = ramp.small * 15;
-  const perRow = Math.max(
-    1,
-    Math.min(3, Math.floor((spec.width + gap) / (minWidth + gap))),
-  );
-  const asked = spec.singleRow ? perRow : (spec.count ?? perRow);
+  const perRowOf = (narrowest: number) =>
+    Math.max(
+      1,
+      Math.min(3, Math.floor((spec.width + gap) / (narrowest + gap))),
+    );
+  let perRow = perRowOf(minWidth);
+  const asked = spec.singleRow && !spec.fill ? perRow : (spec.count ?? perRow);
   const wanted = pending ? asked : Math.min(repos.length, asked);
 
-  // Fewer rows first, then shorter descriptions, until it fits.
   let lines: number = spec.lines;
   let rows = Math.ceil(wanted / perRow);
   const total = () => rows * cardHeight(m, lines) + (rows - 1) * gap;
-  if (spec.maxHeight !== null) {
+  if (spec.maxHeight !== null && spec.fill) {
+    // Cards that only carry a name may be a little narrower, which can fit
+    // one more of them per row.
+    const dense = perRowOf(Math.round(minWidth * 0.9));
+    const filling = bestFilling(m, gap, wanted, spec.maxHeight, [
+      { perRow, lines: spec.lines },
+      ...(dense > perRow ? [{ perRow: dense, lines: 0 }] : []),
+    ]);
+    if (!filling) return null;
+    ({ perRow, rows, lines } = filling);
+  } else if (spec.maxHeight !== null) {
+    // Fewer rows first, then shorter descriptions, until it fits.
     while (total() > spec.maxHeight && rows > 1) rows -= 1;
     while (total() > spec.maxHeight && lines > 0) lines -= 1;
     if (total() > spec.maxHeight) return null;
@@ -299,17 +438,45 @@ export function planRepos(ctx: Ctx, spec: ReposSpec): Block | null {
   const columns = Math.min(perRow, count);
   const cardWidth = Math.floor((spec.width - (columns - 1) * gap) / columns);
   const height = cardHeight(m, lines);
+  // One answer for the whole set: a fork count on some cards only would
+  // look like the others have none.
+  const showForks = repos
+    .slice(0, count)
+    .every(
+      (repo) =>
+        !(repo.forks > 0) || forksFit(ctx, repo, m, cardWidth - 2 * m.padding),
+    );
 
   return {
     width: spec.width,
     height: total(),
+    // Measured the way fillings are weighed, so type never grows into a
+    // layout that shows less.
+    ...(spec.fill
+      ? {
+          strain:
+            1 -
+            (count * cardWorth(lines)) /
+              Math.max(1, wanted * cardWorth(spec.lines)),
+        }
+      : null),
     at(x, y) {
       return Array.from({ length: count }, (_, index) => {
         const cardX = x + (index % columns) * (cardWidth + gap);
         const cardY = y + Math.floor(index / columns) * (height + gap);
         const repo = repos[index];
         return repo
-          ? drawCard(ctx, repo, m, cardX, cardY, cardWidth, height, lines)
+          ? drawCard(
+              ctx,
+              repo,
+              m,
+              cardX,
+              cardY,
+              cardWidth,
+              height,
+              lines,
+              showForks,
+            )
           : drawPlaceholder(ctx, m, cardX, cardY, cardWidth, height, lines);
       }).flat();
     },

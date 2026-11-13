@@ -43,6 +43,10 @@ interface Leaf {
   tag: string;
   style: CSSProperties;
   text: string;
+  /** Source of an `<img>`. */
+  src: string | null;
+  /** Number of direct children: the paths of an `<svg>`. */
+  children: number;
   /** The box as drawn, without the clip padding of text lines. */
   box: { x: number; y: number; w: number; h: number } | null;
 }
@@ -125,6 +129,12 @@ function inspect(built: BuiltBanner): { leaves: Leaf[]; problems: string[] } {
         tag,
         style,
         text: textOf(element),
+        src: typeof element.props.src === "string" ? element.props.src : null,
+        children: Array.isArray(element.props.children)
+          ? element.props.children.length
+          : element.props.children
+            ? 1
+            : 0,
         box: positioned
           ? {
               x: style.left as number,
@@ -427,9 +437,9 @@ function hostileUsers(): Record<string, User> {
   };
 }
 
-function hostileOrg(): Org {
-  const org = demoEntity("org");
-  Object.assign(org, {
+function hostileOrgs(): Record<string, Org> {
+  const long = demoEntity("org");
+  Object.assign(long, {
     name: LONG,
     description: `${MIXED} ${LONG}`,
     location: LONG,
@@ -446,12 +456,49 @@ function hostileOrg(): Org {
     activity: null,
     people: [],
   });
-  return org;
+
+  const crowded = demoEntity("org");
+  Object.assign(crowded, {
+    isVerified: true,
+    name: MIXED,
+    stats: { ...crowded.stats, members: HUGE, followers: 0 },
+    people: Array.from({ length: 200 }, (_, index) => ({
+      login: `member-${index}`,
+      avatarUrl:
+        index % 3 ? `https://avatars.githubusercontent.com/u/${index}` : "",
+    })),
+    repos: crowded.repos.map((repo) => ({
+      ...repo,
+      owner: "another-owner",
+      name: LONG.slice(0, 100),
+      description: null,
+      language: null,
+      stars: HUGE,
+      forks: HUGE,
+    })),
+  });
+
+  const broken = demoEntity("org");
+  Object.assign(broken, {
+    name: "",
+    description: "",
+    stats: { repositories: 0, stars: 0, forks: 0, members: 0, followers: 0 },
+    people: [null, { login: 7 }, { login: "x", avatarUrl: 9 }],
+    activity: {
+      total: Number.NaN,
+      weeks: [
+        null,
+        { week: "garbage", commits: -1, days: [1, 2, 3] },
+        { week: "2026-11-08", commits: HUGE, days: [HUGE, 0, 0, 0, 0, 0, 0] },
+      ],
+    },
+  });
+  return { long, crowded, broken };
 }
 
-function hostileRepo(): Repo {
-  const repo = demoEntity("repo");
-  Object.assign(repo, {
+function hostileRepos(): Record<string, Repo> {
+  const long = demoEntity("repo");
+  Object.assign(long, {
     owner: { login: "o".repeat(39), avatarUrl: "", kind: "user" },
     name: "n".repeat(100),
     fullName: `${"o".repeat(39)}/${"n".repeat(100)}`,
@@ -478,7 +525,75 @@ function hostileRepo(): Repo {
     contributors: [],
     contributorCount: null,
   });
-  return repo;
+
+  const mixed = demoEntity("repo");
+  Object.assign(mixed, {
+    name: MIXED.slice(0, 40),
+    description: MIXED,
+    language: { name: MIXED, color: "javascript:alert(1)" },
+    license: "NOASSERTION",
+    topics: [MIXED, "", "  ", "ok", LONG, "another-topic"],
+    isArchived: true,
+    latestRelease: { tag: MIXED, name: MIXED, publishedAt: "not a date" },
+    contributorCount: HUGE,
+    contributors: Array.from({ length: 300 }, (_, index) => ({
+      login: MIXED,
+      avatarUrl:
+        index % 2 ? "" : `https://avatars.githubusercontent.com/u/${index}`,
+      contributions: index % 7 ? index : Number.NaN,
+    })),
+    starHistory: Array.from({ length: 400 }, (_, index) => ({
+      week: "nope",
+      stars: index % 5 ? index * index : Number.NaN,
+    })),
+  });
+
+  const flat = demoEntity("repo");
+  Object.assign(flat, {
+    stars: 0,
+    forks: 0,
+    watchers: 0,
+    openIssues: 0,
+    openPullRequests: 0,
+    commits: 0,
+    contributorCount: 0,
+    contributors: [],
+    topics: [],
+    description: "",
+    // A history that never moved, and a year without a single commit.
+    starHistory: Array.from({ length: 30 }, () => ({ week: "", stars: 7 })),
+    activity: {
+      total: 0,
+      weeks: Array.from({ length: 52 }, (_, index) => ({
+        week: `2025-${String((index % 12) + 1).padStart(2, "0")}-01`,
+        commits: 0,
+        days: [0, 0, 0, 0, 0, 0, 0],
+      })),
+    },
+  });
+
+  const weekly = demoEntity("repo");
+  Object.assign(weekly, {
+    activity: {
+      total: HUGE,
+      weeks: Array.from({ length: 90 }, (_, index) => ({
+        week: "",
+        commits: index === 40 ? HUGE : index % 9,
+        days: null,
+      })),
+    },
+  });
+
+  const garbage = demoEntity("repo");
+  Object.assign(garbage, {
+    activity: { total: "many", weeks: [1, "two", { days: "all" }, {}] },
+    starHistory: "rising",
+    contributors: [null, 4, { login: "a" }, { avatarUrl: "b" }],
+    topics: "all of them",
+    owner: { login: "", avatarUrl: 5, kind: "robot" },
+    latestRelease: { tag: "", name: null, publishedAt: null },
+  });
+  return { long, mixed, flat, weekly, garbage };
 }
 
 const CUSTOM_CANVASES = [
@@ -499,35 +614,51 @@ const CUSTOM_CANVASES = [
 // ── tests ───────────────────────────────────────────────────────────────────
 
 describe("buildBanner", () => {
-  test("every user preset on every size in every theme", () => {
-    const user = demoEntity("user");
+  test("every preset of every kind on every size in every theme", () => {
     let count = 0;
-    for (const preset of presetsFor("user")) {
+    for (const preset of PRESETS) {
+      const entity = demoEntity(preset.kind);
       for (const size of SIZE_IDS) {
         for (const theme of THEMES) {
-          check(
-            user,
-            options("user", preset.id, `size=${size}&theme=${theme.id}`),
+          const opts = options(
+            preset.kind,
+            preset.id,
+            `size=${size}&theme=${theme.id}`,
           );
+          const built = buildBanner(entity, opts, ENV);
+          expect({
+            preset: `${preset.kind}/${preset.id}`,
+            size,
+            theme: theme.id,
+            problems: problemsOf(built, opts),
+          }).toEqual({
+            preset: `${preset.kind}/${preset.id}`,
+            size,
+            theme: theme.id,
+            problems: [],
+          });
+          expect(built.theme.id).toBe(theme.id);
           count += 1;
         }
       }
     }
-    expect(count).toBe(
-      presetsFor("user").length * SIZE_IDS.length * THEMES.length,
-    );
+    expect(PRESETS).toHaveLength(16);
+    expect(count).toBe(16 * 6 * THEMES.length);
   });
 
-  test("organization and repository presets on every size", () => {
-    for (const kind of ["org", "repo"] as const) {
-      for (const preset of presetsFor(kind)) {
-        for (const size of SIZE_IDS) {
-          for (const theme of ["github-dark", "github-light-high-contrast"]) {
-            check(
-              demoEntity(kind),
-              options(kind, preset.id, `size=${size}&theme=${theme}`),
-            );
-          }
+  test("the year in review for a calendar year, on every size and theme", () => {
+    for (const year of [2026, 2025, 2012]) {
+      const user = demoEntity("user", { year });
+      for (const size of SIZE_IDS) {
+        for (const theme of THEMES) {
+          check(
+            user,
+            options(
+              "user",
+              "wrapped",
+              `size=${size}&theme=${theme.id}&year=${year}`,
+            ),
+          );
         }
       }
     }
@@ -568,15 +699,70 @@ describe("buildBanner", () => {
     }
   });
 
-  test("hostile organizations and repositories", () => {
-    for (const entity of [hostileOrg(), hostileRepo()]) {
+  test("hostile organizations and repositories on every preset, size and custom canvas", () => {
+    const entities: [string, Entity][] = [
+      ...Object.entries(hostileOrgs()),
+      ...Object.entries(hostileRepos()),
+    ];
+    for (const [name, entity] of entities) {
       for (const preset of presetsFor(entity.kind)) {
         for (const query of [
           ...SIZE_IDS.map((size) => `size=${size}`),
           ...CUSTOM_CANVASES,
+          "theme=github-light-high-contrast&font=mono",
+          "size=og&hide=avatar,description,meta,topics,title,legend,labels",
+          "size=square&count=30&stats=stars,release,contributors,totalCommits,watchers,forks,openIssues,openPullRequests,members,followers,repositories",
         ]) {
-          check(entity, options(entity.kind, preset.id, query));
+          const opts = options(entity.kind, preset.id, query);
+          const built = buildBanner(entity, opts, ENV);
+          expect({
+            name,
+            preset: preset.id,
+            query,
+            problems: problemsOf(built, opts),
+          }).toEqual({ name, preset: preset.id, query, problems: [] });
         }
+      }
+    }
+  });
+
+  test("a hostile year in review", () => {
+    const user = demoEntity("user", { year: 2026 });
+    const cases: Record<string, unknown> = {
+      garbage: { year: "soon", previousTotal: "many", topRepos: "none" },
+      huge: {
+        year: 2026,
+        previousTotal: 1,
+        topRepos: Array.from({ length: 50 }, () => ({
+          fullName: `${LONG.slice(0, 39)}/${LONG.slice(0, 100)}`,
+          commits: HUGE,
+        })),
+      },
+      mixed: {
+        year: 2026,
+        previousTotal: HUGE,
+        topRepos: [
+          { fullName: MIXED, commits: 3 },
+          { fullName: "", commits: 9 },
+          null,
+        ],
+      },
+    };
+    for (const [name, wrapped] of Object.entries(cases)) {
+      const hostile = { ...user, wrapped } as User;
+      for (const query of [
+        ...SIZE_IDS.map((size) => `size=${size}&year=2026`),
+        ...CUSTOM_CANVASES,
+        "count=30&size=square",
+        "font=mono&size=x",
+      ]) {
+        const opts = options("user", "wrapped", query);
+        const built = buildBanner(hostile, opts, ENV);
+        expect({ name, query, problems: problemsOf(built, opts) }).toEqual({
+          name,
+          query,
+          problems: [],
+        });
       }
     }
   });
@@ -928,7 +1114,7 @@ describe("altText", () => {
       `GitHub banner for @mona-demo: ${user.calendar.total.toLocaleString("en-US")} contributions in the last year, 1,284 followers.`,
     );
     expect(altText(demoEntity("org"), { year: null })).toBe(
-      "GitHub banner for Acme Labs (@acme-labs): 128 public repositories, 48,210 stars, 24 public members.",
+      "GitHub banner for Acme Labs (@acme-labs): 128 public repositories, 48,210 stars, 36 public members.",
     );
     expect(altText(demoEntity("repo"), { year: null })).toBe(
       "acme-labs/rocket: A fast, friendly build tool for the modern web. Demo data. 18,432 stars, 912 forks.",
@@ -1069,5 +1255,1049 @@ describe("buildMessageBanner", () => {
         buildMessageBanner(message as never, opts, ENV),
       ).not.toThrow();
     }
+  });
+});
+
+// ── repositories, organizations and the year in review ──────────────────────
+
+/** Builds a banner, checks it, and returns it with its leaves. */
+function drawn(entity: Entity, preset: string | null, query = "") {
+  const opts = options(entity.kind, preset, query);
+  const built = check(entity, opts);
+  const { leaves } = inspect(built);
+  return {
+    built,
+    leaves,
+    texts: leaves.filter((leaf) => leaf.text).map((leaf) => leaf.text),
+    images: leaves.filter((leaf) => leaf.tag === "img"),
+    /** Text leaves whose whole text is `text`. */
+    exact: (text: string) => leaves.filter((leaf) => leaf.text === text),
+  };
+}
+
+function repoWith(patch: (repo: Repo) => void): Repo {
+  const repo = demoEntity("repo");
+  patch(repo);
+  return repo;
+}
+
+function orgWith(patch: (org: Org) => void): Org {
+  const org = demoEntity("org");
+  patch(org);
+  return org;
+}
+
+const number = (n: number) => n.toLocaleString("en-US");
+
+describe("repository banners", () => {
+  const repo = demoEntity("repo");
+
+  test("the header: owner and name, facts, description, topics", () => {
+    const { texts, leaves, images } = drawn(repo, "overview");
+    expect(texts).toContain("acme-labs/rocket");
+    expect(texts).toContain("TypeScript · MIT · v4.2.0");
+    expect(texts).toContain(repo.description ?? "");
+    for (const topic of repo.topics) expect(texts).toContain(topic);
+    // The owner is an organization: a rounded square, not a circle.
+    expect(images).toHaveLength(1);
+    expect(images[0]?.style.borderRadius).toBeLessThan(10);
+    // The language keeps its Linguist colour as a dot in front of the facts.
+    const dot = leaves.find(
+      (leaf) => leaf.style.backgroundColor === "#3178c6" && !leaf.text,
+    );
+    expect(dot?.style.width).toBe(dot?.style.height);
+    expect(dot?.style.borderRadius).toBe((dot?.style.width as number) / 2);
+
+    const personal = repoWith((r) => {
+      r.owner = { ...r.owner, kind: "user" };
+    });
+    const avatar = drawn(personal, "overview").images[0];
+    expect(avatar?.style.borderRadius).toBe(
+      (avatar?.style.width as number) / 2,
+    );
+  });
+
+  test("at most four topics, in the owner's order", () => {
+    const many = repoWith((r) => {
+      r.topics = ["one", "two", "three", "four", "five", "six"];
+    });
+    const { texts } = drawn(many, "overview");
+    expect(texts.filter((text) => /^(one|two|three|four)$/.test(text))).toEqual(
+      ["one", "two", "three", "four"],
+    );
+    expect(texts).not.toContain("five");
+    // A topic that does not fit ends the row: none is cut, none is skipped.
+    const wide = repoWith((r) => {
+      r.topics = ["first", "x".repeat(140), "third"];
+    });
+    const shown = drawn(wide, "overview").texts;
+    expect(shown).toContain("first");
+    expect(shown).not.toContain("third");
+  });
+
+  test("hide=description, topics and meta remove exactly those", () => {
+    const all = drawn(repo, "overview").texts;
+    const hidden = (ids: string) =>
+      drawn(repo, "overview", `hide=${ids}`).texts;
+    expect(hidden("description")).not.toContain(repo.description ?? "");
+    expect(hidden("description")).toContain("build-tool");
+    expect(hidden("topics")).not.toContain("build-tool");
+    expect(hidden("topics")).toContain(repo.description ?? "");
+    expect(hidden("meta")).not.toContain("TypeScript · MIT · v4.2.0");
+    expect(hidden("meta")).toContain("acme-labs/rocket");
+    expect(hidden("description,topics,meta").length).toBeLessThan(all.length);
+    // The preset hides topics on the banners that are about something else.
+    expect(drawn(repo, "activity").texts).not.toContain("build-tool");
+  });
+
+  test("Archived and Fork are labels beside the name", () => {
+    expect(drawn(repo, "overview").exact("Archived")).toHaveLength(0);
+    const { exact, leaves } = drawn(
+      repoWith((r) => {
+        r.isArchived = true;
+        r.isFork = true;
+      }),
+      "overview",
+    );
+    const [archived] = exact("Archived");
+    const [fork] = exact("Fork");
+    const title = leaves.find((leaf) => leaf.text === "acme-labs/rocket");
+    // GitHub's attention colour for the archive, the muted one for a fork.
+    expect(archived?.style.color).toBe("#d29922");
+    expect(fork?.style.color).toBe("#9198a1");
+    // On the title's line, after it, in that order.
+    expect(archived?.box?.x).toBeGreaterThan(
+      (title?.box?.x ?? 0) + (title?.box?.w ?? 0),
+    );
+    expect(fork?.box?.x).toBeGreaterThan(
+      (archived?.box?.x ?? 0) + (archived?.box?.w ?? 0),
+    );
+    expect(archived?.box?.y).toBeLessThan(
+      (title?.box?.y ?? 0) + (title?.box?.h ?? 0),
+    );
+    for (const size of SIZE_IDS) {
+      const text = drawn(
+        repoWith((r) => {
+          r.isArchived = true;
+        }),
+        "overview",
+        `size=${size}`,
+      ).texts;
+      // As a pill where the name leaves room, else at the head of the facts.
+      expect({
+        size,
+        archived: text.some((item) => /^Archived\b/.test(item)),
+      }).toEqual({ size, archived: true });
+    }
+  });
+
+  test("facts that say nothing are left out", () => {
+    const { texts } = drawn(
+      repoWith((r) => {
+        r.license = "NOASSERTION";
+        r.language = null;
+      }),
+      "overview",
+    );
+    expect(texts.join("|")).not.toContain("NOASSERTION");
+    expect(texts).toContain("v4.2.0");
+    // A release tile already carries the tag: the facts do not repeat it.
+    const release = drawn(repo, "release").texts;
+    expect(release.filter((text) => text.includes("v4.2.0"))).toEqual([
+      "v4.2.0",
+    ]);
+    expect(release).toContain("TypeScript · MIT");
+  });
+
+  test("tiles drop what GitHub did not tell", () => {
+    const { texts } = drawn(
+      repoWith((r) => {
+        r.commits = null;
+        r.contributorCount = null;
+        r.latestRelease = null;
+      }),
+      "activity",
+    );
+    for (const label of ["Commits", "Contributors", "Latest release"]) {
+      expect(texts).not.toContain(label);
+    }
+    expect(drawn(repo, "activity").texts).toEqual(
+      expect.arrayContaining(["Commits", "Contributors", "Released last week"]),
+    );
+  });
+
+  test("star history is a trend line beside the Stars tile, or nothing", () => {
+    const trends = (entity: Repo, preset: string, query = "") =>
+      drawn(entity, preset, query).leaves.filter(
+        (leaf) => leaf.tag === "svg" && leaf.children === 2,
+      );
+    const without = { ...repo, starHistory: null };
+    for (const [preset, query] of [
+      ["overview", ""],
+      ["overview", "size=og"],
+      ["overview", "size=social"],
+      ["social", ""],
+    ] as const) {
+      const [trend] = trends(repo, preset, query);
+      const stars = drawn(repo, preset, query).exact("18.4k")[0];
+      expect({
+        preset,
+        query,
+        drawn: trends(repo, preset, query).length,
+      }).toEqual({ preset, query, drawn: 1 });
+      // As tall as the digits, on their line, and clear of them.
+      expect(trend?.box?.h).toBeLessThan(stars?.box?.h ?? 0);
+      expect(trend?.box?.y).toBeGreaterThanOrEqual(stars?.box?.y ?? 0);
+      const [left, right] =
+        (trend?.box?.x ?? 0) < (stars?.box?.x ?? 0)
+          ? [trend, stars]
+          : [stars, trend];
+      expect((left?.box?.x ?? 0) + (left?.box?.w ?? 0)).toBeLessThan(
+        right?.box?.x ?? 0,
+      );
+      expect(trends(without, preset, query)).toHaveLength(0);
+      // The line never moves a tile: with and without it the banner is the same size.
+      expect(drawn(without, preset, query).built.height).toBe(
+        drawn(repo, preset, query).built.height,
+      );
+    }
+    // No Stars tile, no trend.
+    expect(trends(repo, "activity")).toHaveLength(0);
+    // The line takes spare room and never asks for any: a row packed to fit
+    // all four tiles beside a profile photo has none, and shows the tiles.
+    expect(trends(repo, "overview", "size=x")).toHaveLength(0);
+    expect(drawn(repo, "overview", "size=x").texts).toEqual(
+      expect.arrayContaining([
+        "Stars",
+        "Forks",
+        "Open issues",
+        "Open pull requests",
+      ]),
+    );
+  });
+});
+
+describe("repository activity", () => {
+  const repo = demoEntity("repo");
+  const total = number(repo.activity?.total ?? 0);
+  const bars = (leaves: Leaf[]) =>
+    leaves.filter((leaf) => leaf.style.borderTopLeftRadius !== undefined);
+
+  test("the commit calendar on every standard size", () => {
+    for (const size of SIZE_IDS) {
+      const { built } = drawn(repo, "activity", `size=${size}`);
+      // 52 weeks of seven days, minus the Saturday that has not happened yet.
+      expect({ size, cells: built.heatmap?.cells }).toEqual({
+        size,
+        cells: 52 * 7 - 1,
+      });
+    }
+    const { texts, built } = drawn(repo, "activity");
+    expect(texts).toContain(`${total} commits in the last year`);
+    expect(texts).toEqual(expect.arrayContaining(["Less", "More", "Mon"]));
+    // The same cell size as a profile's graph on the same card.
+    expect(built.heatmap).toMatchObject({ cell: 11, gap: 3 });
+  });
+
+  test("on a poster the total is the headline", () => {
+    const { texts } = drawn(repo, "activity", "size=og");
+    expect(texts).toContain(total);
+    expect(texts).toContain("commits in the last year");
+    expect(texts).not.toContain(`${total} commits in the last year`);
+  });
+
+  test("while GitHub computes, a quiet placeholder of the same size", () => {
+    const computing = { ...repo, activity: null };
+    for (const preset of ["activity", "release"]) {
+      for (const size of SIZE_IDS) {
+        const query = `size=${size}`;
+        const pending = drawn(computing, preset, query);
+        const ready = drawn(repo, preset, query);
+        expect(pending.texts).toContain("GitHub is calculating activity");
+        expect(pending.texts.join("|")).not.toContain(
+          "commits in the last year",
+        );
+        expect(pending.texts).not.toContain("Less");
+        // Nothing to animate, and nothing jumps when the data arrives.
+        expect(pending.built.heatmap).toBeNull();
+        expect({ preset, size, height: pending.built.height }).toEqual({
+          preset,
+          size,
+          height: ready.built.height,
+        });
+      }
+    }
+    // The message is a state, not a title.
+    expect(drawn(computing, "activity", "hide=title").texts).toContain(
+      "GitHub is calculating activity",
+    );
+  });
+
+  test("weekly bars when the calendar does not apply", () => {
+    const weeklyOnly = repoWith((r) => {
+      if (!r.activity) return;
+      r.activity = {
+        ...r.activity,
+        weeks: r.activity.weeks.map((week) => ({ ...week, days: null })),
+      };
+    });
+    const busy = (repo.activity?.weeks ?? []).filter(
+      (week) => week.commits > 0,
+    ).length;
+    for (const [entity, preset, query] of [
+      [weeklyOnly, "activity", ""],
+      [weeklyOnly, "activity", "size=og"],
+      [repo, "activity", "width=495"],
+      [repo, "release", ""],
+      [repo, "release", "size=square"],
+    ] as const) {
+      const { built, leaves, texts } = drawn(entity, preset, query);
+      expect(built.heatmap).toBeNull();
+      expect({ preset, query, bars: bars(leaves).length }).toEqual({
+        preset,
+        query,
+        bars: busy,
+      });
+      expect(texts).toContain(`${total} commits in the last year`);
+    }
+  });
+
+  test("bars stand on one baseline, evenly spaced, the busiest the tallest", () => {
+    const { leaves } = drawn(repo, "release");
+    const drawnBars = bars(leaves);
+    const bottoms = new Set(
+      drawnBars.map((bar) => (bar.box?.y ?? 0) + (bar.box?.h ?? 0)),
+    );
+    expect(bottoms.size).toBe(1);
+    const widths = new Set(drawnBars.map((bar) => bar.box?.w));
+    expect(widths.size).toBe(1);
+    const xs = drawnBars.map((bar) => bar.box?.x ?? 0);
+    const pitch = Math.min(
+      ...xs.slice(1).map((x, index) => x - (xs[index] ?? 0)),
+    );
+    for (const x of xs) expect((x - (xs[0] ?? 0)) % pitch).toBe(0);
+    const weeks = (repo.activity?.weeks ?? []).filter(
+      (week) => week.commits > 0,
+    );
+    const busiest = weeks.reduce(
+      (best, week, index) =>
+        week.commits > (weeks[best]?.commits ?? 0) ? index : best,
+      0,
+    );
+    const tallest = Math.max(...drawnBars.map((bar) => bar.box?.h ?? 0));
+    expect(drawnBars[busiest]?.box?.h).toBe(tallest);
+    // Bars are coloured from the theme's heat ramp, never from outside it.
+    const ramp = ["#033a16", "#196c2e", "#2ea043", "#56d364"];
+    for (const bar of drawnBars) {
+      expect(ramp).toContain(String(bar.style.backgroundColor));
+    }
+  });
+
+  test("a year without commits says so", () => {
+    const idle = repoWith((r) => {
+      if (!r.activity) return;
+      r.activity = {
+        total: 0,
+        weeks: r.activity.weeks.map((week) => ({
+          ...week,
+          commits: 0,
+          days: [0, 0, 0, 0, 0, 0, 0],
+        })),
+      };
+    });
+    expect(drawn(idle, "activity").texts).toContain(
+      "No commits in the last year",
+    );
+    const release = drawn(idle, "release");
+    expect(release.texts).toContain("No commits in the last year");
+    expect(bars(release.leaves)).toHaveLength(0);
+    const single = repoWith((r) => {
+      if (!r.activity) return;
+      r.activity = { ...r.activity, total: 1 };
+    });
+    expect(drawn(single, "activity").texts).toContain(
+      "1 commit in the last year",
+    );
+  });
+});
+
+describe("repository contributors", () => {
+  const repo = demoEntity("repo");
+  /** Avatars of the grid: every image but the owner's. */
+  const faces = (images: Leaf[]) => images.slice(1);
+
+  test("a README card: two full rows of 14, the last place a +N chip", () => {
+    const { images, texts, exact, built } = drawn(repo, "contributors");
+    const grid = faces(images);
+    expect(grid).toHaveLength(27);
+    expect(texts).toContain("+187");
+    expect(texts).toEqual(expect.arrayContaining(["214", "Contributors"]));
+    // 48 px avatars with 8 px gaps, grown by the pixel that fills the row.
+    const sizes = new Set(grid.map((face) => face.box?.w));
+    expect([...sizes]).toEqual([49]);
+    const row = grid.slice(0, 14);
+    expect(row.every((face) => face.box?.y === row[0]?.box?.y)).toBe(true);
+    const gaps = row
+      .slice(1)
+      .map(
+        (face, index) => (face.box?.x ?? 0) - (row[index]?.box?.x ?? 0) - 49,
+      );
+    expect(gaps.every((gap) => gap === 8 || gap === 9)).toBe(true);
+    // The rows reach both margins, and the chip closes the second one.
+    expect(row[0]?.box?.x).toBe(24);
+    expect((row[13]?.box?.x ?? 0) + 49).toBe(built.width - 24);
+    const [chip] = exact("+187");
+    expect((chip?.box?.x ?? 0) + (chip?.box?.w ?? 0)).toBe(built.width - 24);
+    expect(chip?.box?.y).toBe(grid[26]?.box?.y);
+    // Circles, every one.
+    expect(grid.every((face) => face.style.borderRadius === 24.5)).toBe(true);
+  });
+
+  test("ordered by contributions, whatever order they arrive in", () => {
+    const shuffled = repoWith((r) => {
+      r.contributors = [...r.contributors].reverse();
+    });
+    const expected = [...repo.contributors]
+      .sort((a, b) => b.contributions - a.contributions)
+      .slice(0, 27)
+      .map((person) => person.avatarUrl);
+    expect(
+      faces(drawn(shuffled, "contributors").images).map((face) => face.src),
+    ).toEqual(expected);
+  });
+
+  test("the chip counts everyone without a face", () => {
+    const chip = (entity: Repo, query = "") =>
+      drawn(entity, "contributors", query).texts.find((text) =>
+        text.startsWith("+"),
+      );
+    expect(chip(repo, "count=10")).toBe("+204");
+    expect(faces(drawn(repo, "contributors", "count=10").images)).toHaveLength(
+      10,
+    );
+    // Unknown total: only the listed people can be counted.
+    expect(chip({ ...repo, contributorCount: null })).toBe("+3");
+    expect(chip({ ...repo, contributorCount: 12_345 })).toBe("+12.3k");
+    // Everyone has a face: no chip.
+    const few = {
+      ...repo,
+      contributors: repo.contributors.slice(0, 4),
+      contributorCount: 4,
+    };
+    expect(chip(few)).toBeUndefined();
+    expect(faces(drawn(few, "contributors").images)).toHaveLength(4);
+  });
+
+  test("nobody to show is no grid", () => {
+    const nobody = { ...repo, contributors: [], contributorCount: 0 };
+    for (const size of SIZE_IDS) {
+      const { images, texts } = drawn(nobody, "contributors", `size=${size}`);
+      expect(images).toHaveLength(1);
+      expect(texts.some((text) => text.startsWith("+"))).toBe(false);
+    }
+  });
+
+  test("on fixed canvases the grid fills its box with whole rows", () => {
+    for (const size of ["x", "linkedin", "og", "social", "square"]) {
+      const { images, texts } = drawn(repo, "contributors", `size=${size}`);
+      const grid = faces(images);
+      const rows = new Map<number, Leaf[]>();
+      for (const face of grid) {
+        const y = face.box?.y ?? -1;
+        rows.set(y, [...(rows.get(y) ?? []), face]);
+      }
+      const counts = [...rows.values()].map((row) => row.length);
+      // Every row is full; the last one gives its last place to the chip.
+      expect({ size, ragged: new Set(counts.slice(0, -1)).size > 1 }).toEqual({
+        size,
+        ragged: false,
+      });
+      expect(counts.at(-1)).toBe(
+        (counts[0] ?? 0) - (counts.length > 1 ? 1 : 0),
+      );
+      expect(texts.some((text) => /^\+\d+$/.test(text))).toBe(true);
+      expect(grid.length).toBeGreaterThanOrEqual(8);
+    }
+  });
+});
+
+describe("repository social preview", () => {
+  const repo = demoEntity("repo");
+  const strip = (leaves: Leaf[], height: number) =>
+    leaves.filter(
+      (leaf) =>
+        !leaf.text &&
+        leaf.tag === "div" &&
+        (leaf.box?.y ?? 0) + (leaf.box?.h ?? 0) === height &&
+        (leaf.box?.h ?? 0) < height / 10,
+    );
+
+  test("1280 x 640, laid out like the reference", () => {
+    const { built, leaves, images, exact } = drawn(repo, "social");
+    expect([built.width, built.height]).toEqual([1280, 640]);
+    // Avatar 96 px at (64, 64).
+    expect(images[0]?.box).toEqual({ x: 64, y: 64, w: 96, h: 96 });
+    // The name at 72 px from the left margin; owner muted, name strong.
+    const title = leaves.find((leaf) => leaf.text === "acme-labs/rocket");
+    expect(title?.style.fontSize).toBe(72);
+    expect(title?.box?.x).toBe(64);
+    // Facts right-aligned at the right margin.
+    const [facts] = exact("TypeScript · MIT · v4.2.0");
+    expect((facts?.box?.x ?? 0) + (facts?.box?.w ?? 0)).toBe(1216);
+    expect(facts?.style.fontSize).toBe(24);
+    // Description in the muted colour, 30 px.
+    const [description] = exact(repo.description ?? "");
+    expect(description?.style.fontSize).toBe(30);
+    expect(description?.style.color).toBe("#9198a1");
+    // Four tiles from the left margin, labels at 20 px or more.
+    for (const label of ["Stars", "Forks", "Contributors", "Open issues"]) {
+      expect(exact(label)[0]?.style.fontSize).toBeGreaterThanOrEqual(20);
+    }
+    expect(exact("Stars")[0]?.box?.x).toBe(64);
+  });
+
+  test("the language mix is a strip along the bottom edge", () => {
+    const { leaves, built } = drawn(repo, "social");
+    const segments = strip(leaves, built.height);
+    expect(segments.map((leaf) => leaf.style.backgroundColor)).toEqual(
+      repo.languages.map((language) => language.color),
+    );
+    expect(segments.every((leaf) => leaf.box?.h === 20)).toBe(true);
+    expect(segments[0]?.box?.x).toBe(0);
+    expect(segments.reduce((sum, leaf) => sum + (leaf.box?.w ?? 0), 0)).toBe(
+      1280,
+    );
+    // Widths follow the shares.
+    expect(segments[0]?.box?.w).toBeGreaterThan(1280 * 0.45);
+    // Without languages there is no strip, and nothing else changes place.
+    const plain = drawn({ ...repo, languages: [] }, "social");
+    expect(strip(plain.leaves, 640)).toHaveLength(0);
+    expect(plain.exact("Stars")[0]?.box).toEqual(
+      drawn(repo, "social").exact("Stars")[0]?.box,
+    );
+  });
+
+  test("the name shrinks to fit, to 44 px and no further", () => {
+    const titled = (owner: string, name: string) => {
+      const entity = repoWith((r) => {
+        r.owner = { ...r.owner, login: owner };
+        r.name = name;
+        r.fullName = `${owner}/${name}`;
+      });
+      const { leaves } = drawn(entity, "social");
+      const whole = leaves.find((leaf) => leaf.text === `${owner}/${name}`);
+      const alone = leaves.find((leaf) => leaf.text === name);
+      return {
+        stacked: whole === undefined,
+        size: (whole ?? alone)?.style.fontSize as number,
+        owner: leaves.find((leaf) => leaf.text === `${owner}/`),
+        name: whole ?? alone,
+      };
+    };
+    expect(titled("vercel", "next.js")).toMatchObject({
+      stacked: false,
+      size: 72,
+    });
+    const medium = titled("sindresorhus", "awesome-lint-staged");
+    expect(medium.stacked).toBe(false);
+    expect(medium.size).toBeLessThan(72);
+    expect(medium.size).toBeGreaterThanOrEqual(44);
+    // Too long for one line even at 44 px: the owner gets a quiet line of
+    // its own above, and the name the whole width.
+    const long = titled("a".repeat(39), "b".repeat(40));
+    expect(long.stacked).toBe(true);
+    expect(long.size).toBeGreaterThanOrEqual(44);
+    expect(long.owner?.style.color).toBe("#9198a1");
+    expect(long.owner?.box?.y).toBeLessThan(long.name?.box?.y ?? 0);
+    expect(long.owner?.style.fontSize).toBeLessThan(long.size);
+    // And a name that fills the width on its own stops shrinking at 44.
+    expect(titled("a".repeat(39), "b".repeat(100)).size).toBe(44);
+    expect(titled("o", "b".repeat(100)).size).toBe(44);
+  });
+
+  test("it is a poster on open canvases and steps aside elsewhere", () => {
+    for (const size of ["og", "square"]) {
+      const { built, leaves } = drawn(repo, "social", `size=${size}`);
+      expect({ size, strip: strip(leaves, built.height).length }).toEqual({
+        size,
+        strip: repo.languages.length,
+      });
+    }
+    // Profile headers have a photo in the corner the strip would run under,
+    // and a card follows its content: the general layout draws those.
+    for (const size of ["x", "linkedin", "readme"]) {
+      const { built, leaves } = drawn(repo, "social", `size=${size}`);
+      expect({ size, strip: strip(leaves, built.height).length }).toEqual({
+        size,
+        strip: 0,
+      });
+    }
+    // Other presets at the social size keep the general layout too.
+    const overview = drawn(repo, "overview", "size=social");
+    expect(strip(overview.leaves, 640)).toHaveLength(0);
+    // Sections the poster does not draw send it to the general layout.
+    const extra = drawn(repo, "social", "show=header,stats,contributors");
+    expect(extra.images.length).toBeGreaterThan(1);
+  });
+
+  test("on a rounded canvas the strip stays inside the margins", () => {
+    const { leaves } = drawn(repo, "social", "radius=40&border=1");
+    const bar = leaves.filter(
+      (leaf) =>
+        !leaf.text &&
+        repo.languages.some(
+          (language) => language.color === leaf.style.backgroundColor,
+        ) &&
+        (leaf.box?.w ?? 0) > 20,
+    );
+    expect(bar).toHaveLength(repo.languages.length);
+    expect(Math.min(...bar.map((leaf) => leaf.box?.x ?? 0))).toBe(64);
+    expect(
+      Math.max(...bar.map((leaf) => (leaf.box?.x ?? 0) + (leaf.box?.w ?? 0))),
+    ).toBe(1216);
+    expect(
+      Math.max(...bar.map((leaf) => (leaf.box?.y ?? 0) + (leaf.box?.h ?? 0))),
+    ).toBeLessThan(640 - 12);
+  });
+
+  test("state labels and hidden parts", () => {
+    const archived = drawn(
+      repoWith((r) => {
+        r.isArchived = true;
+        r.isFork = true;
+      }),
+      "social",
+    );
+    expect(archived.exact("Archived")).toHaveLength(1);
+    expect(archived.exact("Fork")).toHaveLength(1);
+    const bare = drawn(repo, "social", "hide=avatar,description,meta&brand=0");
+    expect(bare.images).toHaveLength(0);
+    expect(bare.texts).not.toContain(repo.description ?? "");
+    expect(bare.texts).not.toContain("TypeScript · MIT · v4.2.0");
+    expect(bare.texts.join("|")).not.toContain("gitbanners");
+  });
+});
+
+describe("organization banners", () => {
+  const org = demoEntity("org");
+
+  test("Verified is a label in the theme's success colour", () => {
+    for (const [theme, color] of [
+      ["github-dark", "#3fb950"],
+      ["github-light", "#1a7f37"],
+      ["dracula", "#50fa7b"],
+    ] as const) {
+      const [label] = drawn(org, "overview", `theme=${theme}`).exact(
+        "Verified",
+      );
+      expect({ theme, color: label?.style.color }).toEqual({ theme, color });
+    }
+    expect(
+      drawn({ ...org, isVerified: false }, "overview").exact("Verified"),
+    ).toHaveLength(0);
+    // The avatar is a rounded square.
+    const avatar = drawn(org, "overview").images[0];
+    expect(avatar?.style.borderRadius).toBeLessThan(
+      (avatar?.style.width as number) / 4,
+    );
+  });
+
+  test("people: one full row on a card, +N for the members without a face", () => {
+    const { images, texts, built } = drawn(org, "overview");
+    const people = images.slice(1);
+    expect(people).toHaveLength(13);
+    expect(texts).toContain("+23");
+    expect(people.map((face) => face.src)).toEqual(
+      org.people.slice(0, 13).map((person) => person.avatarUrl),
+    );
+    expect(people[0]?.box?.x).toBe(24);
+    const [chip] = drawn(org, "overview").exact("+23");
+    expect((chip?.box?.x ?? 0) + (chip?.box?.w ?? 0)).toBe(built.width - 24);
+    // Asking for everyone shows everyone listed.
+    const everyone = drawn(org, "overview", "count=24");
+    expect(everyone.images.slice(1)).toHaveLength(24);
+    expect(everyone.texts).toContain("+12");
+  });
+
+  test("a hidden roster is never zero members", () => {
+    for (const members of [null, 0]) {
+      const hidden = orgWith((o) => {
+        o.people = [];
+        o.stats = { ...o.stats, members };
+      });
+      for (const size of SIZE_IDS) {
+        for (const preset of ["overview", "activity"]) {
+          const { texts, images } = drawn(hidden, preset, `size=${size}`);
+          expect(texts).not.toContain("Members");
+          expect(texts).not.toContain("0");
+          expect(texts.join("|")).not.toMatch(/\b0 members/i);
+          expect(images).toHaveLength(1);
+        }
+      }
+    }
+    expect(
+      altText(
+        { ...org, stats: { ...org.stats, members: null } },
+        { year: null },
+      ),
+    ).not.toContain("members");
+  });
+
+  test("repos: six cards in two rows on a card", () => {
+    const { leaves, texts } = drawn(org, "repos");
+    const names = org.repos.map((repo) => repo.name);
+    for (const name of names) expect(texts).toContain(name);
+    const rows = new Set(
+      names.map((name) => leaves.find((leaf) => leaf.text === name)?.box?.y),
+    );
+    expect(rows.size).toBe(2);
+    const columns = new Set(
+      names.map((name) => leaves.find((leaf) => leaf.text === name)?.box?.x),
+    );
+    expect(columns.size).toBe(3);
+    // Every card says what its repository is for.
+    for (const repo of org.repos) {
+      expect(texts).toContain(repo.description ?? "");
+    }
+  });
+
+  test("repos on fixed canvases: as many cards as fit, stars on every one", () => {
+    for (const size of ["x", "linkedin", "og", "social", "square"]) {
+      const { texts } = drawn(org, "repos", `size=${size}`);
+      const shown = org.repos.filter((repo) => texts.includes(repo.name));
+      expect(shown.length).toBeGreaterThanOrEqual(2);
+      // Cards come in the data's order: the most starred first.
+      expect(shown).toEqual(org.repos.slice(0, shown.length));
+      for (const repo of shown) {
+        expect({
+          size,
+          repo: repo.name,
+          stars: texts.includes(starsOf(repo.stars)),
+        }).toEqual({
+          size,
+          repo: repo.name,
+          stars: true,
+        });
+      }
+    }
+    expect(
+      org.repos.filter((repo) =>
+        drawn(org, "repos", "size=og").texts.includes(repo.name),
+      ),
+    ).toHaveLength(6);
+  });
+
+  test("activity: the commit calendar of the top repositories", () => {
+    const total = number(org.activity?.total ?? 0);
+    const card = drawn(org, "activity");
+    expect(card.built.heatmap?.cells).toBe(52 * 7 - 1);
+    expect(card.texts).toContain(
+      `${total} commits to top repositories in the last year`,
+    );
+    // On a poster the headline is short, and the line under the graph says
+    // what the number covers.
+    const poster = drawn(org, "activity", "size=og");
+    expect(poster.texts).toEqual(
+      expect.arrayContaining([
+        total,
+        "commits in the last year",
+        "Across top public repositories",
+      ]),
+    );
+  });
+
+  test("without activity data there is no chart, and no empty box", () => {
+    const silent = { ...org, activity: null };
+    for (const size of SIZE_IDS) {
+      const without = drawn(silent, "activity", `size=${size}`);
+      const withChart = drawn(org, "activity", `size=${size}`);
+      expect(without.built.heatmap).toBeNull();
+      expect(without.texts.join("|")).not.toMatch(/calculating|commits/i);
+      expect(without.texts).toEqual(
+        expect.arrayContaining(["Acme Labs", "Repositories", "Stars"]),
+      );
+      expect(without.leaves.length).toBeLessThan(withChart.leaves.length / 4);
+      // Nothing is outlined around nothing: no frame larger than the avatar
+      // (the "Verified" label is the only outline, and far smaller).
+      const avatar = without.images[0]?.box;
+      const frames = without.leaves.filter(
+        (leaf) =>
+          !leaf.text &&
+          leaf.tag === "div" &&
+          leaf.style.border !== undefined &&
+          (leaf.box?.w ?? 0) < without.built.width &&
+          (leaf.box?.w ?? 0) * (leaf.box?.h ?? 0) >
+            (avatar?.w ?? 0) * (avatar?.h ?? 0),
+      );
+      expect({ size, frames: frames.length }).toEqual({ size, frames: 0 });
+    }
+    expect(drawn(silent, "activity").built.height).toBeLessThan(
+      drawn(org, "activity").built.height,
+    );
+  });
+});
+
+/** Stars as a repository card prints them. */
+function starsOf(stars: number): string {
+  return stars < 1000
+    ? String(stars)
+    : `${(Math.round(stars / 100) / 10).toString().replace(/\.0$/, "")}k`;
+}
+
+describe("year in review", () => {
+  const user = demoEntity("user", { year: 2026 });
+  const total = number(user.calendar.total);
+
+  test("a poster by default: the year, the total, the facts, the lists", () => {
+    const { built, texts, leaves } = drawn(user, "wrapped", "year=2026");
+    expect([built.width, built.height]).toEqual([1200, 630]);
+    expect(texts).toEqual(
+      expect.arrayContaining([
+        "Mona Demo",
+        "2026",
+        "+22% vs 2025",
+        `${total} contributions in 2026`,
+        "Longest streak",
+        "Active days",
+        "Busiest month",
+        "Busiest weekday",
+        "Top repositories",
+        "rocket",
+        "paper-lantern",
+        "acme-labs/tide",
+        "Top languages",
+        "TypeScript",
+        "46%",
+      ]),
+    );
+    expect(
+      texts.some((text) => /^Best day, [A-Z][a-z]{2} \d+$/.test(text)),
+    ).toBe(true);
+    expect(texts.some((text) => /^\d+ days$/.test(text))).toBe(true);
+    // The year's graph, ready to animate.
+    expect(built.heatmap?.cells).toBe(user.calendar.days.length);
+    // The total is the largest type on the canvas, the year the second largest.
+    const sizes = leaves
+      .filter((leaf) => leaf.text)
+      .map((leaf) => [leaf.text, leaf.style.fontSize as number] as const)
+      .sort((a, b) => b[1] - a[1]);
+    expect(sizes[0]?.[0]).toBe(`${total} contributions in 2026`);
+    expect(sizes[1]?.[0]).toBe("2026");
+    // The year takes the colour of the graph.
+    const year = leaves.find((leaf) => leaf.text === "2026");
+    expect(year?.style.color).toBe("#56d364");
+    expect(
+      leaves.find((leaf) => leaf.text === "+22% vs 2025")?.style.color,
+    ).toBe("#3fb950");
+  });
+
+  test("without a year it is the last 12 months, and says so", () => {
+    const last = demoEntity("user");
+    const { texts, built } = drawn(last, "wrapped");
+    const sum = number(last.calendar.total);
+    expect(texts).toEqual(
+      expect.arrayContaining([
+        "Year in review",
+        "Last 12 months",
+        `${sum} contributions in the last 12 months`,
+        "Top languages",
+      ]),
+    );
+    // No extras were fetched: no comparison, no top repositories.
+    expect(texts.join("|")).not.toMatch(/ vs \d{4}|Top repositories/);
+    expect(texts).not.toContain("2026");
+    expect(built.heatmap?.cells).toBe(last.calendar.days.length);
+  });
+
+  test("the facts come from the calendar's days", () => {
+    const days = user.calendar.days;
+    const active = days.filter((day) => day.count > 0).length;
+    const best = Math.max(...days.map((day) => day.count));
+    const { texts } = drawn(user, "wrapped", "year=2026&size=square");
+    expect(texts).toContain(number(active));
+    expect(texts).toContain(number(best));
+    const byMonth = new Map<string, number>();
+    for (const day of days) {
+      const month = day.date.slice(0, 7);
+      byMonth.set(month, (byMonth.get(month) ?? 0) + day.count);
+    }
+    const [busiest] = [...byMonth].sort((a, b) => b[1] - a[1]);
+    const name = new Date(`${busiest?.[0]}-01T00:00:00Z`).toLocaleString(
+      "en-US",
+      { month: "long", timeZone: "UTC" },
+    );
+    expect(texts).toContain(name);
+  });
+
+  test("a slower year, a first year and a quiet one", () => {
+    const slower = {
+      ...user,
+      wrapped: { year: 2026, previousTotal: 5000, topRepos: [] },
+    };
+    const down = drawn(slower, "wrapped", "year=2026");
+    const change = down.leaves.find((leaf) => / vs 2025$/.test(leaf.text));
+    expect(change?.text).toMatch(/^-\d+% vs 2025$/);
+    // Fewer contributions are not a failure: no alarm colour.
+    expect(change?.style.color).toBe("#9198a1");
+    expect(down.texts).not.toContain("Top repositories");
+
+    const first = {
+      ...user,
+      wrapped: { year: 2026, previousTotal: 0, topRepos: [] },
+    };
+    const started = drawn(first, "wrapped", "year=2026").texts;
+    expect(started.join("|")).not.toContain(" vs ");
+    expect(started).toContain("Year in review");
+
+    const idle: User = {
+      ...user,
+      calendar: {
+        ...user.calendar,
+        total: 0,
+        days: user.calendar.days.map((day) => ({ ...day, count: 0, level: 0 })),
+      },
+      wrapped: null,
+    };
+    for (const size of SIZE_IDS) {
+      const { texts } = drawn(idle, "wrapped", `year=2026&size=${size}`);
+      expect(texts.join("|")).toContain("No public contributions in 2026");
+      expect(texts).not.toContain("Longest streak");
+      expect(texts).not.toContain("0");
+    }
+  });
+
+  test("the breakdown counts what the total is made of, in words", () => {
+    const one: User = {
+      ...user,
+      stats: { ...user.stats, commits: 1, pullRequests: 1, reviews: 0 },
+    };
+    const { texts } = drawn(one, "wrapped", "year=2026&size=readme");
+    expect(texts).toContain("1 commit · 1 pull request");
+    expect(texts.join("|")).not.toMatch(/1 commits|1 pull requests|0 reviews/);
+    const unknown: User = {
+      ...user,
+      stats: {
+        ...user.stats,
+        commits: null,
+        pullRequests: null,
+        reviews: null,
+      },
+    };
+    expect(
+      drawn(unknown, "wrapped", "year=2026&size=readme").texts.join("|"),
+    ).not.toMatch(/commits ·|pull request/);
+  });
+
+  test("every size: a card, posters, and profile headers with the photo clear", () => {
+    const expected: Record<string, [number, number | null]> = {
+      readme: [846, null],
+      x: [1500, 500],
+      linkedin: [1584, 396],
+      og: [1200, 630],
+      social: [1280, 640],
+      square: [1080, 1080],
+    };
+    for (const [size, [width, height]] of Object.entries(expected)) {
+      const { built, texts } = drawn(user, "wrapped", `year=2026&size=${size}`);
+      expect(built.width).toBe(width);
+      if (height !== null) expect(built.height).toBe(height);
+      expect(built.heatmap?.cells).toBe(user.calendar.days.length);
+      expect(texts.join("|")).toContain(total);
+      expect(texts.join("|")).toContain("2026");
+      expect(texts).toContain("Longest streak");
+    }
+    // The card and the square have room for the tables' second column.
+    expect(drawn(user, "wrapped", "year=2026&size=square").texts).toEqual(
+      expect.arrayContaining(["commits", "Daily average"]),
+    );
+  });
+
+  test("count sets how many repositories and languages are listed", () => {
+    // A card grows with its content: five of each.
+    const { texts } = drawn(user, "wrapped", "year=2026&size=readme&count=5");
+    for (const name of [
+      "rocket",
+      "paper-lantern",
+      "acme-labs/tide",
+      "atlas",
+      "quill",
+    ]) {
+      expect(texts).toContain(name);
+    }
+    for (const language of ["TypeScript", "Rust", "Go", "Python", "Swift"]) {
+      expect(texts).toContain(language);
+    }
+    const one = drawn(user, "wrapped", "year=2026&size=square&count=1").texts;
+    expect(one).toContain("rocket");
+    expect(one).not.toContain("paper-lantern");
+    // On a fixed canvas a long list is shortened before it is dropped:
+    // asking for more never shows less.
+    for (const size of ["og", "social", "square"]) {
+      const many = drawn(user, "wrapped", `year=2026&size=${size}&count=30`);
+      expect(many.texts).toEqual(
+        expect.arrayContaining(["Top repositories", "rocket", "Top languages"]),
+      );
+    }
+  });
+
+  test("title replaces what the total counts; other kinds ignore the section", () => {
+    const titled = drawn(
+      user,
+      "wrapped",
+      "year=2026&title=Shipped%20in%202026",
+    );
+    expect(titled.texts).toContain(`${total} Shipped in 2026`);
+    const hidden = drawn(user, "wrapped", "year=2026&hide=title");
+    expect(hidden.texts).toContain(total);
+    // An organization asked for the section draws its usual identity.
+    const org = drawn(demoEntity("org"), "overview", "show=wrapped");
+    expect(org.texts).toContain("Acme Labs");
+    expect(org.texts).not.toContain("Year in review");
+  });
+
+  test("a canvas too small for the poster gets the general banner", () => {
+    const { texts, built } = drawn(user, "wrapped", "width=320&height=120");
+    expect([built.width, built.height]).toEqual([320, 120]);
+    expect(texts.join("|")).toContain("Mona Demo");
+    expect(texts).not.toContain("Longest streak");
+  });
+});
+
+describe("images of the new sections", () => {
+  test("contributors and members are fetched once, at the size they are drawn", () => {
+    const env = { now: ENV.now, host: ENV.host };
+    const repo = repoWith((r) => {
+      r.owner = {
+        ...r.owner,
+        avatarUrl: "https://avatars.githubusercontent.com/u/1?v=4",
+      };
+      r.contributors = r.contributors.map((person, index) => ({
+        ...person,
+        avatarUrl: `https://avatars.githubusercontent.com/u/${1000 + index}?v=4`,
+      }));
+    });
+    const images = collectImages(repo, options("repo", "contributors"), env);
+    expect(images).toHaveLength(28);
+    expect(images[0]).toEqual({ url: repo.owner.avatarUrl, px: 56 });
+    expect(images.slice(1).every((image) => image.px === 49)).toBe(true);
+    // Only the faces that are drawn are fetched.
+    expect(
+      collectImages(repo, options("repo", "contributors", "count=5"), env),
+    ).toHaveLength(6);
+    expect(collectImages(repo, options("repo", "overview"), env)).toHaveLength(
+      1,
+    );
+    const social = collectImages(repo, options("repo", "social"), env);
+    expect(social).toEqual([{ url: repo.owner.avatarUrl, px: 96 }]);
+
+    const org = orgWith((o) => {
+      o.people = o.people.map((person, index) => ({
+        ...person,
+        avatarUrl: `https://avatars.githubusercontent.com/u/${2000 + index}?v=4`,
+      }));
+    });
+    expect(collectImages(org, options("org", "overview"), env)).toHaveLength(
+      13,
+    );
   });
 });

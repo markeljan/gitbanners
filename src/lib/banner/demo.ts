@@ -1,6 +1,12 @@
 "use no memo";
 
-import { addDays, parseIsoDate, toIsoDate } from "@/lib/banner/format";
+import {
+  addDays,
+  daysBetween,
+  parseIsoDate,
+  toIsoDate,
+  weekdayOf,
+} from "@/lib/banner/format";
 import type { EntityKind } from "@/lib/banner/types";
 import type {
   AvatarRef,
@@ -14,6 +20,7 @@ import type {
   RepoSummary,
   Streak,
   User,
+  YearInReview,
 } from "@/lib/github/schema";
 
 /**
@@ -80,26 +87,53 @@ function isHoliday(offset: number): boolean {
   return (offset >= 44 && offset <= 55) || (offset >= 264 && offset <= 276);
 }
 
-function demoCalendar(): Calendar {
-  const next = prng(20261113);
-  const start = parseIsoDate(DEMO_FROM);
-  const end = parseIsoDate(DEMO_TODAY);
-  if (!start || !end) {
-    return { total: 0, from: DEMO_FROM, to: DEMO_TODAY, days: [] };
+/** A span of days to make a calendar for. */
+interface DemoRange {
+  from: string;
+  to: string;
+  seed: number;
+  /** The range ends "today": its last days are a streak that is still running. */
+  live: boolean;
+}
+
+/** GitHub's default view: the last year of activity, up to the demo's today. */
+const LAST_YEAR: DemoRange = {
+  from: DEMO_FROM,
+  to: DEMO_TODAY,
+  seed: 20261113,
+  live: true,
+};
+
+/** The range of a calendar year: all of it, or up to the demo's today for the current one. */
+function yearRange(year: number): DemoRange {
+  const today = parseIsoDate(DEMO_TODAY);
+  const current = today !== null && year === today.year;
+  return {
+    from: `${year}-01-01`,
+    to: current ? DEMO_TODAY : `${year}-12-31`,
+    seed: 20261113 + year,
+    live: current,
+  };
+}
+
+function demoCalendar(range: DemoRange = LAST_YEAR): Calendar {
+  const next = prng(range.seed);
+  const start = parseIsoDate(range.from);
+  const end = parseIsoDate(range.to);
+  if (!start || !end || daysBetween(start, end) < 0) {
+    return { total: 0, from: range.from, to: range.to, days: [] };
   }
-  const length =
-    Math.round(
-      (Date.UTC(end.year, end.month - 1, end.day) -
-        Date.UTC(start.year, start.month - 1, start.day)) /
-        86_400_000,
-    ) + 1;
+  const length = daysBetween(start, end) + 1;
+  const firstWeekday = weekdayOf(start);
 
   const counts: number[] = [];
   let week = 1;
   for (let offset = 0; offset < length; offset++) {
-    const weekday = offset % 7; // the calendar starts on a Sunday
+    const weekday = (firstWeekday + offset) % 7;
     // Every week has its own pace: some are slow, a few are release weeks.
-    if (weekday === 0) week = 0.35 + next() * 1.1 + (next() < 0.14 ? 1.2 : 0);
+    if (weekday === 0 || offset === 0) {
+      week = 0.35 + next() * 1.1 + (next() < 0.14 ? 1.2 : 0);
+    }
     const season = 0.8 + 0.3 * Math.sin((offset / length) * Math.PI * 3.2);
     const activity = WEEKDAY_ACTIVITY[weekday] * season;
     const roll = next();
@@ -114,7 +148,7 @@ function demoCalendar(): Calendar {
     }
     // A long spring run and a live streak make the streak banner worth looking at.
     const inRun = offset >= 150 && offset <= 187;
-    const inLiveStreak = offset >= length - 17;
+    const inLiveStreak = range.live && offset >= length - 17;
     if ((inRun || inLiveStreak) && count === 0)
       count = 1 + Math.floor(size * 5);
     counts.push(count);
@@ -144,8 +178,8 @@ function demoCalendar(): Calendar {
   }));
   return {
     total: counts.reduce((sum, count) => sum + count, 0),
-    from: DEMO_FROM,
-    to: DEMO_TODAY,
+    from: range.from,
+    to: range.to,
     days,
   };
 }
@@ -271,13 +305,18 @@ function avatarRefs(logins: readonly string[]): AvatarRef[] {
   return logins.map((login) => ({ login, avatarUrl: identicon(login) }));
 }
 
-function demoActivity(seed: number): CommitActivity {
+/**
+ * A year of weekly commit activity ending in the demo's current week, with
+ * commits per weekday. `pace` is the busiest a weekday gets: a repository's
+ * own rhythm, or several repositories summed for an organization.
+ */
+function demoActivity(seed: number, pace: number): CommitActivity {
   const next = prng(seed);
   const start = parseIsoDate("2025-11-16");
   const weeks = Array.from({ length: 52 }, (_, index) => {
     const wave = 0.7 + 0.5 * Math.sin(index / 5.2);
     const days = WEEKDAY_ACTIVITY.map((weight) =>
-      Math.floor(next() * 14 * weight * wave),
+      Math.floor(next() * pace * weight * wave),
     );
     return {
       week: start ? toIsoDate(addDays(start, index * 7)) : DEMO_FROM,
@@ -291,8 +330,31 @@ function demoActivity(seed: number): CommitActivity {
   };
 }
 
-function demoUser(): User {
-  const calendar = demoCalendar();
+/** Share of a year's commits that went to each of the top repositories. */
+const TOP_REPO_SHARES = [
+  ["mona-demo/rocket", 0.31],
+  ["mona-demo/paper-lantern", 0.17],
+  ["acme-labs/tide", 0.11],
+  ["mona-demo/atlas", 0.07],
+  ["mona-demo/quill", 0.04],
+] as const;
+
+/** The extras a year in review adds: the year before, and where the commits went. */
+function demoYearInReview(year: number, total: number): YearInReview {
+  const commits = Math.round(total * 0.71);
+  return {
+    year,
+    // A good year: about a fifth more than the one before.
+    previousTotal: Math.round(total / 1.22),
+    topRepos: TOP_REPO_SHARES.map(([fullName, share]) => ({
+      fullName,
+      commits: Math.round(commits * share),
+    })),
+  };
+}
+
+function demoUser(year: number | null): User {
+  const calendar = demoCalendar(year === null ? LAST_YEAR : yearRange(year));
   const bestDay = calendar.days.reduce<ContributionDay | null>(
     (best, day) => (day.count > (best?.count ?? 0) ? day : best),
     null,
@@ -329,7 +391,7 @@ function demoUser(): User {
     repos: demoRepos("mona-demo"),
     languages: [...LANGUAGES],
     organizations: avatarRefs(["acme-labs", "northwind-oss", "paper-lantern"]),
-    wrapped: null,
+    wrapped: year === null ? null : demoYearInReview(year, calendar.total),
     complete: true,
     fetchedAt: FETCHED_AT,
   };
@@ -352,12 +414,12 @@ function demoOrg(): Org {
       repositories: 128,
       stars: 48_210,
       forks: 5932,
-      members: 24,
+      members: 36,
       followers: 3120,
     },
     repos: demoRepos("acme-labs"),
     languages: [...LANGUAGES],
-    activity: demoActivity(7),
+    activity: demoActivity(7, 96),
     people: avatarRefs(
       Array.from({ length: 24 }, (_, index) => `demo-member-${index + 1}`),
     ),
@@ -365,9 +427,32 @@ function demoOrg(): Org {
   };
 }
 
-function demoRepo(): Repo {
+/** Weeks of star history the data layer keeps. */
+const STAR_WEEKS = 30;
+
+/**
+ * Cumulative stars per week that end at today's count: steady growth with a
+ * launch-week jump two thirds of the way in, so the trend line has a shape.
+ */
+function demoStarHistory(current: number): Repo["starHistory"] {
   const next = prng(11);
-  let stars = 17_100;
+  const gains = Array.from({ length: STAR_WEEKS }, (_, index) => {
+    const launch = index >= 19 && index <= 21 ? 240 - (index - 19) * 70 : 0;
+    return Math.floor(18 + next() * 46) + launch;
+  });
+  const first = parseIsoDate("2026-04-19");
+  let stars = current - gains.reduce((sum, gain) => sum + gain, 0);
+  return gains.map((gain, index) => {
+    stars += gain;
+    return {
+      week: first ? toIsoDate(addDays(first, index * 7)) : DEMO_FROM,
+      stars,
+    };
+  });
+}
+
+function demoRepo(): Repo {
+  const stars = 18_432;
   return {
     kind: "repo",
     owner: {
@@ -379,7 +464,7 @@ function demoRepo(): Repo {
     fullName: "acme-labs/rocket",
     description: "A fast, friendly build tool for the modern web. Demo data.",
     homepageUrl: "https://example.com",
-    stars: 18_432,
+    stars,
     forks: 912,
     watchers: 187,
     openIssues: 143,
@@ -398,15 +483,8 @@ function demoRepo(): Repo {
       publishedAt: "2026-11-03T15:00:00Z",
     },
     commits: 6841,
-    activity: demoActivity(3),
-    starHistory: Array.from({ length: 30 }, (_, index) => {
-      stars += Math.floor(20 + next() * 60);
-      const week = parseIsoDate("2026-04-19");
-      return {
-        week: week ? toIsoDate(addDays(week, index * 7)) : DEMO_FROM,
-        stars,
-      };
-    }),
+    activity: demoActivity(3, 26),
+    starHistory: demoStarHistory(stars),
     contributors: Array.from({ length: 30 }, (_, index) => ({
       login: `demo-contributor-${index + 1}`,
       avatarUrl: identicon(`demo-contributor-${index + 1}`),
@@ -417,18 +495,32 @@ function demoRepo(): Repo {
   };
 }
 
+/** What to vary in the demo data. */
+export interface DemoOptions {
+  /**
+   * A calendar year for the user: the calendar then covers that year (up to
+   * the demo's "today" for 2026) and the year-in-review extras are filled
+   * in, as the data layer does when a banner asks for a year. Other kinds
+   * ignore it.
+   */
+  year?: number | null;
+}
+
 /**
  * Deterministic synthetic data for one entity kind: "Mona Demo", the
  * organization "acme-labs" or the repository "acme-labs/rocket".
  */
-export function demoEntity(kind: "user"): User;
-export function demoEntity(kind: "org"): Org;
-export function demoEntity(kind: "repo"): Repo;
-export function demoEntity(kind: EntityKind): Entity;
-export function demoEntity(kind: EntityKind): Entity {
+export function demoEntity(kind: "user", options?: DemoOptions): User;
+export function demoEntity(kind: "org", options?: DemoOptions): Org;
+export function demoEntity(kind: "repo", options?: DemoOptions): Repo;
+export function demoEntity(kind: EntityKind, options?: DemoOptions): Entity;
+export function demoEntity(kind: EntityKind, options?: DemoOptions): Entity {
   if (kind === "org") return demoOrg();
   if (kind === "repo") return demoRepo();
-  return demoUser();
+  const year = options?.year;
+  return demoUser(
+    typeof year === "number" && Number.isInteger(year) ? year : null,
+  );
 }
 
 /** The instant the demo data pretends to be fetched at; a fitting `RenderEnv.now`. */

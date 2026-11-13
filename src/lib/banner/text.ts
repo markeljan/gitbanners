@@ -48,7 +48,15 @@ export function plainText(value: unknown): string {
   return out.replace(/\s+/g, " ").trim();
 }
 
-/** `plainText`, cut to at most `max` characters (not UTF-16 units: an emoji is never halved). */
+/**
+ * `plainText`, cut to at most `max` characters (not UTF-16 units: an emoji is
+ * never halved). Only the head of a very long input is read, so the work is
+ * bounded by `max`, not by what a caller sends: 16 UTF-16 units per kept
+ * character cover any run of joined emoji and collapsible spaces a real
+ * title has.
+ */
 export function clipText(value: unknown, max: number): string {
-  return [...plainText(value)].slice(0, Math.max(0, max)).join("").trim();
+  const limit = Math.max(0, max);
+  const head = typeof value === "string" ? value.slice(0, limit * 16) : value;
+  return [...plainText(head)].slice(0, limit).join("").trim();
 }

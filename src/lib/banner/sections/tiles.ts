@@ -44,6 +44,12 @@ export interface TilesSpec {
   spread?: boolean;
   /** Free width to keep after the last tile's label, for something that shares its line. */
   keepFree?: number;
+  /**
+   * When even columns do not fit a single left-aligned row, set every tile
+   * as wide as its own text with even gaps instead (see `tilesThatPack`). One
+   * long label ("Open pull requests") then no longer costs a whole tile.
+   */
+  packed?: boolean;
 }
 
 export interface TilesPlan extends Block {
@@ -122,9 +128,10 @@ function trendOf(
 ): Node | null {
   if (!tile.trend) return null;
   const height = Math.round(place.size * CAP_HEIGHT);
-  const width = Math.round(place.size * 1.9);
   const gap = Math.round(place.size * 0.4);
-  if (place.room < gap + width) return null;
+  // Up to two digits wide; a little narrower when that is all there is.
+  const width = Math.min(Math.round(place.size * 1.9), place.room - gap);
+  if (width < Math.round(place.size * 1.3)) return null;
   return sparkline({
     values: tile.trend,
     x:
@@ -139,6 +146,11 @@ function trendOf(
   });
 }
 
+/** True when the tiles fit `width` side by side in columns of one width. */
+function fitEvenly(metrics: TileMetrics, count: number, width: number) {
+  return (count - 1) * metrics.minPitch + metrics.content <= width;
+}
+
 /** How many of `tiles`, taken from the front, fit side by side in `width`. */
 export function tilesThatFit(
   ctx: Ctx,
@@ -146,8 +158,49 @@ export function tilesThatFit(
   width: number,
 ): number {
   for (let count = tiles.length; count > 0; count--) {
-    const metrics = measure(ctx, tiles.slice(0, count));
-    if ((count - 1) * metrics.minPitch + metrics.content <= width) return count;
+    if (fitEvenly(measure(ctx, tiles.slice(0, count)), count, width)) {
+      return count;
+    }
+  }
+  return 0;
+}
+
+/** Width each tile needs for its own number and label. */
+function ownWidths(
+  ctx: Ctx,
+  tiles: readonly Tile[],
+  metrics: TileMetrics,
+): number[] {
+  return tiles.map((tile) =>
+    Math.max(
+      boxOf(ctx, tile.value, metrics.valueSize, ctx.ramp.strong),
+      boxOf(ctx, tile.label, metrics.labelSize),
+    ),
+  );
+}
+
+function sum(values: readonly number[]): number {
+  return values.reduce((total, value) => total + value, 0);
+}
+
+/**
+ * How many of `tiles`, taken from the front, fit one row of `width` when
+ * each may be as wide as its own text (`TilesSpec.packed`). Never fewer than
+ * `tilesThatFit`: even columns are still what a row uses when they fit.
+ */
+export function tilesThatPack(
+  ctx: Ctx,
+  tiles: readonly Tile[],
+  width: number,
+): number {
+  for (let count = tiles.length; count > 0; count--) {
+    const shown = tiles.slice(0, count);
+    const metrics = measure(ctx, shown);
+    if (fitEvenly(metrics, count, width)) return count;
+    const gap = metrics.minPitch - metrics.content;
+    if (sum(ownWidths(ctx, shown, metrics)) + (count - 1) * gap <= width) {
+      return count;
+    }
   }
   return 0;
 }
@@ -190,28 +243,63 @@ export function planTiles(
       : spec.spread
         ? even
         : Math.max(1, Math.min(metrics.pitch, widest));
-  const slot = Math.max(
+  const evenSlot = Math.max(
     1,
     columns === 1
       ? spec.width
       : Math.min(pitch - Math.round(ramp.small), spec.width),
   );
   const rowGap = Math.round(ramp.small * 1.6);
-  const used = (columns - 1) * pitch + Math.min(slot, metrics.content);
+  const lastRowCount = tiles.length - (rows - 1) * columns;
+  // Even columns by default. A single left-aligned row that is too narrow
+  // for them may be packed instead: every tile as wide as its own text.
+  const own =
+    spec.packed &&
+    spec.align === "left" &&
+    !spec.spread &&
+    rows === 1 &&
+    columns > 1 &&
+    !fitEvenly(metrics, columns, spec.width)
+      ? ownWidths(ctx, tiles, metrics)
+      : null;
+  const before = own ? sum(own.slice(0, -1)) : 0;
+  const packedGap = own
+    ? Math.max(
+        metrics.minPitch - metrics.content,
+        Math.min(
+          metrics.pitch - metrics.content,
+          Math.floor(
+            Math.min(
+              spec.width - sum(own),
+              spec.width - (spec.keepFree ?? 0) - lastWidth - before,
+            ) /
+              (columns - 1),
+          ),
+        ),
+      )
+    : 0;
+  /** Offset of a column's left edge (packed) or of the edge it holds on to. */
+  const startOf = (col: number) =>
+    own ? sum(own.slice(0, col)) + col * packedGap : col * pitch;
+  /** Width a column's number and label may take. */
+  const slotOf = (col: number) => own?.[col] ?? evenSlot;
+  const lastCol = lastRowCount - 1;
+  const used =
+    startOf(columns - 1) + Math.min(slotOf(columns - 1), metrics.content);
   const labelTop =
     (rows - 1) * (metrics.height + rowGap) + metrics.valueLine + ramp.lead;
-  const lastRowCount = tiles.length - (rows - 1) * columns;
 
   const at = (x: number, y: number): Node[] => {
     const nodes: (Node | null)[] = [];
     tiles.forEach((tile, index) => {
       const col = index % columns;
       const row = Math.floor(index / columns);
+      const slot = slotOf(col);
       // The edge the column holds on to: its left side, or its right one.
       const edge =
         spec.align === "left"
-          ? x + col * pitch
-          : x + spec.width - (columns - 1 - col) * pitch;
+          ? x + startOf(col)
+          : x + spec.width - startOf(columns - 1 - col);
       const top = y + row * (metrics.height + rowGap);
       // A long value (a release tag) shrinks before it is cut.
       const size = fitFontSize(tile.value, slot, metrics.valueSize, ramp.body, {
@@ -275,7 +363,7 @@ export function planTiles(
       labelTop + baselineOffset(metrics.labelSize, metrics.labelLine),
     tailX:
       spec.align === "left"
-        ? (lastRowCount - 1) * pitch + Math.min(slot, lastWidth)
+        ? startOf(lastCol) + Math.min(slotOf(lastCol), lastWidth)
         : spec.width,
   };
 }

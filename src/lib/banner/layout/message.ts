@@ -100,8 +100,18 @@ export function layoutMessage(
   const hostWidth = host ? boxOf(m.ctx, host, finePrint(m.ctx)) : 0;
   const mark =
     host && hostWidth < width / 2 ? planBrand(m.ctx, host, hostWidth) : null;
-  const textWidth = width - (mark ? hostWidth + m.ctx.ramp.small * 2 : 0);
   const y = Math.max(top, top + Math.floor((bottom - top - m.content) / 2));
+  // On a fixed canvas the mark sits in the bottom-right corner, where every
+  // other banner has it, when the message leaves that corner free. On a card
+  // (and on a canvas too low for both) it shares the message's last line.
+  const corner =
+    mark && canvas.height !== null
+      ? canvas.height - canvas.inset.bottom - mark.height
+      : null;
+  const cornered =
+    corner !== null && corner >= y + m.content + m.ctx.ramp.small;
+  const textWidth =
+    width - (mark && !cornered ? hostWidth + m.ctx.ramp.small * 2 : 0);
 
   return {
     width: canvas.width,
@@ -131,7 +141,12 @@ export function layoutMessage(
           })
         : null,
       ...(mark
-        ? mark.at(right - hostWidth, Math.max(top, y + m.content - mark.height))
+        ? mark.at(
+            right - hostWidth,
+            cornered && corner !== null
+              ? corner
+              : Math.max(top, y + m.content - mark.height),
+          )
         : []),
     ]),
   };
