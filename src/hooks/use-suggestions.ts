@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import useSWR from "swr";
 import { z } from "zod";
 import { OwnerSuggestionSchema, type Suggestion } from "@/lib/github/schema";
@@ -11,10 +11,15 @@ import { useDebouncedValue } from "./use-debounced-value";
 /**
  * Typeahead suggestions for the target input, from `GET /api/v1/search`.
  *
- * Keystrokes are debounced by about 80 ms, a request the visitor typed past
- * is aborted, answers stay in memory for five minutes, and while the next
- * answer is on its way the previous list is narrowed locally to what still
- * matches, so the list never goes blank and never shows a stale mismatch.
+ * Keystrokes are debounced by about 80 ms and answers stay in memory. While
+ * the answer for the exact text is on its way, the newest answer for a
+ * shorter prefix of it is narrowed locally to what still matches: the list
+ * never goes blank, never shows a stale mismatch, and a name is usually
+ * already on screen (and known to exist) by the time it is fully typed.
+ *
+ * A request is aborted when the visitor changes direction (deletes, or
+ * types something else). Typing forward keeps it: its answer is exactly
+ * that prefix list.
  */
 
 /** Shortest text the API searches for (GitHub does no prefix match below it). */
@@ -68,17 +73,81 @@ export function matchesQuery(suggestion: Suggestion, query: string): boolean {
   );
 }
 
+/**
+ * True when an answer for `earlier` is still worth having while `query` is
+ * on screen: typing forward within the same kind of search. A login prefix
+ * says nothing about `owner/…` repositories, so crossing the slash does not
+ * count.
+ */
+export function extendsQuery(query: string, earlier: string): boolean {
+  return (
+    query.startsWith(earlier) && query.includes("/") === earlier.includes("/")
+  );
+}
+
+export interface SearchAnswer {
+  query: string;
+  suggestions: readonly Suggestion[];
+}
+
+/** Answers kept for prefix reuse. Typing produces a handful per name. */
+const MAX_ANSWERS = 120;
+
+/**
+ * Every answer received in this tab, by query. Separate from SWR's cache
+ * because the question asked of it is different: not "the answer for this
+ * key" but "the best answer for any prefix of this text".
+ */
+export function createAnswerStore(limit = MAX_ANSWERS) {
+  const answers = new Map<string, SearchAnswer>();
+  const listeners = new Set<() => void>();
+  let version = 0;
+  return {
+    add(answer: SearchAnswer): void {
+      answers.delete(answer.query);
+      answers.set(answer.query, answer);
+      if (answers.size > limit) {
+        const oldest = answers.keys().next().value;
+        if (oldest !== undefined) answers.delete(oldest);
+      }
+      version += 1;
+      for (const listener of listeners) listener();
+    },
+    /** The exact answer for `query`, else the one for its longest answered prefix. */
+    best(query: string): SearchAnswer | null {
+      const exact = answers.get(query);
+      if (exact) return exact;
+      let best: SearchAnswer | null = null;
+      for (const answer of answers.values()) {
+        if (
+          extendsQuery(query, answer.query) &&
+          (best === null || answer.query.length > best.query.length)
+        ) {
+          best = answer;
+        }
+      }
+      return best;
+    },
+    subscribe(listener: () => void): () => void {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    version: () => version,
+  };
+}
+
+const store = createAnswerStore();
+
 const SearchResultSchema = z.object({
   query: z.string(),
   suggestions: z.array(OwnerSuggestionSchema),
 });
-type SearchResult = z.infer<typeof SearchResultSchema>;
 
 const controllers = new Map<string, AbortController>();
 /** After a 429 the API is left alone until its `Retry-After` has passed. */
 let blocked: { until: number; problem: ApiProblem } | null = null;
 
-async function fetchSuggestions(url: string): Promise<SearchResult> {
+async function fetchSuggestions(url: string): Promise<SearchAnswer> {
   if (blocked && Date.now() < blocked.until) throw blocked.problem;
   const controller = new AbortController();
   controllers.set(url, controller);
@@ -88,6 +157,7 @@ async function fetchSuggestions(url: string): Promise<SearchResult> {
     for (const suggestion of result.suggestions) {
       knownTargets.add(suggestion.slug);
     }
+    store.add(result);
     return result;
   } catch (error) {
     if (error instanceof ApiProblem && error.status === 429) {
@@ -110,6 +180,7 @@ export interface SuggestionsState {
 }
 
 const NONE: readonly Suggestion[] = [];
+const serverVersion = () => 0;
 
 /**
  * Suggestions for what is typed in the target input.
@@ -125,12 +196,11 @@ export function useSuggestions(
     query,
     options.debounceMs ?? SEARCH_DEBOUNCE_MS,
   );
-  // An answer that is already in memory skips the debounce entirely.
-  const cached = useSWR<SearchResult>(query ? searchUrl(query) : null, null);
+  // Re-render when any answer arrives: it may be a prefix of this text.
+  useSyncExternalStore(store.subscribe, store.version, serverVersion);
   // Clearing the field must not wait for the debounce to notice.
   const fetchUrl = query && settled ? searchUrl(settled) : null;
   const fetched = useSWR(fetchUrl, fetchSuggestions, {
-    keepPreviousData: true,
     dedupingInterval: 300_000,
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
@@ -138,29 +208,34 @@ export function useSuggestions(
     shouldRetryOnError: false,
   });
 
+  // Abort what can no longer help. Done when the query changes, not in a
+  // cleanup: Strict Mode runs cleanups on mount.
   const watched = useRef<string | null>(null);
   useEffect(() => {
-    if (watched.current && watched.current !== fetchUrl) {
-      controllers.get(watched.current)?.abort();
+    const previous = watched.current;
+    watched.current = settled;
+    if (previous && previous !== settled) {
+      if (!settled || !extendsQuery(settled, previous)) {
+        controllers.get(searchUrl(previous))?.abort();
+      }
     }
-    watched.current = fetchUrl;
-  }, [fetchUrl]);
+  }, [settled]);
 
   if (query === null) {
     return { suggestions: NONE, isLoading: false, failure: null };
   }
-  const source = cached.data ?? fetched.data;
-  const isExact = source?.query === query;
+  const answer = store.best(query);
+  const isExact = answer?.query === query;
   const failure =
     !isExact && settled === query && fetched.error !== undefined
       ? failureOf(fetched.error)
       : null;
   return {
-    suggestions: !source
+    suggestions: !answer
       ? NONE
       : isExact
-        ? source.suggestions
-        : source.suggestions.filter((item) => matchesQuery(item, query)),
+        ? answer.suggestions
+        : answer.suggestions.filter((item) => matchesQuery(item, query)),
     isLoading: !isExact && (failure === null || failure === "aborted"),
     failure: failure === "aborted" ? null : failure,
   };

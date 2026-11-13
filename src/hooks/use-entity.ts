@@ -134,7 +134,12 @@ export function retryDelay(error: unknown, retryCount: number): number | null {
   return 1500 * 2 ** (retryCount - 1);
 }
 
+/** How long an answer counts as fresh: no second request within it. */
+const FRESH_MS = 60_000;
+
 const controllers = new Map<string, AbortController>();
+/** When each URL last answered (or failed), for `prefetchEntity`. */
+const answeredAt = new Map<string, number>();
 
 async function fetchEntity(url: string): Promise<Entity> {
   const controller = new AbortController();
@@ -149,17 +154,40 @@ async function fetchEntity(url: string): Promise<Entity> {
         "The API answered with an unexpected shape.",
       );
     }
-    const entity = parsed.data;
-    knownTargets.add(entity.kind === "repo" ? entity.fullName : entity.login);
-    return entity;
+    answeredAt.set(url, Date.now());
+    return parsed.data;
+  } catch (error) {
+    // A failure is an answer too: nothing fetches ahead into an outage or
+    // asks twice about a name that does not exist. (The hook's own retry and
+    // the visitor's "Try again" do not go through `prefetchEntity`.)
+    if (failureOf(error) !== "aborted") answeredAt.set(url, Date.now());
+    throw error;
   } finally {
     if (controllers.get(url) === controller) controllers.delete(url);
   }
 }
 
+/**
+ * True when asking for `url` now would repeat a request that is in flight
+ * or was answered a moment ago. SWR de-duplicates its own revalidations but
+ * not a `preload()` made after the hook already took the answer.
+ */
+export function isFresh(
+  url: string,
+  now: number,
+  state: {
+    inFlight: { has(url: string): boolean };
+    answeredAt: { get(url: string): number | undefined };
+  },
+): boolean {
+  if (state.inFlight.has(url)) return true;
+  const at = state.answeredAt.get(url);
+  return at !== undefined && now - at < FRESH_MS;
+}
+
 const SWR_OPTIONS: SWRConfiguration<Entity, unknown> = {
   // Typing back and forth between two names must not ask twice.
-  dedupingInterval: 60_000,
+  dedupingInterval: FRESH_MS,
   revalidateOnFocus: false,
   revalidateOnReconnect: false,
   onErrorRetry(error, _key, _config, revalidate, { retryCount }) {
@@ -169,12 +197,18 @@ const SWR_OPTIONS: SWRConfiguration<Entity, unknown> = {
 };
 
 /**
- * Warms the cache for a target the visitor is likely to pick next (the
- * highlighted suggestion). Owners get the one-request preview, which is
- * enough for a first banner the moment they are chosen.
+ * Warms the cache for a target the visitor is likely to want next (the
+ * highlighted suggestion, the name just typed). Owners get the one-request
+ * preview, which is enough for a first banner the moment they are chosen.
+ * Nothing is shown and nothing is reported: `useEntity` picks the answer up
+ * if the target is asked for.
  */
 export function prefetchEntity(target: BannerTarget): void {
   const url = entityUrl(target, target.kind === "owner" ? "preview" : "full");
+  const state = { inFlight: controllers, answeredAt };
+  if (isFresh(url, Date.now(), state)) return;
+  // A full entity that just arrived makes the preview pointless.
+  if (isFresh(entityUrl(target, "full"), Date.now(), state)) return;
   // The promise is consumed by the hook later; until then a failure here is
   // nobody's business.
   preload(url, fetchEntity).catch(() => {});
@@ -290,6 +324,10 @@ export function useEntity(
   );
   if (resolved.entity && key && shown?.entity !== resolved.entity) {
     setShown({ entity: resolved.entity, key });
+    // Shown on purpose once, known for good: typing this name again brings
+    // it back without waiting for the search. (A lookup made ahead of time
+    // does not count: it must not put a half-typed name on screen.)
+    knownTargets.add(key);
   }
   const visible =
     resolved.entity && key ? { entity: resolved.entity, key } : shown;

@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import type { Suggestion } from "@/lib/github/schema";
 import {
+  createAnswerStore,
+  extendsQuery,
   matchesQuery,
   normalizeSearchText,
   searchUrl,
@@ -75,5 +77,82 @@ describe("matchesQuery", () => {
     expect(matchesQuery(item("repo", "vercel-labs/next"), "vercel/ne")).toBe(
       false,
     );
+  });
+});
+
+describe("extendsQuery", () => {
+  test("typing forward extends the earlier query", () => {
+    expect(extendsQuery("torvalds", "torv")).toBe(true);
+    expect(extendsQuery("torv", "torv")).toBe(true);
+    expect(extendsQuery("vercel/next", "vercel/ne")).toBe(true);
+    expect(extendsQuery("vercel/", "vercel/")).toBe(true);
+  });
+  test("deleting or changing the text does not", () => {
+    expect(extendsQuery("tor", "torv")).toBe(false);
+    expect(extendsQuery("torx", "torv")).toBe(false);
+  });
+  test("a login prefix says nothing about that owner's repositories", () => {
+    expect(extendsQuery("vercel/ne", "vercel")).toBe(false);
+    expect(extendsQuery("vercel/", "ver")).toBe(false);
+  });
+});
+
+describe("createAnswerStore", () => {
+  const answer = (query: string, slugs: string[]) => ({
+    query,
+    suggestions: slugs.map((slug) => ({
+      kind: slug.includes("/") ? ("repo" as const) : ("user" as const),
+      slug,
+      title: null,
+      avatarUrl: "",
+      stars: null,
+    })),
+  });
+
+  test("prefers the exact answer", () => {
+    const store = createAnswerStore();
+    store.add(answer("tor", ["torvalds", "tornado"]));
+    store.add(answer("torv", ["torvalds"]));
+    expect(store.best("torv")?.query).toBe("torv");
+  });
+  test("falls back to the longest answered prefix", () => {
+    const store = createAnswerStore();
+    store.add(answer("to", ["tom"]));
+    store.add(answer("torv", ["torvalds"]));
+    store.add(answer("tor", ["torvalds", "tornado"]));
+    expect(store.best("torvalds")?.query).toBe("torv");
+    expect(store.best("tornado")?.query).toBe("tor");
+    expect(store.best("tx")).toBeNull();
+  });
+  test("never answers a repository query from account results", () => {
+    const store = createAnswerStore();
+    store.add(answer("vercel", ["vercel"]));
+    expect(store.best("vercel/ne")).toBeNull();
+    store.add(answer("vercel/", ["vercel/next.js"]));
+    expect(store.best("vercel/ne")?.query).toBe("vercel/");
+  });
+  test("notifies subscribers and bumps the version on every answer", () => {
+    const store = createAnswerStore();
+    let calls = 0;
+    const unsubscribe = store.subscribe(() => {
+      calls += 1;
+    });
+    const before = store.version();
+    store.add(answer("ab", []));
+    expect(calls).toBe(1);
+    expect(store.version()).toBe(before + 1);
+    unsubscribe();
+    store.add(answer("abc", []));
+    expect(calls).toBe(1);
+  });
+  test("forgets the oldest answers beyond its limit, keeping re-asked ones", () => {
+    const store = createAnswerStore(2);
+    store.add(answer("aa", []));
+    store.add(answer("bb", []));
+    store.add(answer("aa", ["aa-again"]));
+    store.add(answer("cc", []));
+    expect(store.best("bb")).toBeNull();
+    expect(store.best("aa")?.suggestions).toHaveLength(1);
+    expect(store.best("cc")?.query).toBe("cc");
   });
 });

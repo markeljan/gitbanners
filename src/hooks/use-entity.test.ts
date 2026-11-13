@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { SAMPLE_REPO, SAMPLE_USER } from "@/lib/github/samples";
 import type { User } from "@/lib/github/schema";
 import { ApiProblem } from "./api";
-import { resolveEntity, retryDelay } from "./use-entity";
+import { isFresh, resolveEntity, retryDelay } from "./use-entity";
 
 const preview: User = { ...SAMPLE_USER, complete: false };
 const notFound = new ApiProblem(404, "not_found", "No such user.");
@@ -155,5 +155,26 @@ describe("retryDelay", () => {
       1000,
     );
     expect(retryDelay(limited, 1)).toBeNull();
+  });
+});
+
+describe("isFresh", () => {
+  const url = "/api/v1/owners/torvalds?view=preview";
+  const state = (inFlight: string[], answered: Record<string, number>) => ({
+    inFlight: new Set(inFlight),
+    answeredAt: new Map(Object.entries(answered)),
+  });
+  test("a request in flight is not repeated", () => {
+    expect(isFresh(url, 1_000, state([url], {}))).toBe(true);
+  });
+  test("an answer stays fresh for a minute", () => {
+    expect(isFresh(url, 30_000, state([], { [url]: 1_000 }))).toBe(true);
+    expect(isFresh(url, 61_001, state([], { [url]: 1_000 }))).toBe(false);
+  });
+  test("an unknown URL is worth asking", () => {
+    expect(isFresh(url, 1_000, state([], {}))).toBe(false);
+    expect(
+      isFresh(url, 1_000, state(["/api/v1/owners/vercel"], { other: 900 })),
+    ).toBe(false);
   });
 });

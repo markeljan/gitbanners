@@ -58,6 +58,7 @@ export function UrlPatterns() {
       <ContentTable
         block={blockOf(copy, "table")}
         caption="Banner URL patterns"
+        variant="stacked"
       />
     </HomeSection>
   );

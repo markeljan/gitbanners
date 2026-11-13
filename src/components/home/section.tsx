@@ -88,8 +88,11 @@ export function ContentTable({
   block: Extract<Block, { type: "table" }>;
   /** Names the table for assistive technology. Visually hidden. */
   caption: string;
-  /** `plans` centres the value columns under their plan names. */
-  variant?: "plans";
+  /**
+   * `plans`: narrow value columns under their plan names. `stacked`: on a
+   * phone each row becomes two lines, for a table whose first column is long.
+   */
+  variant?: "plans" | "stacked";
 }) {
   return (
     <div className="gb-table-wrap">

@@ -41,6 +41,12 @@ import {
 export const SETTLE_MS = 350;
 /** A top suggestion is fetched ahead once it has been on screen this long. */
 const PREFETCH_TOP_MS = 120;
+/**
+ * Pause after which typed text is fetched ahead while its search is still
+ * out. Longer than the gap between keys of a word, so half-typed names are
+ * rarely asked for; shorter than a search round trip, so it still saves time.
+ */
+const AHEAD_MS = 250;
 
 export interface TargetInputProps {
   /** Text in the field. The component is controlled. */
@@ -66,9 +72,26 @@ export interface TargetInputProps {
   /** Static text in front of the field, such as the site host. Replaces the search glyph. */
   prefix?: ReactNode;
   hasAutoFocus?: boolean;
+  /**
+   * Let "/" focus the field from anywhere on the page (unless the visitor is
+   * typing somewhere else), and show the key as a hint in the empty field.
+   * For the one main field of a page.
+   */
+  hasShortcut?: boolean;
   /** Examples offered while the field is empty. */
   popular?: readonly TargetOption[];
   className?: string;
+}
+
+/** True when a key press belongs to a field the visitor is typing in. */
+function isTypingTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return (
+    target.isContentEditable ||
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement
+  );
 }
 
 function optionTarget(option: TargetOption): BannerTarget | null {
@@ -127,6 +150,7 @@ function OptionRow({ option }: { option: TargetOption }) {
  *   in local storage) and popular examples.
  * - The highlighted suggestion and the top one are fetched ahead, so
  *   choosing them shows a banner at once.
+ * - With `hasShortcut`, "/" focuses the field from anywhere on the page.
  *
  * The list is positioned under the field in normal flow order (no portal),
  * so do not put the component inside a container that clips overflow.
@@ -141,6 +165,7 @@ export function TargetInput({
   size = "md",
   prefix,
   hasAutoFocus = false,
+  hasShortcut = false,
   popular = POPULAR_TARGETS,
   className,
 }: TargetInputProps) {
@@ -287,6 +312,20 @@ export function TargetInput({
     return () => clearTimeout(timer);
   }, [hasPreview, isKnown, isSearchDown, typedSlug]);
 
+  // While the search for a finished-looking name is still out, ask for the
+  // name itself too. Nothing is shown from it (see above); it only means the
+  // banner is already there when the search confirms the name.
+  const isUnconfirmed =
+    hasPreview && typedSlug !== null && !isKnown && isLoading;
+  const fetchTypedAhead = useEffectEvent(() => {
+    if (typed) prefetchEntity(typed);
+  });
+  useEffect(() => {
+    if (!isUnconfirmed || typedSlug === null) return;
+    const timer = setTimeout(fetchTypedAhead, AHEAD_MS);
+    return () => clearTimeout(timer);
+  }, [isUnconfirmed, typedSlug]);
+
   // Fetch ahead what Enter would pick: the highlighted row, or the best
   // match once it has stayed at the top for a moment.
   const activeSlug = activeOption?.slug ?? null;
@@ -301,6 +340,19 @@ export function TargetInput({
     const timer = setTimeout(() => prefetchEntity(target), PREFETCH_TOP_MS);
     return () => clearTimeout(timer);
   }, [topSlug]);
+
+  useEffect(() => {
+    if (!hasShortcut) return;
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== "/" || event.defaultPrevented) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isTypingTarget(event.target)) return;
+      event.preventDefault();
+      input.current?.focus();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [hasShortcut]);
 
   // Keep the highlighted row in view while arrowing through a long list.
   useEffect(() => {
@@ -360,7 +412,14 @@ export function TargetInput({
         aria-expanded={isListShown}
         aria-controls={isListShown ? listboxId : undefined}
         aria-activedescendant={activeOption ? optionId(active) : undefined}
+        aria-keyshortcuts={hasShortcut ? "/" : undefined}
       />
+      {hasShortcut && value === "" ? (
+        // The key is announced through aria-keyshortcuts on the field.
+        <span className="gb-target-kbd" aria-hidden="true">
+          /
+        </span>
+      ) : null}
       {isPopupShown ? (
         // Pressing inside the popup must not take focus from the field.
         // biome-ignore lint/a11y/noStaticElementInteractions: not an action, only keeps focus where it is

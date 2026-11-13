@@ -10,7 +10,8 @@ import { fetchJson } from "./api";
 const MeSchema = z.object({
   user: z
     .object({
-      id: z.number(),
+      // GitHub's numeric id, which the account store keeps as a string.
+      id: z.union([z.string(), z.number()]).transform(String),
       login: z.string(),
       name: z.string().nullable(),
       avatarUrl: z.string(),
@@ -45,8 +46,13 @@ const subscribe = () => () => {};
 const clientHint = () => hasSessionHint(document.cookie);
 const serverHint = () => false;
 
+/** Validates a `/api/me` body. Throws when it is not one. */
+export function parseMe(body: unknown): Me {
+  return MeSchema.parse(body);
+}
+
 async function fetchMe(): Promise<Me> {
-  return MeSchema.parse(await fetchJson(ME_KEY));
+  return parseMe(await fetchJson(ME_KEY));
 }
 
 export interface UseMeResult {

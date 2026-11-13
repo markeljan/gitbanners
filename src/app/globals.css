@@ -59,12 +59,6 @@ html {
   scroll-padding-top: calc(var(--gb-header-height) + var(--spacing-4));
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  html {
-    scroll-behavior: smooth;
-  }
-}
-
 @layer base {
   /* Astryx components bring their own ring; this one is for plain links and buttons. */
   a:focus-visible,
@@ -250,12 +244,14 @@ html {
   }
   /* The sentence under a title. */
   .gb-lead {
-    font-size: var(--text-large-size);
     line-height: 1.55;
   }
   @media (width >= 40rem) {
     .gb-display {
       font-size: var(--text-display-2-size);
+    }
+    .gb-lead {
+      font-size: var(--text-large-size);
     }
   }
   @media (width >= 64rem) {
@@ -305,6 +301,33 @@ html {
     white-space: nowrap;
     /* Sits flush against what is typed. */
     margin-inline-end: calc(var(--spacing-3) * -1);
+  }
+  /* The "/" shortcut, shown at the end of the empty field until it has focus. */
+  .gb-target-kbd {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-end: var(--spacing-4);
+    display: grid;
+    place-items: center;
+    min-width: var(--spacing-6);
+    height: var(--spacing-6);
+    padding-inline: var(--spacing-1-5);
+    transform: translateY(-50%);
+    border: var(--border-width) solid var(--color-border-emphasized);
+    border-radius: var(--radius-inner);
+    color: var(--color-text-secondary);
+    font-family: var(--font-family-code);
+    font-size: var(--text-supporting-size);
+    line-height: 1;
+    pointer-events: none;
+  }
+  .gb-target:focus-within .gb-target-kbd {
+    display: none;
+  }
+  @media (pointer: coarse) {
+    .gb-target-kbd {
+      display: none;
+    }
   }
   .gb-target-popup {
     position: absolute;
@@ -533,7 +556,7 @@ html {
   }
   .gb-swatches {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(6.25rem, 1fr));
     gap: var(--spacing-3) var(--spacing-2);
   }
   .gb-swatch {
@@ -687,7 +710,7 @@ html {
     background: linear-gradient(
       90deg,
       transparent,
-      var(--color-text-secondary),
+      var(--color-text-primary),
       transparent
     );
     background-size: 40% 100%;
@@ -749,6 +772,10 @@ html {
     .gb-frame-actions > * {
       width: 100%;
       min-height: calc(var(--spacing-1) * 11);
+    }
+    /* Two buttons share a phone's width: the words matter more than the glyphs. */
+    .gb-frame-actions .astryx-icon {
+      display: none;
     }
     .gb-chip {
       height: var(--size-element-lg);
@@ -854,6 +881,30 @@ html {
   @media (width >= 40rem) {
     .gb-table tbody th > .gb-code-inline {
       white-space: nowrap;
+    }
+  }
+  /* On a phone a two-column table of URLs becomes a list: URL, then what it gives. */
+  @media (width < 40rem) {
+    .gb-table[data-variant="stacked"] thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+    .gb-table[data-variant="stacked"] tr {
+      display: block;
+      padding-block: var(--spacing-3);
+      border-block-end: var(--border-width) solid var(--color-border);
+    }
+    .gb-table[data-variant="stacked"] th,
+    .gb-table[data-variant="stacked"] td {
+      display: block;
+      padding: 0;
+      border: 0;
+    }
+    .gb-table[data-variant="stacked"] td {
+      margin-block-start: var(--spacing-1);
     }
   }
   .gb-table[data-variant="plans"] td,
@@ -994,11 +1045,19 @@ html {
     }
   }
 
-  /* Themes: the banner, then every theme under it. */
+  /* Themes: the banner, then every theme under it. The banner stays in view
+     while the swatches scroll by, or picking one far down would show nothing. */
   .gb-themes {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-8);
+    gap: var(--spacing-6);
+  }
+  .gb-themes-preview {
+    position: sticky;
+    inset-block-start: var(--gb-header-height);
+    z-index: 2;
+    padding-block: var(--spacing-2);
+    background: var(--color-background-body);
   }
   .gb-themes-code {
     margin-block-start: var(--spacing-8);

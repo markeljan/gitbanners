@@ -97,6 +97,7 @@ export function HeroPlayground() {
         onPreview={(next) => preview.show(next, false)}
         size="lg"
         prefix={`${host}/`}
+        hasShortcut
       />
       <HintLine />
       <div className="gb-frame">

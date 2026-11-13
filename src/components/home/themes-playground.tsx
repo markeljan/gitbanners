@@ -13,7 +13,9 @@ export function ThemesPlayground() {
   const { theme, setTheme } = useHomePreview();
   return (
     <div className="gb-themes">
-      <PreviewBanner />
+      <div className="gb-themes-preview">
+        <PreviewBanner />
+      </div>
       <ThemePicker variant="strip" value={theme} onChange={setTheme} />
     </div>
   );
