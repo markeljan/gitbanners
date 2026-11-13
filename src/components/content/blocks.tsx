@@ -18,6 +18,22 @@ const LANGUAGES: Record<string, string> = {
   json: "json",
   md: "markdown",
   ts: "ts",
+  yaml: "yaml",
+  yml: "yaml",
+};
+
+/** Label shown on a code sample that has no caption of its own. */
+const LANGUAGE_NAMES: Record<string, string> = {
+  bash: "Shell",
+  sh: "Shell",
+  html: "HTML",
+  json: "JSON",
+  md: "Markdown",
+  ts: "TypeScript",
+  yaml: "YAML",
+  yml: "YAML",
+  http: "HTTP headers",
+  text: "Text",
 };
 
 /**
@@ -117,7 +133,7 @@ export function BlockView({ block }: { block: Block }) {
           <CodeBlock
             code={block.code}
             language={LANGUAGES[block.lang] ?? "plaintext"}
-            title={block.caption}
+            title={block.caption ?? LANGUAGE_NAMES[block.lang]}
             width="100%"
           />
         </div>

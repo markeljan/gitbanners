@@ -77,8 +77,11 @@ const OTHER_TARGETS = new Set([
   "/.well-known/mcp/server-card.json",
   // Built elsewhere in the app.
   "/themes",
-  "/docs/migrate",
+  "/studio",
 ]);
+
+/** "Try it" links of the docs: live API answers and banner images. */
+const LIVE_EXAMPLE = /^\/(?:api(?:\/v1(?:\/.*)?)?|[^?#]+\.(?:svg|png))$/;
 
 const LINK = /\[[^\]]+\]\(([^)\s]+)\)/g;
 
@@ -156,7 +159,8 @@ describe("content registry", () => {
             const known =
               target !== undefined ||
               twin !== undefined ||
-              OTHER_TARGETS.has(path);
+              OTHER_TARGETS.has(path) ||
+              LIVE_EXAMPLE.test(path);
             expect(`${href}: ${known}`).toBe(`${href}: true`);
             if (target && hash) {
               expect(`${href}: ${anchors(target).has(hash)}`).toBe(

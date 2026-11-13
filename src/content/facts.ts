@@ -22,6 +22,10 @@ export const FACTS = {
   dataRefreshMinutes: 15,
   /** How long a last good copy of GitHub data is kept (`src/lib/github/cached.ts`), in days. */
   lastGoodDays: 7,
+  /** `PRO_FRESH_MS.pro` in `src/lib/pro/index.ts`, in hours: how long a Pro decision is trusted. */
+  proRecheckHours: 6,
+  /** `PRO_FRESH_MS.free` in `src/lib/pro/index.ts`, in seconds: how soon a new star can be seen. */
+  freeRecheckSeconds: 60,
   /** Notice between the `Deprecation` and the `Sunset` date of an API operation. */
   deprecationNoticeDays: 90,
 } as const;

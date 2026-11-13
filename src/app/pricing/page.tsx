@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { ContentPageView } from "@/components/content/content-page";
 import { JsonLd } from "@/components/content/json-ld";
+import { PricingPageView } from "@/components/pricing/pricing-page";
 import { pricing } from "@/content/pricing";
 import { pageJsonLd } from "@/lib/agent/jsonld";
 import { pageMetadata } from "@/lib/agent/metadata";
@@ -12,7 +12,7 @@ export default function PricingPage() {
   return (
     <>
       <JsonLd data={pageJsonLd(pricing)} />
-      <ContentPageView page={pricing} />
+      <PricingPageView />
     </>
   );
 }

@@ -321,8 +321,50 @@
     }
   }
 
+  /* --- Heading links (`headingLinks`) -------------------------------- */
+
+  .gb-article .gb-anchor {
+    color: inherit;
+    text-decoration-line: none;
+  }
+
+  /* A "#" after the heading on hover or focus: CSS, so it costs no markup. */
+  .gb-article .gb-anchor::after {
+    content: "#";
+    margin-inline-start: var(--spacing-2);
+    color: var(--color-text-secondary);
+    opacity: 0;
+    transition: opacity var(--duration-fast) var(--ease-standard);
+  }
+
+  .gb-article .gb-anchor:is(:hover, :focus-visible)::after {
+    opacity: 1;
+  }
+
+  /* --- Section being read (`DocsEnhancer`) ---------------------------- */
+
+  .gb-article .gb-toc a[aria-current] {
+    color: var(--color-text-primary);
+    font-weight: var(--text-label-weight);
+  }
+
+  /* --- Wide pages: a tool above copy at reading measure (`wide`) ------ */
+
+  .gb-page[data-wide] {
+    max-width: calc(76rem + 2 * var(--spacing-4));
+  }
+
+  .gb-page[data-wide] :is(.gb-head, .gb-body) > :not(.gb-wide) {
+    max-width: var(--gb-measure);
+  }
+
+  .gb-wide {
+    margin-block-end: var(--spacing-12);
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .gb-article a {
+    .gb-article a,
+    .gb-article .gb-anchor::after {
       transition: none;
     }
   }

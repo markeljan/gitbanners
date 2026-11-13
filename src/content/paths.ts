@@ -5,6 +5,7 @@
  */
 export const CONTENT_PATHS = [
   "/docs",
+  "/docs/migrate",
   "/pricing",
   "/about",
   "/contact",
