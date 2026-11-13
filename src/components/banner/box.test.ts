@@ -64,12 +64,22 @@ describe("estimateBannerBox", () => {
     const built = buildBanner(SAMPLE_USER, resolveOptions("user", "overview"), {
       image: () => "",
       now: bannerNow(SAMPLE_USER),
-      host: "",
+      host: "any.host",
     });
     expect(box(`/${SAMPLE_USER.login}`)).toEqual({
       width: built.width,
       height: built.height,
     });
+  });
+  test("measures with a brand mark, like the image route draws it", () => {
+    // The languages card gives the mark a line of its own: measured without
+    // a host it would come out shorter than the real image.
+    const env = { image: () => "", now: bannerNow(SAMPLE_USER) };
+    const options = resolveOptions("user", "languages");
+    const marked = buildBanner(SAMPLE_USER, options, { ...env, host: "a.b" });
+    const bare = buildBanner(SAMPLE_USER, options, { ...env, host: "" });
+    expect(marked.height).toBeGreaterThan(bare.height);
+    expect(box(`/${SAMPLE_USER.login}/languages`).height).toBe(marked.height);
   });
   test("an unknown owner is estimated from demo data of the stated kind", () => {
     const user = box("/someone-unknown");

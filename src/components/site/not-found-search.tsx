@@ -1,43 +1,37 @@
 "use client";
 
 import { Text } from "@astryxdesign/core/Text";
-import { useRouter } from "next/navigation";
-import { useState, useSyncExternalStore } from "react";
-import { TargetInput } from "@/components/banner/target-input";
-import { useSiteHost } from "@/components/providers";
-import { bannerPath } from "@/lib/banner";
-import { missingMessage } from "./missing";
-
-const subscribe = () => () => {};
-const browserPath = () => window.location.pathname;
-const serverPath = () => null;
+import { type ComponentType, useEffect, useState } from "react";
 
 /**
- * The interactive part of the 404 page: says what the address was probably
- * looking for and offers the target input, filled with that name, to fix a
- * typo or try another one. The address is only known in the browser (the
- * page itself is one static file for every missing URL), so the server and
- * the first render show the general sentence.
+ * The 404 page's explanation and target input.
+ *
+ * `not-found.tsx` is part of every route, so whatever it imports directly is
+ * downloaded by every page. The input brings the suggestion hooks and the
+ * banner engine with it: it is a separate chunk, fetched only when a 404 is
+ * really on screen. Until it arrives (and without JavaScript) the general
+ * sentence stands in, above a placeholder of the input's height.
  */
 export function NotFoundSearch({ fallback }: { fallback: string }) {
-  const router = useRouter();
-  const host = useSiteHost();
-  const pathname = useSyncExternalStore(subscribe, browserPath, serverPath);
-  const missing = missingMessage(pathname);
-  const [edited, setEdited] = useState<string | null>(null);
+  const [Input, setInput] = useState<ComponentType<{
+    fallback: string;
+  }> | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void import("./not-found-input").then((module) => {
+      if (alive) setInput(() => module.NotFoundInput);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  if (Input) return <Input fallback={fallback} />;
   return (
     <>
       <Text as="p" color="secondary" className="gb-lead">
-        {missing?.message ?? fallback}
+        {fallback}
       </Text>
-      <TargetInput
-        value={edited ?? missing?.slug ?? ""}
-        onValueChange={setEdited}
-        onCommit={(target) => router.push(bannerPath(target))}
-        size="lg"
-        prefix={`${host}/`}
-        label="GitHub username or owner/repo to open"
-      />
+      <div className="gb-target-placeholder" aria-hidden="true" />
     </>
   );
 }

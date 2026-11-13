@@ -394,7 +394,7 @@ export function TargetInput({
         onBlur={close}
         onPaste={handlePaste}
         placeholder={placeholder}
-        size="lg"
+        size={size}
         width="100%"
         startIcon={
           prefix ? <span className="gb-target-prefix">{prefix}</span> : "search"
@@ -435,38 +435,38 @@ export function TargetInput({
               role="listbox"
               aria-label={hasText ? "Suggestions" : "Recent and popular"}
             >
-              {groups.map((group, groupAt) => (
-                // biome-ignore lint/a11y/useSemanticElements: a listbox group, not a form fieldset
-                <div
-                  key={group.id}
-                  role="group"
-                  aria-label={group.label ?? undefined}
-                >
-                  {group.label ? (
+              {groups.map((group, groupAt) => {
+                const rows = group.options.map((option, optionAt) => {
+                  const position = offsets[groupAt] + optionAt;
+                  return (
+                    // biome-ignore lint/a11y/useFocusableInteractive: see the listbox above
+                    // biome-ignore lint/a11y/useKeyWithClickEvents: keys are handled by the field
+                    <div
+                      key={`${group.id}:${option.slug}`}
+                      id={optionId(position)}
+                      role="option"
+                      aria-selected={position === active}
+                      className="gb-target-option"
+                      onPointerMove={() => setActive(position)}
+                      onClick={() => choose(option)}
+                    >
+                      <OptionRow option={option} />
+                    </div>
+                  );
+                });
+                // Search results are one unnamed run of options; only the
+                // labelled runs of the empty field are groups.
+                if (group.label === null) return rows;
+                return (
+                  // biome-ignore lint/a11y/useSemanticElements: a listbox group, not a form fieldset
+                  <div key={group.id} role="group" aria-label={group.label}>
                     <div className="gb-target-group" aria-hidden="true">
                       {group.label}
                     </div>
-                  ) : null}
-                  {group.options.map((option, optionAt) => {
-                    const position = offsets[groupAt] + optionAt;
-                    return (
-                      // biome-ignore lint/a11y/useFocusableInteractive: see the listbox above
-                      // biome-ignore lint/a11y/useKeyWithClickEvents: keys are handled by the field
-                      <div
-                        key={`${group.id}:${option.slug}`}
-                        id={optionId(position)}
-                        role="option"
-                        aria-selected={position === active}
-                        className="gb-target-option"
-                        onPointerMove={() => setActive(position)}
-                        onClick={() => choose(option)}
-                      >
-                        <OptionRow option={option} />
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
+                    {rows}
+                  </div>
+                );
+              })}
             </div>
           ) : null}
           {hint !== null ? <div className="gb-target-hint">{hint}</div> : null}

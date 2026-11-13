@@ -1,29 +1,14 @@
 "use client";
 
-import { Avatar } from "@astryxdesign/core/Avatar";
-import { Badge } from "@astryxdesign/core/Badge";
 import { Button } from "@astryxdesign/core/Button";
-import { DropdownMenu } from "@astryxdesign/core/DropdownMenu";
 import { Icon } from "@astryxdesign/core/Icon";
 import { Skeleton } from "@astryxdesign/core/Skeleton";
-import { LayoutDashboard, LogOut, User } from "lucide-react";
-import { useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { useState } from "react";
 import { GithubMark } from "@/components/github-mark";
 import { useHydrated } from "@/hooks/use-hydrated";
-import { type SessionUser, useMe } from "@/hooks/use-me";
-import { ownerPath } from "@/lib/reserved";
+import { useMe } from "@/hooks/use-me";
 import { signInHref } from "./links";
-
-/** A GitHub avatar at `px` CSS pixels, asked for at twice that for sharp screens. */
-function avatarAt(url: string, px: number): string {
-  try {
-    const next = new URL(url);
-    next.searchParams.set("s", String(px * 2));
-    return next.toString();
-  } catch {
-    return url;
-  }
-}
 
 export interface SignInLinkProps {
   /** Shorter visible text for tight places. The accessible name stays the same. */
@@ -64,52 +49,17 @@ export function SignInLink({ compact = false, width }: SignInLinkProps) {
   );
 }
 
-function AccountMenu({ user, pro }: { user: SessionUser; pro: boolean }) {
-  const form = useRef<HTMLFormElement>(null);
-  return (
-    <>
-      <DropdownMenu
-        hasChevron={false}
-        alignment="end"
-        menuWidth={232}
-        renderTrigger={(props) => (
-          <Avatar
-            name={user.name ?? user.login}
-            src={avatarAt(user.avatarUrl, 28)}
-            size="sm"
-            tooltip={false}
-            aria-label={`Account menu for ${user.login}`}
-            {...props}
-          />
-        )}
-        items={[
-          {
-            label: user.login,
-            description: "Your banner page",
-            href: ownerPath(user.login),
-            icon: User,
-            endContent: pro ? (
-              <Badge label="Pro" variant="success" />
-            ) : undefined,
-          },
-          {
-            label: "Dashboard",
-            href: "/dashboard",
-            icon: LayoutDashboard,
-          },
-          { type: "divider" },
-          {
-            label: "Sign out",
-            icon: LogOut,
-            onClick: () => form.current?.requestSubmit(),
-          },
-        ]}
-      />
-      {/* A real form post: the route answers 303 to "/", a full navigation,
-          so nothing rendered for the signed-in user survives. */}
-      <form ref={form} method="post" action="/api/auth/signout" hidden />
-    </>
-  );
+/**
+ * The avatar menu is its own chunk: it brings a dropdown, a bottom sheet for
+ * phones and an avatar, none of which a signed-out visitor ever needs.
+ */
+const AccountMenu = dynamic(
+  () => import("./account-menu").then((module) => module.AccountMenu),
+  { ssr: false, loading: () => <AvatarPlaceholder /> },
+);
+
+function AvatarPlaceholder() {
+  return <Skeleton width={28} height={28} radius="rounded" />;
 }
 
 /**
@@ -129,7 +79,7 @@ export function UserMenu() {
       {status === "signed-in" && user ? (
         <AccountMenu user={user} pro={pro} />
       ) : status === "loading" ? (
-        <Skeleton width={28} height={28} radius="rounded" />
+        <AvatarPlaceholder />
       ) : (
         // On phones the sign-in action lives in the menu drawer.
         <span className="max-sm:hidden">

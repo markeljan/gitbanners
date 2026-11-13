@@ -56,6 +56,13 @@ export function parseBannerRef(path: string): BannerRef | null {
 }
 
 /**
+ * Stand-in for the site host while measuring. Some layouts give the brand
+ * mark a line of its own, so an empty host would measure a shorter banner
+ * than the one the image route draws; the text itself does not matter.
+ */
+const LAYOUT_HOST = "gitbanners.example";
+
+/**
  * The size a banner will have, without asking GitHub.
  *
  * Fixed canvases (X header, link preview, …) are exact. README cards grow
@@ -84,7 +91,7 @@ export function estimateBannerBox(
   const built = buildBanner(entity, options, {
     image: () => "",
     now: bannerNow(entity),
-    host: "",
+    host: LAYOUT_HOST,
   });
   return { width: built.width, height: built.height };
 }

@@ -41,6 +41,13 @@
 .gb-target[data-size="lg"] .gb-target-control input {
   font-size: var(--text-large-size);
 }
+/* Stands in for the 48px field while its code loads. */
+.gb-target-placeholder {
+  width: 100%;
+  height: calc(var(--spacing-1) * 12);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-container);
+}
 /* Static text in front of the field: reads as the start of one URL. */
 .gb-target-prefix {
   color: var(--color-text-secondary);

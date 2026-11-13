@@ -2,36 +2,26 @@
 
 import { useSyncExternalStore } from "react";
 import useSWR from "swr";
-import { z } from "zod";
 import { SESSION_HINT_RE } from "@/components/theme";
 import { type Entitlements, FREE } from "@/lib/pro/entitlements";
 import { fetchJson } from "./api";
 
-const MeSchema = z.object({
-  user: z
-    .object({
-      // GitHub's numeric id, which the account store keeps as a string.
-      id: z.union([z.string(), z.number()]).transform(String),
-      login: z.string(),
-      name: z.string().nullable(),
-      avatarUrl: z.string(),
-    })
-    .nullable(),
-  pro: z.boolean(),
-  entitlements: z.object({
-    plan: z.enum(["free", "pro"]),
-    maxSavedBanners: z.number(),
-    canHideBrand: z.boolean(),
-    canAnimate: z.boolean(),
-    canSetDefault: z.boolean(),
-    refreshSeconds: z.number(),
-  }),
-  banners: z.object({ count: z.number(), max: z.number() }),
-});
+/** A signed-in user as `/api/me` reports them. */
+export interface SessionUser {
+  /** GitHub's numeric id. The account store keeps it as a string. */
+  id: string;
+  login: string;
+  name: string | null;
+  avatarUrl: string;
+}
 
 /** Body of `GET /api/me`. */
-export type Me = z.infer<typeof MeSchema>;
-export type SessionUser = NonNullable<Me["user"]>;
+export interface Me {
+  user: SessionUser | null;
+  pro: boolean;
+  entitlements: Entitlements;
+  banners: { count: number; max: number };
+}
 
 export const ME_KEY = "/api/me";
 
@@ -46,9 +36,76 @@ const subscribe = () => () => {};
 const clientHint = () => hasSessionHint(document.cookie);
 const serverHint = () => false;
 
-/** Validates a `/api/me` body. Throws when it is not one. */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isCount(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0;
+}
+
+function parseUser(value: unknown): SessionUser | null {
+  if (value === null) return null;
+  if (
+    !isRecord(value) ||
+    !(typeof value.id === "string" || typeof value.id === "number") ||
+    typeof value.login !== "string" ||
+    !(value.name === null || typeof value.name === "string") ||
+    typeof value.avatarUrl !== "string"
+  ) {
+    throw new TypeError("Unexpected user in the /api/me body");
+  }
+  return {
+    id: String(value.id),
+    login: value.login,
+    name: value.name,
+    avatarUrl: value.avatarUrl,
+  };
+}
+
+function parseEntitlements(value: unknown): Entitlements {
+  if (
+    !isRecord(value) ||
+    !(value.plan === "free" || value.plan === "pro") ||
+    !isCount(value.maxSavedBanners) ||
+    typeof value.canHideBrand !== "boolean" ||
+    typeof value.canAnimate !== "boolean" ||
+    typeof value.canSetDefault !== "boolean" ||
+    !isCount(value.refreshSeconds)
+  ) {
+    throw new TypeError("Unexpected entitlements in the /api/me body");
+  }
+  return {
+    plan: value.plan,
+    maxSavedBanners: value.maxSavedBanners,
+    canHideBrand: value.canHideBrand,
+    canAnimate: value.canAnimate,
+    canSetDefault: value.canSetDefault,
+    refreshSeconds: value.refreshSeconds,
+  };
+}
+
+/**
+ * Validates a `/api/me` body. Throws when it is not one.
+ *
+ * Written by hand, not with a schema library: this hook is part of the site
+ * header and so of every page, and a few type checks are not worth making
+ * every page download a validator.
+ */
 export function parseMe(body: unknown): Me {
-  return MeSchema.parse(body);
+  if (!isRecord(body) || typeof body.pro !== "boolean") {
+    throw new TypeError("Unexpected /api/me body");
+  }
+  const banners = body.banners;
+  if (!isRecord(banners) || !isCount(banners.count) || !isCount(banners.max)) {
+    throw new TypeError("Unexpected banner counts in the /api/me body");
+  }
+  return {
+    user: parseUser(body.user),
+    pro: body.pro,
+    entitlements: parseEntitlements(body.entitlements),
+    banners: { count: banners.count, max: banners.max },
+  };
 }
 
 async function fetchMe(): Promise<Me> {

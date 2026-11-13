@@ -10,6 +10,7 @@ import { DownloadButton } from "@/components/banner/download-button";
 import { PresetPicker } from "@/components/banner/preset-picker";
 import { TargetInput } from "@/components/banner/target-input";
 import { useSiteHost } from "@/components/providers";
+import { sameTarget } from "@/hooks/targets";
 import {
   bannerSnippets,
   parseTargetSlug,
@@ -28,9 +29,15 @@ const EXAMPLES = ["torvalds", "vercel/next.js", "vercel", "facebook/react"];
  * height, so nothing below it moves.
  */
 function HintLine() {
-  const { state, requested, target, setText, show } = useHomePreview();
+  const { state, requested, target, text, setText, show } = useHomePreview();
   const asked = targetSlug(requested);
-  const failure = state.failure;
+  // The message is about what is in the field. Once the visitor types
+  // something else it has done its job, even before a new answer arrives.
+  const typed = parseTargetSlug(text);
+  const failure =
+    state.failure && typed && sameTarget(typed, requested)
+      ? state.failure
+      : null;
   if (failure) {
     const message =
       failure === "not_found"

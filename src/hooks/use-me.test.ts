@@ -59,4 +59,44 @@ describe("parseMe", () => {
       parseMe({ status: 503, code: "unavailable", title: "Unavailable" }),
     ).toThrow();
   });
+  test("rejects bodies with a missing or mistyped part", () => {
+    const good = { user: null, pro: false, entitlements: FREE, banners };
+    expect(() => parseMe(null)).toThrow();
+    expect(() => parseMe("me")).toThrow();
+    expect(() => parseMe({ ...good, pro: "yes" })).toThrow();
+    expect(() => parseMe({ ...good, banners: { count: 1 } })).toThrow();
+    expect(() =>
+      parseMe({ ...good, banners: { count: -1, max: 3 } }),
+    ).toThrow();
+    expect(() =>
+      parseMe({ ...good, entitlements: { ...FREE, plan: "team" } }),
+    ).toThrow();
+    expect(() =>
+      parseMe({ ...good, entitlements: { ...FREE, canAnimate: 1 } }),
+    ).toThrow();
+    expect(() => parseMe({ ...good, user: { login: "a" } })).toThrow();
+    expect(() =>
+      parseMe({
+        ...good,
+        user: { id: {}, login: "a", name: null, avatarUrl: "" },
+      }),
+    ).toThrow();
+  });
+  test("drops fields it does not know", () => {
+    const me = parseMe({
+      user: { id: 1, login: "a", name: null, avatarUrl: "", email: "x@y.z" },
+      pro: false,
+      entitlements: { ...FREE, future: true },
+      banners: { count: 0, max: 3, extra: 1 },
+      debug: true,
+    });
+    expect(Object.keys(me).sort()).toEqual([
+      "banners",
+      "entitlements",
+      "pro",
+      "user",
+    ]);
+    expect(me.user).toEqual({ id: "1", login: "a", name: null, avatarUrl: "" });
+    expect(me.entitlements).toEqual({ ...FREE });
+  });
 });
