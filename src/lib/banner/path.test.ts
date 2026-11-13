@@ -250,6 +250,24 @@ describe("bannerPath", () => {
     );
   });
 
+  test("a repository whose name ends in .md keeps its preset segment", () => {
+    // `/jasonnor/README.md` alone is the Markdown of the repository "README".
+    expect(bannerPath(repo("Jasonnor", "README.md"))).toBe(
+      "/jasonnor/README.md/overview",
+    );
+    expect(bannerPath(repo("someone", "notes.MD"), { format: "png" })).toBe(
+      "/someone/notes.MD/overview.png",
+    );
+    expect(
+      bannerPath(repo("jasonnor", "README.md"), { preset: "activity" }),
+    ).toBe("/jasonnor/README.md/activity");
+    // A name that only contains ".md" needs nothing.
+    expect(bannerPath(repo("someone", "x.md.js"))).toBe("/someone/x.md.js");
+    expect(parseBannerPath(["jasonnor", "README.md", "overview"])).toEqual(
+      parsed(repo("jasonnor", "README.md"), "overview"),
+    );
+  });
+
   test("presets are written in lower case, whatever was asked", () => {
     expect(bannerPath(owner("torvalds"), { preset: "Activity" })).toBe(
       "/torvalds/activity",
@@ -289,6 +307,8 @@ describe("bannerPath", () => {
       repo("someone", "WRAPPED"),
       repo("someone", "logo.svg"),
       repo("someone", "shot.PNG"),
+      repo("jasonnor", "README.md"),
+      repo("someone", "NOTES.MD"),
       repo("github", ".github"),
       repo("themes", "repos"),
     ];

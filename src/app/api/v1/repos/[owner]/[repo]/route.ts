@@ -13,12 +13,11 @@ interface Context {
 }
 
 export async function GET(request: Request, context: Context) {
+  // Route params arrive URL-decoded: decoding again would turn `%25` into a
+  // lone "%" (and a lone "%" into a URIError) instead of a 400.
   const { owner, repo } = await context.params;
   return publicApi(request, "api", async () => {
-    const data = await getRepoData(
-      decodeURIComponent(owner),
-      decodeURIComponent(repo),
-    );
+    const data = await getRepoData(owner, repo);
     return {
       body: data,
       tags: [
