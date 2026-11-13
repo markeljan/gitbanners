@@ -85,6 +85,8 @@ export function BannerImage({
   return (
     <Link
       href={href ?? ref.page}
+      // Galleries hold dozens of these: no prefetch per banner.
+      prefetch={false}
       className={className ? `gb-banner-link ${className}` : "gb-banner-link"}
     >
       {image}

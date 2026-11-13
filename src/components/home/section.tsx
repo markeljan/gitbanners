@@ -51,7 +51,7 @@ export function HomeSection({
   children,
 }: HomeSectionProps) {
   return (
-    <section id={id} className="gb-section" aria-labelledby={`${id}-title`}>
+    <section id={id} aria-labelledby={`${id}-title`}>
       <div
         className={
           layout === "split"

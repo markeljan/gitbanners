@@ -4,6 +4,7 @@ import { Button } from "@astryxdesign/core/Button";
 import { Icon } from "@astryxdesign/core/Icon";
 import { ArrowRight } from "lucide-react";
 import { useId } from "react";
+import { NoPrefetchLink } from "@/components/app-link";
 import { CopyButton } from "@/components/banner/copy-button";
 import { DownloadButton } from "@/components/banner/download-button";
 import { PresetPicker } from "@/components/banner/preset-picker";
@@ -129,6 +130,8 @@ export function HeroPlayground() {
             <Button
               label="Open in studio"
               href={studioPath({ target, preset, query })}
+              // The address follows every keystroke: prefetching it would too.
+              as={NoPrefetchLink}
               variant="ghost"
               endContent={<Icon icon={ArrowRight} size="sm" />}
             />

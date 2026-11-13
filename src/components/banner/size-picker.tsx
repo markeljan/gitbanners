@@ -15,6 +15,12 @@ export interface SizePickerProps {
   size?: "sm" | "md";
 }
 
+/** The canvas in miniature: its true proportions inside a 40 by 24 box. */
+function glyphBox(ratio: number): { width: number; height: number } {
+  const width = Math.min(40, 24 * ratio);
+  return { width: Math.round(width), height: Math.round(width / ratio) };
+}
+
 function isSizeId(value: string): value is SizeId {
   return Object.hasOwn(SIZES, value);
 }
@@ -51,7 +57,7 @@ export function SizePicker({
             endContent={
               <span
                 className="gb-ratio-glyph"
-                style={{ aspectRatio: String(sizeRatio(id)) }}
+                style={glyphBox(sizeRatio(id))}
                 aria-hidden="true"
               />
             }

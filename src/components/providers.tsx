@@ -4,7 +4,6 @@ import { LayerProvider } from "@astryxdesign/core/Layer";
 import { LinkProvider } from "@astryxdesign/core/Link";
 import { registerTheme, ThemeContext } from "@astryxdesign/core/theme";
 import { neutralTheme } from "@astryxdesign/theme-neutral/built";
-import Link from "next/link";
 import {
   createContext,
   use,
@@ -12,6 +11,7 @@ import {
   useMemo,
   useSyncExternalStore,
 } from "react";
+import { AppLink } from "./app-link";
 import {
   applyMode,
   type ColorMode,
@@ -88,7 +88,7 @@ export function Providers({ origin, children }: ProvidersProps) {
     <SiteOriginContext value={origin.replace(/\/+$/, "")}>
       <ThemeContext value={theme}>
         <LayerProvider toast={{ position: "bottomEnd" }}>
-          <LinkProvider component={Link}>{children}</LinkProvider>
+          <LinkProvider component={AppLink}>{children}</LinkProvider>
         </LayerProvider>
       </ThemeContext>
     </SiteOriginContext>

@@ -3,6 +3,7 @@
 import { Icon } from "@astryxdesign/core/Icon";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { ArrowUpRight } from "lucide-react";
+import { NoPrefetchLink } from "@/components/app-link";
 import { useSiteOrigin } from "@/components/providers";
 import { studioPath } from "@/lib/embed";
 import { parseBannerRef } from "./box";
@@ -39,6 +40,8 @@ export function BannerCardActions({
           preset: ref.preset,
           query: ref.query,
         })}
+        // A gallery has one of these per card: none of them is prefetched.
+        as={NoPrefetchLink}
         icon={<Icon icon={ArrowUpRight} />}
       />
     </div>
