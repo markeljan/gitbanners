@@ -15,10 +15,10 @@
 import type { NextRequest } from "next/server";
 import {
   type BannerOptions,
-  canonicalQuery,
   type ImageFormat,
   parseBannerPath,
   parseOptions,
+  QUERY_KEYS,
 } from "@/lib/banner";
 import { getDefaultBanner } from "@/lib/db/banners";
 import { CACHE, entityCacheTag } from "@/lib/http/cache-headers";
@@ -117,10 +117,12 @@ export async function GET(
     pro: false,
     tags: [],
   };
+  // Only the bare vanity URL: any banner option in the query, even one that
+  // spells out a default (`?theme=github-dark`), asks for exactly that.
   if (
     parsed.target.kind === "owner" &&
     parsed.preset === null &&
-    canonicalQuery(query) === ""
+    !QUERY_KEYS.some((key) => query.has(key))
   ) {
     chosen = (await vanityDefault(parsed.target.login)) ?? chosen;
   }
