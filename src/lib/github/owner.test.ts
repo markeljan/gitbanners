@@ -312,6 +312,7 @@ describe("fetchOwner (user)", () => {
     const gate = Promise.withResolvers<void>();
     serve(
       userRoutes("torvalds", {
+        // biome-ignore lint/correctness/noComponentHookFactories: GraphQL operation responder, not a React component factory.
         OwnerCore: async () => {
           await gate.promise;
           return json(fixture("owner-core.torvalds.json"));
@@ -386,6 +387,7 @@ describe("fetchOwner (user)", () => {
     serve(
       userRoutes("torvalds", {
         // Answers only when its request is aborted.
+        // biome-ignore lint/correctness/noComponentHookFactories: GraphQL operation responder, not a React component factory.
         UserTotals: (call) =>
           new Promise<Response>((_resolve, reject) => {
             call.signal?.addEventListener("abort", () =>
@@ -435,6 +437,7 @@ describe("fetchOwner (user)", () => {
     let page = 0;
     serve(
       userRoutes("sindresorhus", {
+        // biome-ignore lint/correctness/noComponentHookFactories: GraphQL operation responder, not a React component factory.
         UserRepoStats: (call) => {
           page += 1;
           return page === 2 ? htmlTimeout(504) : pagedStats(call);
@@ -545,6 +548,7 @@ describe("fetchOwner (unknown login)", () => {
     const gate = Promise.withResolvers<void>();
     serve(
       userRoutes("torvalds", {
+        // biome-ignore lint/correctness/noComponentHookFactories: GraphQL operation responder, not a React component factory.
         OwnerCore: async () => {
           await gate.promise;
           return json(fixture("owner-core.torvalds.json"));
@@ -634,21 +638,19 @@ describe("fetchOwner (year)", () => {
     });
   });
 
-  test.each([
-    2007,
-    2027,
-    2025.5,
-    Number.NaN,
-  ])("year %p is invalid: no request", async (year) => {
-    serve({});
-    for (const run of [fetchOwner, fetchOwnerPreview]) {
-      const error = await run("torvalds", { now: NOW, year }).catch((e) => e);
-      expect(error).toBeInstanceOf(GitHubError);
-      expect(error.code).toBe("invalid");
-      expect(error.status).toBe(400);
-    }
-    expect(fake.calls).toHaveLength(0);
-  });
+  test.each([2007, 2027, 2025.5, Number.NaN])(
+    "year %p is invalid: no request",
+    async (year) => {
+      serve({});
+      for (const run of [fetchOwner, fetchOwnerPreview]) {
+        const error = await run("torvalds", { now: NOW, year }).catch((e) => e);
+        expect(error).toBeInstanceOf(GitHubError);
+        expect(error.code).toBe("invalid");
+        expect(error.status).toBe(400);
+      }
+      expect(fake.calls).toHaveLength(0);
+    },
+  );
 
   test("null means the last 12 months", async () => {
     serve(userRoutes("torvalds"));
@@ -705,6 +707,7 @@ describe("fetchOwner (organization)", () => {
     const gate = Promise.withResolvers<void>();
     serve(
       userRoutes("torvalds", {
+        // biome-ignore lint/correctness/noComponentHookFactories: GraphQL operation responder, not a React component factory.
         OwnerCore: async () => {
           await gate.promise;
           return json(fixture("owner-core.torvalds.json"));

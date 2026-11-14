@@ -48,6 +48,7 @@ interface Context {
 // Exporting the refusals also keeps this handler out of build-time
 // prerendering, where it would lose the `Vary: Accept` it must send.
 const { notAllowed, options } = methodGuards(["GET"]);
+
 export {
   notAllowed as DELETE,
   notAllowed as PATCH,

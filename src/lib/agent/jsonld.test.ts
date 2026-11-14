@@ -104,8 +104,8 @@ describe("banner page structured data", () => {
       entityJsonLd(SAMPLE_USER, { title: "t", description: "d" }),
       "WebPage",
     );
-    expect((user?.about as Node)["@type"]).toBe("Person");
-    expect((user?.about as Node).url).toBe(
+    expect((user?.about as Node | undefined)?.["@type"]).toBe("Person");
+    expect((user?.about as Node | undefined)?.url).toBe(
       `https://github.com/${SAMPLE_USER.login}`,
     );
     expect(user?.url).toBe(`${site.url}/${SAMPLE_USER.login.toLowerCase()}`);
@@ -113,7 +113,7 @@ describe("banner page structured data", () => {
       entityJsonLd(SAMPLE_ORG, { title: "t", description: "d" }),
       "WebPage",
     );
-    expect((org?.about as Node)["@type"]).toBe("Organization");
+    expect((org?.about as Node | undefined)?.["@type"]).toBe("Organization");
   });
 
   test("a repository is source code, below its owner in the trail", () => {
@@ -124,11 +124,13 @@ describe("banner page structured data", () => {
     });
     const page = byType(graph, "WebPage");
     expect(page?.url).toBe(`${site.url}/vercel/next.js/contributors`);
-    expect((page?.about as Node)["@type"]).toBe("SoftwareSourceCode");
-    expect((page?.about as Node).codeRepository).toBe(
+    expect((page?.about as Node | undefined)?.["@type"]).toBe(
+      "SoftwareSourceCode",
+    );
+    expect((page?.about as Node | undefined)?.codeRepository).toBe(
       "https://github.com/vercel/next.js",
     );
-    expect((page?.primaryImageOfPage as Node).url).toBe(
+    expect((page?.primaryImageOfPage as Node | undefined)?.url).toBe(
       `${site.url}/vercel/next.js/contributors.png?size=og`,
     );
     const crumbs = byType(graph, "BreadcrumbList")?.itemListElement as Node[];

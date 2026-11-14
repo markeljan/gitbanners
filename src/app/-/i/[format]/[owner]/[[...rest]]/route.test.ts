@@ -69,6 +69,13 @@ describe("format", () => {
 });
 
 describe("paths", () => {
+  test("an overlong login is a cacheable not_found SVG", async () => {
+    const owner = "a".repeat(40);
+    const response = await get(`/${owner}.svg`, { format: "svg", owner });
+    await expectImage(response, "image/svg+xml", "not_found");
+    expect(response.headers.get("cache-control")).not.toContain("no-store");
+  });
+
   test("/embed/{login} reaches a login named like an app route", async () => {
     // next.config.ts hands /embed/docs over as "@docs".
     const response = await get("/embed/docs.svg", {

@@ -42,7 +42,7 @@ export async function generateStaticParams() {
 }
 
 /** What the banner shows, in words: preset, target, theme and size. */
-function describe(banner: PublicBanner) {
+function describeBanner(banner: PublicBanner) {
   const options = resolveOptions(
     banner.target.kind === "repo" ? "repo" : "user",
     banner.preset,
@@ -62,7 +62,7 @@ export async function generateMetadata({
   const { id } = await params;
   const banner = await loadSavedBanner(id);
   if (!banner) notFound();
-  const facts = describe(banner);
+  const facts = describeBanner(banner);
   const paths = savedPaths(banner.id);
   const description = `${facts.preset} banner for ${facts.target}, saved on ${site.name}. A live image that follows the GitHub data, as SVG or PNG.`;
   const alt = savedBannerAlt(banner);
@@ -101,7 +101,7 @@ export default async function SavedBannerPage({
   const { id } = await params;
   const banner = await loadSavedBanner(id);
   if (!banner) notFound();
-  const facts = describe(banner);
+  const facts = describeBanner(banner);
   const paths = savedPaths(banner.id);
   const box = estimateBannerBox({
     target: banner.target,

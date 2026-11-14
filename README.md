@@ -24,16 +24,16 @@ Site: [gitbanners.com](https://gitbanners.com) · Docs: [gitbanners.com/docs](ht
 
 The same path is a page, an image or a Markdown document, by its ending.
 
-| URL | Answers with |
-| --- | --- |
-| `/{owner}` | The banner page of a user or an organization |
-| `/{owner}.svg`, `/{owner}.png` | Its banner, default preset |
-| `/{owner}/{preset}.svg` | One preset: `/torvalds/streak.svg` |
-| `/{owner}/{repo}.svg` | A repository's banner |
+| URL                            | Answers with                                              |
+| ------------------------------ | --------------------------------------------------------- |
+| `/{owner}`                     | The banner page of a user or an organization              |
+| `/{owner}.svg`, `/{owner}.png` | Its banner, default preset                                |
+| `/{owner}/{preset}.svg`        | One preset: `/torvalds/streak.svg`                        |
+| `/{owner}/{repo}.svg`          | A repository's banner                                     |
 | `/{owner}/{repo}/{preset}.svg` | One repository preset: `/vercel/next.js/contributors.svg` |
-| `/embed/{owner}[/{repo}]` | The image, format chosen by the `Accept` header |
-| `/b/{id}.svg` | A saved banner |
-| `/{owner}.md`, `/{page}.md` | The page as Markdown |
+| `/embed/{owner}[/{repo}]`      | The image, format chosen by the `Accept` header           |
+| `/b/{id}.svg`                  | A saved banner                                            |
+| `/{owner}.md`, `/{page}.md`    | The page as Markdown                                      |
 
 Options go in the query string: `?theme=dracula&size=x`, `?width=495`, `?bg=0d1117&accent=f78166&heat=a855f7`, `?year=2025`, `?hide=bio,legend`. Parsing is lenient: unknown parameters are ignored and bad values fall back to defaults, so an embedded image never breaks. A login that collides with a route of the site is written with `@`: `/@docs.svg`. The full reference, with every parameter, is at [/docs](https://gitbanners.com/docs).
 
@@ -70,21 +70,21 @@ More: `bun tests/e2e/auth/run.ts` drives sign-in, saved banners and Pro over HTT
 
 All optional for public banners. `.env.example` documents each one in full.
 
-| Variable | What it is for |
-| --- | --- |
-| `SESSION_SECRET` | Signs session cookies. Base64 of 32 random bytes: `openssl rand -base64 32`. |
-| `SESSION_SECRET_PREVIOUS` | The old secret during a rotation. |
-| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | The GitHub app people sign in with. Callback URL `https://<your-domain>/api/auth/github/callback`. No scopes are requested. |
-| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | Upstash Redis for accounts and saved banners (or `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`). Without them local development uses a JSON file. |
-| `KEY_NAMESPACE` | Prefix for Redis keys. Default `gb:`, and `gb:<VERCEL_ENV>:` on previews. |
-| `GB_STORE_FILE` | Local only: where the file store lives. Default `.data/store.json`. |
-| `GITHUB_TOKEN` | Server token for GitHub data and for re-checking stars. Must be able to list the stargazers of the Pro repository. |
-| `PRO_REPO` | `owner/name` whose stargazers are Pro. Default: this repository. |
-| `PRO_LOGINS` | Comma-separated logins that are always Pro. |
-| `NEXT_PUBLIC_SITE_URL` | Canonical origin, such as `https://gitbanners.com`. Default: the Vercel production domain. |
-| `NEXT_PUBLIC_GITBANNERS_REPO` | The repository people star, `owner/name`. |
-| `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_CONTACT_COUNTRY` | Optional public contact details for the contact page and structured data. |
-| `GITBANNERS_DEV_GH_LOGIN` | Local only. `1` enables `/api/auth/dev`, which signs you in as your GitHub CLI account. Never set it on Vercel. |
+| Variable                                                   | What it is for                                                                                                                                              |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SESSION_SECRET`                                           | Signs session cookies. Base64 of 32 random bytes: `openssl rand -base64 32`.                                                                                |
+| `SESSION_SECRET_PREVIOUS`                                  | The old secret during a rotation.                                                                                                                           |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`                 | The GitHub app people sign in with. Callback URL `https://<your-domain>/api/auth/github/callback`. No scopes are requested.                                 |
+| `KV_REST_API_URL`, `KV_REST_API_TOKEN`                     | Upstash Redis for accounts and saved banners (or `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`). Without them local development uses a JSON file. |
+| `KEY_NAMESPACE`                                            | Prefix for Redis keys. Default `gb:`, and `gb:<VERCEL_ENV>:` on previews.                                                                                   |
+| `GB_STORE_FILE`                                            | Local only: where the file store lives. Default `.data/store.json`.                                                                                         |
+| `GITHUB_TOKEN`                                             | Server token for GitHub data and for re-checking stars. Must be able to list the stargazers of the Pro repository.                                          |
+| `PRO_REPO`                                                 | `owner/name` whose stargazers are Pro. Default: this repository.                                                                                            |
+| `PRO_LOGINS`                                               | Comma-separated logins that are always Pro.                                                                                                                 |
+| `NEXT_PUBLIC_SITE_URL`                                     | Canonical origin, such as `https://gitbanners.com`. Default: the Vercel production domain.                                                                  |
+| `NEXT_PUBLIC_GITBANNERS_REPO`                              | The repository people star, `owner/name`.                                                                                                                   |
+| `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_CONTACT_COUNTRY` | Optional public contact details for the contact page and structured data.                                                                                   |
+| `GITBANNERS_DEV_GH_LOGIN`                                  | Local only. `1` enables `/api/auth/dev`, which signs you in as your GitHub CLI account. Never set it on Vercel.                                             |
 
 ## Architecture in one screen
 

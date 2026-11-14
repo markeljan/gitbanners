@@ -81,6 +81,7 @@ function ThemeCard({
               Graph{" "}
               {theme.colors.heat.map((color, level) => (
                 <span
+                  // biome-ignore lint/suspicious/noArrayIndexKey: fixed heat levels are the identity; colours may repeat.
                   key={`${theme.id}-${level}`}
                   className="gb-theme-dot"
                   style={{ "--gb-dot": color } as CSSProperties}

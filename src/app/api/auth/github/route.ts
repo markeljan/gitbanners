@@ -30,6 +30,7 @@ import { methodGuards, problem, unavailable } from "@/lib/http/problem";
 const PATH = "/api/auth/github";
 
 const { notAllowed, options } = methodGuards(["GET"]);
+
 export {
   notAllowed as DELETE,
   notAllowed as PATCH,

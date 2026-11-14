@@ -6,7 +6,14 @@ updates:
     open-pull-requests-limit: 5
     groups:
       next-react:
-        patterns: ["next", "react", "react-dom", "@types/react*", "babel-plugin-react-compiler"]
+        patterns:
+          [
+            "next",
+            "react",
+            "react-dom",
+            "@types/react*",
+            "babel-plugin-react-compiler",
+          ]
       astryx:
         patterns: ["@astryxdesign/*", "@stylexjs/stylex"]
       vercel:
