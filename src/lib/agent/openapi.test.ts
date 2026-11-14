@@ -129,12 +129,32 @@ describe("OpenAPI document", () => {
         "image/svg+xml",
         "image/png",
       ]);
-      // The image handler refuses with a problem, the routing layer with the
-      // static 404 page: both are what a client can get back.
+      // Preserve both actual error media types; the descriptions distinguish
+      // routing-layer failures from direct internal format-guard failures.
       expect(Object.keys(operation.responses["404"].content ?? {})).toEqual([
         "application/problem+json",
         "text/html",
       ]);
+    }
+  });
+
+  test("image descriptions distinguish error cards, routing and internal format errors", () => {
+    for (const operation of operations.slice(-2)) {
+      const responses = operation.responses as Record<string, Json>;
+      const success = String(responses["200"].description);
+      const refused = String(responses["404"].description);
+      expect(success).toContain("malformed");
+      expect(success).toContain("more than three segments");
+      expect(success).toContain("X-Banner-State: not_found");
+      expect(refused).toContain("HTML 404");
+      expect(refused).toContain("/-/i/gif/vercel");
+      expect(refused).toContain("Unknown image format");
+      expect(refused).toContain("not a public `.gif` image route");
+      expect(refused).not.toContain("too long or malformed");
+      const format = operation.parameters
+        .map(resolve)
+        .find((entry) => entry.name === "format");
+      expect(format?.schema).toEqual({ type: "string", enum: ["svg", "png"] });
     }
   });
 
