@@ -175,17 +175,18 @@ describe("tools/call", () => {
       login: "markeljan",
       include_calendar: true,
     });
-    const days = (
-      full.result.structuredContent?.owner as { calendar: { days: unknown[] } }
-    ).calendar.days;
+    const content = full.result.structuredContent;
+    if (!content) throw new Error("Expected structured owner content");
+    const days = (content.owner as { calendar: { days: unknown[] } }).calendar
+      .days;
     expect(days.length).toBeGreaterThan(300);
   });
 
   test("get_owner answers for an organization too", async () => {
     const { result } = await call("get_owner", { login: "vercel" });
-    expect((result.structuredContent?.owner as { kind: string }).kind).toBe(
-      "org",
-    );
+    expect(
+      (result.structuredContent?.owner as { kind: string } | undefined)?.kind,
+    ).toBe("org");
   });
 
   test("get_repository", async () => {

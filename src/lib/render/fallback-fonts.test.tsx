@@ -241,19 +241,20 @@ if (!online)
   console.warn("fonts.googleapis.com unreachable: live font tests skipped");
 
 describe.skipIf(!online)("rendering with Google Fonts", () => {
-  test.each(
-    PICTOGRAPHS,
-  )("%s is drawn from Noto Sans Symbols 2", async (char) => {
-    const { element, fonts } = await prepareText(line(`I${char}U`));
-    expect(textOf(element)).toBe(`I${char}U`);
-    expect(fonts.map((font) => font.name)).toContain(
-      "fallback Noto Sans Symbols 2",
-    );
-    const svg = await svgOf(element, fonts);
-    expectNoInvertocat(svg);
-    // I, U and the pictograph itself.
-    expect(glyphs(svg)).toHaveLength(3);
-  });
+  test.each(PICTOGRAPHS)(
+    "%s is drawn from Noto Sans Symbols 2",
+    async (char) => {
+      const { element, fonts } = await prepareText(line(`I${char}U`));
+      expect(textOf(element)).toBe(`I${char}U`);
+      expect(fonts.map((font) => font.name)).toContain(
+        "fallback Noto Sans Symbols 2",
+      );
+      const svg = await svgOf(element, fonts);
+      expectNoInvertocat(svg);
+      // I, U and the pictograph itself.
+      expect(glyphs(svg)).toHaveLength(3);
+    },
+  );
 
   test("❤ ♥ ✔ ⛓ 🖥 together in one line", async () => {
     const text = "I❤U A♥B C✔D x⛓y z🖥w";

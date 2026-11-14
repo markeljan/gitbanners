@@ -243,14 +243,14 @@ describe("GraphQL errors (recorded responses)", () => {
     expect(error.retryAfter).toBeNull();
   });
 
-  test.each([
-    ["EXCESSIVE_PAGINATION"],
-    ["contributions span > 1 year"],
-  ])("%s nulls the root but is not a 'not found'", async (name) => {
-    serve(recordedResponse(name));
-    const error = await failure(graphql(QUERY, {}, { token: freshToken() }));
-    expect(error.code).toBe("invalid");
-  });
+  test.each([["EXCESSIVE_PAGINATION"], ["contributions span > 1 year"]])(
+    "%s nulls the root but is not a 'not found'",
+    async (name) => {
+      serve(recordedResponse(name));
+      const error = await failure(graphql(QUERY, {}, { token: freshToken() }));
+      expect(error.code).toBe("invalid");
+    },
+  );
 
   test("a nested field error leaves the response usable", async () => {
     serve({
@@ -301,12 +301,15 @@ describe("GraphQL errors (recorded responses)", () => {
     [{ message: "no data, no errors" }],
     [{ data: null }],
     [[1, 2, 3]],
-  ])("a body that is not a GraphQL envelope is unavailable: %j", async (body) => {
-    serve(json(body));
-    const error = await failure(graphql(QUERY, {}, { token: freshToken() }));
-    expect(error.code).toBe("unavailable");
-    expect(error.status).toBe(502);
-  });
+  ])(
+    "a body that is not a GraphQL envelope is unavailable: %j",
+    async (body) => {
+      serve(json(body));
+      const error = await failure(graphql(QUERY, {}, { token: freshToken() }));
+      expect(error.code).toBe("unavailable");
+      expect(error.status).toBe(502);
+    },
+  );
 });
 
 describe("rate limits", () => {

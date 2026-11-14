@@ -165,7 +165,7 @@ export function setSnapshotStore(next: SnapshotStore): void {
 }
 
 /** Name and message only: a store client's error object can embed its URL. */
-function describe(error: unknown): string {
+function describeError(error: unknown): string {
   return error instanceof Error
     ? `${error.name}: ${error.message}`
     : String(error);
@@ -177,7 +177,7 @@ async function readSnapshot(key: string): Promise<Snapshot | null> {
   } catch (error) {
     // A broken store must never take the data path down with it.
     console.warn(
-      `[github] snapshot store read failed for ${key}: ${describe(error)}`,
+      `[github] snapshot store read failed for ${key}: ${describeError(error)}`,
     );
     return null;
   }
@@ -192,7 +192,7 @@ async function writeSnapshot(
     await shared().store.set(key, value, ttlSeconds);
   } catch (error) {
     console.warn(
-      `[github] snapshot store write failed for ${key}: ${describe(error)}`,
+      `[github] snapshot store write failed for ${key}: ${describeError(error)}`,
     );
   }
 }

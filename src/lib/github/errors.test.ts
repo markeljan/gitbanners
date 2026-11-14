@@ -79,31 +79,32 @@ describe("asGitHubError", () => {
     ["invalid", 451, null],
   ];
 
-  test.each(
-    cases,
-  )("%s (status %p, retry %p) survives a production cache boundary", (code, status, retryAfter) => {
-    const original = new GitHubError(code, "secret wording from GitHub", {
-      status,
-      retryAfter,
-    });
-    const transported = transportedInProduction(original);
-    expect(isGitHubError(transported)).toBe(false);
+  test.each(cases)(
+    "%s (status %p, retry %p) survives a production cache boundary",
+    (code, status, retryAfter) => {
+      const original = new GitHubError(code, "secret wording from GitHub", {
+        status,
+        retryAfter,
+      });
+      const transported = transportedInProduction(original);
+      expect(isGitHubError(transported)).toBe(false);
 
-    const revived = asGitHubError(transported);
-    expect(revived).toBeInstanceOf(GitHubError);
-    expect(revived?.code).toBe(original.code);
-    expect(revived?.status).toBe(original.status);
-    expect(revived?.retryAfter).toBe(original.retryAfter);
-    // Same digest: Next.js then recognises it as the error it already logged.
-    expect(revived?.digest).toBe(original.digest);
-    expect(revived?.cause).toBe(transported);
-    // Production never had the message; it must not be invented either.
-    expect(revived?.message).not.toContain("secret wording");
-    expect(revived?.message).toContain(code);
-    expect(isTransient(revived)).toBe(
-      code === "rate_limited" || code === "unavailable",
-    );
-  });
+      const revived = asGitHubError(transported);
+      expect(revived).toBeInstanceOf(GitHubError);
+      expect(revived?.code).toBe(original.code);
+      expect(revived?.status).toBe(original.status);
+      expect(revived?.retryAfter).toBe(original.retryAfter);
+      // Same digest: Next.js then recognises it as the error it already logged.
+      expect(revived?.digest).toBe(original.digest);
+      expect(revived?.cause).toBe(transported);
+      // Production never had the message; it must not be invented either.
+      expect(revived?.message).not.toContain("secret wording");
+      expect(revived?.message).toContain(code);
+      expect(isTransient(revived)).toBe(
+        code === "rate_limited" || code === "unavailable",
+      );
+    },
+  );
 
   test("a development build also gives the message back", () => {
     const original = new GitHubError("unavailable", "GitHub HTTP 502", {

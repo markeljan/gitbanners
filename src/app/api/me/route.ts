@@ -29,6 +29,7 @@ import { StoreUnavailableError } from "@/lib/store";
 const HEADERS = { ...PRIVATE_NO_STORE, Vary: "Cookie" };
 
 const { notAllowed, options } = methodGuards(["GET", "DELETE"]);
+
 export {
   notAllowed as PATCH,
   notAllowed as POST,

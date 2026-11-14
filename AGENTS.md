@@ -14,21 +14,21 @@ GitBanners turns a GitHub login or `owner/repo` into a live banner image with a 
 
 ### Where things are
 
-| Path | What lives there |
-| --- | --- |
-| `next.config.ts` | The URL grammar as rewrites: a path is a page, an image (`.svg`, `.png`, `Accept: image/*`) or Markdown (`.md`, `Accept: text/markdown`). Internal handlers live under `/-/`. |
-| `src/lib/reserved.ts` | First path segments that are never a GitHub owner. Every new top-level folder in `src/app` goes here. `ownerPath(login)` prints owner links. |
-| `src/lib/site.ts` | `site.url` (canonical origin), names, the Pro repository. Never hard-code a host. |
-| `src/lib/banner` | Pure banner engine: presets, themes, sizes, options parsing, layout, `buildBanner`. Import from `@/lib/banner` only. |
-| `src/lib/render`, `src/app/-/i` | Banner element to SVG or PNG, cache headers, the image routes. |
-| `src/lib/github` | GitHub data with `'use cache'`. Server code imports `@/lib/github/cached`; client code imports `@/lib/github/schema`, `/samples`, `/calendar`, `/errors` directly. |
-| `src/lib/auth`, `src/lib/pro`, `src/lib/store`, `src/lib/db`, `src/app/api` | Sign in with GitHub, sessions, the Pro check, Upstash or file store, saved banners, the account API. |
-| `src/lib/api`, `src/app/api/v1` | The keyless public JSON API and its parameter docs. |
-| `src/lib/agent`, `src/app/mcp`, `src/app/-/md` | OpenAPI, llms.txt, JSON-LD, metadata, the MCP server, Markdown versions of pages. |
-| `src/content` | Page copy as data. `ContentPage` objects render to HTML (`src/components/content`) and to Markdown from the same source. Register new pages in `pages.ts` and `paths.ts`. |
-| `src/lib/migrate`, `src/components/migrate` | The README doctor: a pure engine that swaps dead stat-card URLs, and its browser-only page at `/docs/migrate`. |
-| `src/components/site`, `src/hooks` | Site shell, `useMe()` for the session, data hooks. |
-| `scripts/` | `agent-readiness-check.sh` and `content-ratio.mjs` (run against `next start`), `shot.ts` for screenshots, sample refreshers. |
+| Path                                                                        | What lives there                                                                                                                                                              |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `next.config.ts`                                                            | The URL grammar as rewrites: a path is a page, an image (`.svg`, `.png`, `Accept: image/*`) or Markdown (`.md`, `Accept: text/markdown`). Internal handlers live under `/-/`. |
+| `src/lib/reserved.ts`                                                       | First path segments that are never a GitHub owner. Every new top-level folder in `src/app` goes here. `ownerPath(login)` prints owner links.                                  |
+| `src/lib/site.ts`                                                           | `site.url` (canonical origin), names, the Pro repository. Never hard-code a host.                                                                                             |
+| `src/lib/banner`                                                            | Pure banner engine: presets, themes, sizes, options parsing, layout, `buildBanner`. Import from `@/lib/banner` only.                                                          |
+| `src/lib/render`, `src/app/-/i`                                             | Banner element to SVG or PNG, cache headers, the image routes.                                                                                                                |
+| `src/lib/github`                                                            | GitHub data with `'use cache'`. Server code imports `@/lib/github/cached`; client code imports `@/lib/github/schema`, `/samples`, `/calendar`, `/errors` directly.            |
+| `src/lib/auth`, `src/lib/pro`, `src/lib/store`, `src/lib/db`, `src/app/api` | Sign in with GitHub, sessions, the Pro check, Upstash or file store, saved banners, the account API.                                                                          |
+| `src/lib/api`, `src/app/api/v1`                                             | The keyless public JSON API and its parameter docs.                                                                                                                           |
+| `src/lib/agent`, `src/app/mcp`, `src/app/-/md`                              | OpenAPI, llms.txt, JSON-LD, metadata, the MCP server, Markdown versions of pages.                                                                                             |
+| `src/content`                                                               | Page copy as data. `ContentPage` objects render to HTML (`src/components/content`) and to Markdown from the same source. Register new pages in `pages.ts` and `paths.ts`.     |
+| `src/lib/migrate`, `src/components/migrate`                                 | The README doctor: a pure engine that swaps dead stat-card URLs, and its browser-only page at `/docs/migrate`.                                                                |
+| `src/components/site`, `src/hooks`                                          | Site shell, `useMe()` for the session, data hooks.                                                                                                                            |
+| `scripts/`                                                                  | `agent-readiness-check.sh` and `content-ratio.mjs` (run against `next start`), `shot.ts` for screenshots, sample refreshers.                                                  |
 
 ### Rules
 

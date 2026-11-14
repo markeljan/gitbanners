@@ -25,6 +25,7 @@ import { methodGuards } from "@/lib/http/problem";
 import { clientIp, limit } from "@/lib/ratelimit";
 
 const { notAllowed, options } = methodGuards(["GET"]);
+
 export {
   notAllowed as DELETE,
   notAllowed as PATCH,

@@ -381,11 +381,14 @@ describe("fetchRepo", () => {
     ["vercel", "has space"],
     ["vercel", "a/b"],
     ["vercel", "x".repeat(101)],
-  ])("%p / %p cannot be a repository: null without a request", async (owner, name) => {
-    serve({});
-    expect(await fetchRepo(owner, name)).toBeNull();
-    expect(fake.calls).toHaveLength(0);
-  });
+  ])(
+    "%p / %p cannot be a repository: null without a request",
+    async (owner, name) => {
+      serve({});
+      expect(await fetchRepo(owner, name)).toBeNull();
+      expect(fake.calls).toHaveLength(0);
+    },
+  );
 
   test("a failing core request throws", async () => {
     serve(nextRoutes([], htmlTimeout()));

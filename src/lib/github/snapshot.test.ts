@@ -77,23 +77,23 @@ describe("withSnapshot", () => {
     expect(load).toHaveBeenCalledTimes(2);
   });
 
-  test.each([
-    "rate_limited",
-    "unavailable",
-  ] as const)("serves the stale snapshot when the reload fails with %s", async (code) => {
-    const key = freshKey();
-    const failing = mock(async (): Promise<{ v: number }> => {
-      throw new GitHubError(code, "GitHub is having a moment");
-    });
-    await withSnapshot(key, async () => ({ v: 1 }), options());
+  test.each(["rate_limited", "unavailable"] as const)(
+    "serves the stale snapshot when the reload fails with %s",
+    async (code) => {
+      const key = freshKey();
+      const failing = mock(async (): Promise<{ v: number }> => {
+        throw new GitHubError(code, "GitHub is having a moment");
+      });
+      await withSnapshot(key, async () => ({ v: 1 }), options());
 
-    advance(86_400 * 6);
-    expect(await withSnapshot(key, failing, options())).toEqual({ v: 1 });
-    expect(failing).toHaveBeenCalledTimes(1);
-    // Still stale: the next call tries GitHub again.
-    expect(await withSnapshot(key, failing, options())).toEqual({ v: 1 });
-    expect(failing).toHaveBeenCalledTimes(2);
-  });
+      advance(86_400 * 6);
+      expect(await withSnapshot(key, failing, options())).toEqual({ v: 1 });
+      expect(failing).toHaveBeenCalledTimes(1);
+      // Still stale: the next call tries GitHub again.
+      expect(await withSnapshot(key, failing, options())).toEqual({ v: 1 });
+      expect(failing).toHaveBeenCalledTimes(2);
+    },
+  );
 
   test("a snapshot older than staleFor is not served: the error surfaces", async () => {
     const key = freshKey();

@@ -46,7 +46,7 @@
     "@types/react-dom": "^19",
     "@vercel/config": "0.14.1",
     "babel-plugin-react-compiler": "1.0.0",
-    "ioredis": "6",
+    "ioredis": "5",
     "ioredis-mock": "8.13.1",
     "tailwindcss": "4.3.5",
     "typescript": "^7"

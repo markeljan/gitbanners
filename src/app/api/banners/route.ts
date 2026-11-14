@@ -28,6 +28,7 @@ import { forbidden, methodGuards, notOwnProfile } from "@/lib/http/problem";
 import { getEntitlements, proRepoSlug, proRequired } from "@/lib/pro";
 
 const { notAllowed, options } = methodGuards(["GET", "POST"]);
+
 export {
   notAllowed as DELETE,
   notAllowed as PATCH,

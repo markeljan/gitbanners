@@ -23,6 +23,7 @@ const PATH = "/api/auth/signout";
 // GET answers 405 like the other methods this route lacks: a link, an image
 // tag or a prefetch must never be able to sign anyone out.
 const { notAllowed, options } = methodGuards(["POST"]);
+
 export {
   notAllowed as DELETE,
   notAllowed as GET,

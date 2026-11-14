@@ -27,6 +27,7 @@ import { methodGuards, notFound, notOwnProfile } from "@/lib/http/problem";
 import { getEntitlements, proRequired } from "@/lib/pro";
 
 const { notAllowed, options } = methodGuards(["GET", "PATCH", "DELETE"]);
+
 export { notAllowed as POST, notAllowed as PUT, options as OPTIONS };
 
 const patchSchema = bannerPatchSchema
