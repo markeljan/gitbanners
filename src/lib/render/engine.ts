@@ -36,7 +36,7 @@ const IMAGES = {
 export type RenderOptions = {
   width: number;
   height: number;
-  /** extra per-render fonts, e.g. `await fallbackFontsFor(text)` */
+  /** extra per-render fonts, e.g. `(await fontsForText(text)).fonts` */
   fonts?: BannerFont[];
   signal?: AbortSignal;
 };

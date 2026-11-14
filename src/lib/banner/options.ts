@@ -165,6 +165,12 @@ type Heat = ThemeColors["heat"];
 
 const HEX_RE = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i;
 const INT_RE = /^\d{1,6}$/;
+/**
+ * Most entries of a list option that are looked at. No valid list is longer
+ * than the number of stat ids (18); the cap keeps the work done for a query
+ * string bounded however long someone makes it.
+ */
+const MAX_LIST_ITEMS = 64;
 
 function lookup<T extends string>(ids: readonly T[]): Map<string, T> {
   return new Map(ids.map((id) => [id.toLowerCase(), id]));
@@ -226,7 +232,7 @@ function pickList<T extends string>(
 ): T[] | undefined {
   if (!Array.isArray(value)) return undefined;
   const picked: T[] = [];
-  for (const item of value) {
+  for (const item of value.slice(0, MAX_LIST_ITEMS)) {
     const id = pickEnum(item, ids);
     if (id && !picked.includes(id)) picked.push(id);
   }
@@ -244,7 +250,8 @@ function pickTitle(value: unknown): string | undefined {
  * the banner ends up with. Five colours are taken as they are.
  */
 function pickHeat(value: unknown): Heat | undefined {
-  if (!Array.isArray(value)) return undefined;
+  // One colour or five: a longer list is not a ramp, however it starts.
+  if (!Array.isArray(value) || value.length > 5) return undefined;
   const colors = value.map(normalizeHex);
   if (colors.some((color) => color === null)) return undefined;
   const [a, b, c, d, e] = colors as string[];
@@ -338,12 +345,18 @@ function reader(input: QueryInput) {
     has: (key: QueryKey) => all(key).length > 0,
     /** The last occurrence wins, like most query-string parsers. */
     one: (key: QueryKey): string | undefined => all(key).at(-1),
-    /** Repeated parameters and comma-separated values, flattened. */
+    /**
+     * Repeated parameters and comma-separated values, flattened. Only the
+     * first entries are read (`String.split` stops at its limit), so a
+     * megabyte of commas costs no more than a short list.
+     */
     list: (key: QueryKey): string[] =>
       all(key)
-        .flatMap((value) => value.split(","))
+        .slice(0, MAX_LIST_ITEMS)
+        .flatMap((value) => value.split(",", MAX_LIST_ITEMS))
         .map((value) => value.trim())
-        .filter(Boolean),
+        .filter(Boolean)
+        .slice(0, MAX_LIST_ITEMS),
   };
 }
 

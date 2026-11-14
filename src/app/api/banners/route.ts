@@ -7,12 +7,13 @@
  *
  * Saves a banner. Body: `{ name, target, preset?, query?, isDefault? }`.
  * 201 with the banner and a `Location` header. 403 `banner_limit_reached`
- * when the plan's quota is used up.
+ * when the plan's quota is used up. `isDefault: true` needs Pro and a target
+ * that is the user's own profile (422 `default_not_own_profile`).
  */
 import { revalidateTag } from "next/cache";
 import { z } from "zod";
 import { loginChanged, withUser } from "@/lib/auth/session";
-import { canonicalQuery } from "@/lib/banner";
+import { canonicalQuery, isProfileOf } from "@/lib/banner";
 import {
   bannerInputSchema,
   createBanner,
@@ -23,7 +24,7 @@ import {
   toBannerView,
 } from "@/lib/db/banners";
 import { entityCacheTag } from "@/lib/http/cache-headers";
-import { forbidden, methodGuards } from "@/lib/http/problem";
+import { forbidden, methodGuards, notOwnProfile } from "@/lib/http/problem";
 import { getEntitlements, proRepoSlug, proRequired } from "@/lib/pro";
 
 const { notAllowed, options } = methodGuards(["GET", "POST"]);
@@ -64,6 +65,9 @@ export async function POST(request: Request): Promise<Response> {
         return proRequired(
           "Only Pro accounts can choose the banner served at their profile URL.",
         );
+      }
+      if (isDefault && !isProfileOf(input.target, user.login)) {
+        return notOwnProfile(user.login);
       }
 
       const created = await createBanner(

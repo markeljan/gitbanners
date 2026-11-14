@@ -170,7 +170,8 @@ export interface Block {
 /** Wraps an image source so remote URLs go through the environment and data URIs do not. */
 export function imageResolver(env: RenderEnv): Ctx["image"] {
   return (url, px) => {
-    if (!url) return "";
+    // Data that does not match the schema must still draw: no source, no image.
+    if (typeof url !== "string" || !url) return "";
     if (url.startsWith("data:")) return url;
     try {
       const resolved = env.image(url, Math.max(1, Math.round(px)));

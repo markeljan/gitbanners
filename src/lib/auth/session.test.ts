@@ -254,7 +254,7 @@ describe("sign-in transaction cookie", () => {
 
 describe("completeSignIn and requireUser", () => {
   test("creates the account, decides Pro and starts the session", async () => {
-    const user = await completeSignIn(profile);
+    const { user } = await completeSignIn(profile);
     expect(user).toMatchObject({
       id: "4242",
       login: "Octo-Test",

@@ -10,7 +10,9 @@ import { resolveSections } from "@/lib/banner/graph";
 import { layoutCard } from "@/lib/banner/layout/card";
 import { layoutMessage } from "@/lib/banner/layout/message";
 import { layoutPoster } from "@/lib/banner/layout/poster";
+import { layoutSocial } from "@/lib/banner/layout/social";
 import type { Layout } from "@/lib/banner/layout/types";
+import { layoutWrapped } from "@/lib/banner/layout/wrapped";
 import { DEFAULT_OPTIONS, normalizeOptions } from "@/lib/banner/options";
 import { resolvePalette } from "@/lib/banner/palette";
 import { getPreset } from "@/lib/banner/presets";
@@ -19,6 +21,7 @@ import type {
   BuiltBanner,
   EntityKind,
   RenderEnv,
+  SectionId,
 } from "@/lib/banner/types";
 import type { Entity } from "@/lib/github/schema";
 
@@ -55,7 +58,12 @@ function trustedOptions(
   };
 }
 
-function contextOf(
+/**
+ * Everything sections and layouts need to plan a banner: the canvas, the
+ * colours, the type scale and the injected environment. `options` must be
+ * resolved already (`buildBanner` re-validates them before it gets here).
+ */
+export function contextOf(
   entity: Entity,
   options: BannerOptions,
   env: RenderEnv,
@@ -119,6 +127,37 @@ function finish(ctx: Ctx, layout: Layout, alt: string): BuiltBanner {
 }
 
 /**
+ * Posters: banners with a composition of their own. Each one decides whether
+ * it applies to this banner and canvas, and answers `null` when it does not.
+ */
+const POSTERS: readonly ((
+  ctx: Ctx,
+  sections: readonly SectionId[],
+) => Layout | null)[] = [layoutWrapped, layoutSocial];
+
+/** What the year in review falls back to on a canvas too small for the poster. */
+const WRAPPED_FALLBACK: readonly SectionId[] = ["header", "stats", "heatmap"];
+
+/**
+ * Picks the layout: a poster where one applies, otherwise the general
+ * layouts (cards grow with their content, fixed canvases are solved).
+ */
+function layoutOf(ctx: Ctx, sections: readonly SectionId[]): Layout {
+  for (const poster of POSTERS) {
+    const layout = poster(ctx, sections);
+    if (layout) return layout;
+  }
+  const general = [
+    ...new Set(
+      sections.flatMap((id) => (id === "wrapped" ? WRAPPED_FALLBACK : [id])),
+    ),
+  ];
+  return ctx.canvas.height === null
+    ? layoutCard(ctx, general)
+    : layoutPoster(ctx, general);
+}
+
+/**
  * Builds the banner for an entity. Total: any entity that matches the schema
  * and any options at all produce a banner; sections that do not apply to the
  * entity's kind are skipped.
@@ -134,11 +173,7 @@ export function buildBanner(
     ctx,
     trusted.sections ?? getPreset(entity.kind, trusted.preset).sections,
   );
-  const layout =
-    ctx.canvas.height === null
-      ? layoutCard(ctx, sections)
-      : layoutPoster(ctx, sections);
-  return finish(ctx, layout, altText(entity, trusted));
+  return finish(ctx, layoutOf(ctx, sections), altText(entity, trusted));
 }
 
 /**

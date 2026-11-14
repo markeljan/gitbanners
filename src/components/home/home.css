@@ -1,0 +1,499 @@
+/*
+ * The homepage: hero and sections.
+ *
+ * Imported by src/app/globals.css into `@layer components`: Astryx's own
+ * layers come earlier, so these rules win over component defaults, and
+ * Tailwind utilities come later, so a utility on an element still wins.
+ * Everything is built from Astryx tokens; app tokens are prefixed `--gb-`.
+ */
+
+/* ── Homepage hero ─────────────────────────────────────────────────────────── */
+.gb-hero {
+  padding-block: var(--spacing-12) var(--spacing-8);
+  text-align: center;
+}
+.gb-hero-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-3);
+  margin-block-end: var(--spacing-8);
+}
+.gb-hero-lead {
+  max-width: 40rem;
+}
+/* Input, hint line and preview frame: one column, as wide as a README. */
+.gb-playground {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  width: 100%;
+  max-width: calc(
+    var(--gb-readme-width) +
+    2 *
+    var(--spacing-4) +
+    2 *
+    var(--border-width)
+  );
+  margin-inline: auto;
+}
+.gb-hint {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  /* One line, always: a second line would push the banner down. */
+  min-height: var(--size-element-md);
+  overflow-x: auto;
+  scrollbar-width: none;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  text-align: start;
+}
+.gb-hint[data-tone="problem"] {
+  color: var(--color-text-warning);
+}
+.gb-chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  height: var(--size-element-sm);
+  padding-inline: var(--spacing-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-full);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-code);
+  font-size: var(--text-supporting-size);
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+/* A finger gets 44px of chip, the eye still sees a slim one. */
+@media (pointer: coarse) {
+  .gb-hint {
+    min-height: calc(var(--spacing-1) * 11);
+  }
+  .gb-chip {
+    position: relative;
+  }
+  .gb-chip::after {
+    content: "";
+    position: absolute;
+    inset: calc(var(--spacing-1) * -1) 0;
+  }
+}
+.gb-chip:hover {
+  color: var(--color-text-primary);
+  background: var(--color-overlay-hover);
+}
+.gb-chip:active {
+  background: var(--color-overlay-pressed);
+}
+.gb-frame {
+  container-type: inline-size;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-container);
+  background: var(--color-background-surface);
+  text-align: start;
+}
+.gb-frame-tabs {
+  padding-inline: var(--spacing-2);
+  border-block-end: var(--border-width) solid var(--color-border);
+}
+.gb-frame-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  /* Room for the default card plus a little: typing a name whose card is a
+     line taller or shorter does not resize the frame. */
+  min-height: calc(100cqw * 0.36);
+  padding: var(--spacing-4);
+  overflow: hidden;
+}
+/* Loading: a hairline sweep along the top edge. The banner stays put. */
+.gb-frame-stage[aria-busy="true"]::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  height: calc(var(--border-width) * 2);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-text-primary),
+    transparent
+  );
+  background-size: 40% 100%;
+  background-repeat: no-repeat;
+  animation: gb-sweep 900ms linear 120ms infinite both;
+}
+/* PreviewBanner: the server image and the DOM canvas share one box. */
+.gb-preview {
+  position: relative;
+  width: 100%;
+  transition: aspect-ratio var(--duration-fast) var(--ease-standard);
+}
+.gb-preview > .gb-canvas {
+  position: absolute;
+  inset: 0;
+}
+.gb-preview-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.gb-frame-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-block-start: var(--border-width) solid var(--color-border);
+}
+.gb-url {
+  flex: 1 1 12rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-code);
+  font-size: var(--text-supporting-size);
+  user-select: all;
+}
+.gb-frame-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+@media (width < 40rem) {
+  .gb-hero {
+    padding-block-start: var(--spacing-8);
+  }
+  .gb-frame-stage {
+    padding: var(--spacing-3);
+  }
+  .gb-frame-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+  .gb-frame-actions > * {
+    width: 100%;
+    min-height: calc(var(--spacing-1) * 11);
+  }
+  /* Two buttons share a phone's width: the words matter more than the glyphs. */
+  .gb-frame-actions .astryx-icon {
+    display: none;
+  }
+  .gb-chip {
+    height: var(--size-element-lg);
+  }
+}
+@keyframes gb-sweep {
+  from {
+    background-position: -70% 0;
+  }
+  to {
+    background-position: 170% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gb-frame-stage[aria-busy="true"]::before {
+    animation: none;
+    background-size: 100% 100%;
+  }
+}
+
+/* ── Homepage sections ─────────────────────────────────────────────────────── */
+.gb-section-inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  padding-block: calc(var(--spacing-12) + var(--spacing-2));
+  border-block-start: var(--border-width) solid var(--color-border);
+}
+.gb-section-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-3);
+  max-width: var(--gb-prose-width);
+}
+.gb-section-body {
+  min-width: 0;
+}
+@media (width >= 64rem) {
+  .gb-section-inner {
+    padding-block: calc(var(--spacing-12) + var(--spacing-8));
+  }
+  .gb-split {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: calc(var(--spacing-12) + var(--spacing-4));
+    align-items: start;
+  }
+  /* The heading keeps the content company while a long column scrolls by. */
+  .gb-split > .gb-section-head {
+    position: sticky;
+    inset-block-start: calc(var(--gb-header-height) + var(--spacing-8));
+  }
+}
+.gb-link {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+  text-decoration-color: var(--color-border-emphasized);
+  text-underline-offset: var(--spacing-1);
+  border-radius: var(--radius-inner);
+  transition: text-decoration-color var(--duration-fast) var(--ease-standard);
+}
+.gb-link:hover {
+  text-decoration-color: currentColor;
+}
+
+/* Tables: rows and hairlines, no boxes. */
+.gb-table-wrap {
+  overflow-x: auto;
+}
+.gb-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: start;
+}
+.gb-table th,
+.gb-table td {
+  padding: var(--spacing-3) var(--spacing-4) var(--spacing-3) 0;
+  border-block-end: var(--border-width) solid var(--color-border);
+  text-align: start;
+  vertical-align: top;
+}
+.gb-table thead th {
+  padding-block: var(--spacing-2);
+  color: var(--color-text-secondary);
+  font-size: var(--text-supporting-size);
+  font-weight: var(--text-label-weight);
+}
+.gb-table tbody th {
+  font-weight: 400;
+}
+.gb-table td {
+  color: var(--color-text-secondary);
+}
+.gb-table tr > :last-child {
+  padding-inline-end: 0;
+}
+/* A URL reads as one thing: keep it on one line where there is room. */
+@media (width >= 40rem) {
+  .gb-table tbody th > .gb-code-inline {
+    white-space: nowrap;
+  }
+}
+/* On a phone a two-column table of URLs becomes a list: URL, then what it gives. */
+@media (width < 40rem) {
+  .gb-table[data-variant="stacked"] thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .gb-table[data-variant="stacked"] tr {
+    display: block;
+    padding-block: var(--spacing-3);
+    border-block-end: var(--border-width) solid var(--color-border);
+  }
+  .gb-table[data-variant="stacked"] th,
+  .gb-table[data-variant="stacked"] td {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+  .gb-table[data-variant="stacked"] td {
+    margin-block-start: var(--spacing-1);
+  }
+}
+.gb-table[data-variant="plans"] td,
+.gb-table[data-variant="plans"] thead th:not(:first-child) {
+  width: 22%;
+  white-space: nowrap;
+}
+.gb-table[data-variant="plans"] thead th:not(:first-child) {
+  color: var(--color-text-primary);
+  font-size: var(--text-body-size);
+  font-weight: 600;
+}
+.gb-table[data-variant="plans"] td:last-child {
+  color: var(--color-text-primary);
+}
+
+/* Showcase: one group per kind of entity, two cards to a row. */
+.gb-showcase + .gb-showcase {
+  margin-block-start: calc(var(--spacing-12) + var(--spacing-2));
+}
+.gb-showcase-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  max-width: var(--gb-prose-width);
+  margin-block-end: var(--spacing-6);
+}
+.gb-showcase-grid {
+  display: grid;
+  gap: var(--spacing-5);
+}
+@media (width >= 48rem) {
+  .gb-showcase-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+/* BannerCard: the banner on a mat, its caption underneath. */
+.gb-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-container);
+  background: var(--color-background-surface);
+}
+.gb-card > .gb-banner-link {
+  display: grid;
+  flex: 1;
+  align-items: center;
+  padding: var(--spacing-3) var(--spacing-3) 0;
+}
+.gb-card-body {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4) var(--spacing-4);
+}
+.gb-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-0-5);
+  min-width: 0;
+}
+.gb-card-title {
+  font-weight: 600;
+}
+.gb-card-blurb {
+  color: var(--color-text-secondary);
+}
+.gb-card-path {
+  margin-block-start: var(--spacing-1);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-code);
+  font-size: var(--text-supporting-size);
+  overflow-wrap: anywhere;
+}
+.gb-card-actions {
+  display: flex;
+  flex: none;
+  gap: var(--spacing-1);
+}
+
+/* Sizes: every canvas in its true proportion, two to a row of one height. */
+.gb-sizes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+.gb-size-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8) var(--spacing-5);
+}
+.gb-size {
+  margin: 0;
+  min-width: 0;
+}
+.gb-size > figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--spacing-1) var(--spacing-3);
+  margin-block-start: var(--spacing-3);
+  color: var(--color-text-secondary);
+}
+.gb-size > figcaption > b {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+.gb-size[data-size="size=square"] {
+  max-width: 60%;
+}
+@media (width >= 48rem) {
+  .gb-size-row {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  /* flex-grow = width over height, so the two share the row at one height. */
+  .gb-size {
+    flex: 3.18 1 0;
+  }
+  .gb-size[data-size="size=x"] {
+    flex-grow: 3;
+  }
+  .gb-size[data-size="size=linkedin"] {
+    flex-grow: 4;
+  }
+  .gb-size[data-size="size=og"] {
+    flex-grow: 1.905;
+  }
+  .gb-size[data-size="size=social"] {
+    flex-grow: 2;
+  }
+  .gb-size[data-size="size=square"] {
+    flex-grow: 1;
+    max-width: none;
+  }
+}
+
+/* Themes: the banner, then every theme under it. The banner stays in view
+   while the swatches scroll by, or picking one far down would show nothing. */
+.gb-themes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+.gb-themes-preview {
+  position: sticky;
+  inset-block-start: var(--gb-header-height);
+  z-index: 2;
+  padding-block: var(--spacing-2);
+  background: var(--color-background-body);
+}
+.gb-themes-code {
+  margin-block-start: var(--spacing-8);
+}
+@media (width >= 64rem) {
+  .gb-themes .gb-swatches {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+
+/* A plain list as divided rows. */
+.gb-rows > li {
+  padding-block: var(--spacing-4);
+  border-block-end: var(--border-width) solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+.gb-rows > li:first-child {
+  padding-block-start: 0;
+}
+.gb-faq {
+  display: grid;
+  gap: var(--spacing-8) var(--spacing-12);
+}
+.gb-faq > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+@media (width >= 48rem) {
+  .gb-faq {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

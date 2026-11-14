@@ -24,7 +24,7 @@ import {
   unauthorized,
   unavailable,
 } from "@/lib/http/problem";
-import { decideProAtSignIn } from "@/lib/pro";
+import { decideProAtSignIn, type ProDecision } from "@/lib/pro";
 import { limit, type PolicyName } from "@/lib/ratelimit";
 import { StoreUnavailableError } from "@/lib/store";
 import { isSameOrigin } from "./csrf";
@@ -172,14 +172,14 @@ export async function requireUser(): Promise<{
 export async function completeSignIn(
   profile: GitHubUser,
   options: { accessToken?: string } = {},
-): Promise<User> {
+): Promise<{ user: User; pro: ProDecision }> {
   const user = await upsertUser({
     id: String(profile.id),
     login: profile.login,
     name: profile.name,
     avatarUrl: profile.avatarUrl,
   });
-  await decideProAtSignIn(user, options);
+  const pro = await decideProAtSignIn(user, options);
   await setSessionCookie({
     uid: user.id,
     login: user.login,
@@ -187,7 +187,7 @@ export async function completeSignIn(
     avatarUrl: user.avatarUrl,
     sv: user.sv,
   });
-  return user;
+  return { user, pro };
 }
 
 /**

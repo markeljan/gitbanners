@@ -1,0 +1,372 @@
+/*
+ * Typography and layout of the content pages (docs, pricing, legal).
+ *
+ * Long-form copy is rendered as plain semantic HTML and styled here, from
+ * the design system's tokens, instead of wrapping every paragraph, list item
+ * and table cell in a component: a docs page has hundreds of them, and
+ * their markup would outweigh the text they carry.
+ *
+ * In `@layer components`, so utilities and Astryx's own component rules
+ * keep their place in the cascade.
+ */
+@layer components {
+  .gb-page {
+    /* Text measure, room for a sticky header above anchored headings. */
+    --gb-measure: 44rem;
+    --gb-anchor-offset: calc(var(--spacing-12) + var(--spacing-8));
+
+    box-sizing: border-box;
+    width: 100%;
+    max-width: calc(var(--gb-measure) + 2 * var(--spacing-4));
+    margin-inline: auto;
+    padding: var(--spacing-10) var(--spacing-4) var(--spacing-12);
+    color: var(--color-text-primary);
+  }
+
+  .gb-page[data-toc] {
+    max-width: calc(
+      var(--gb-measure) +
+      15rem +
+      var(--spacing-12) +
+      2 *
+      var(--spacing-4)
+    );
+  }
+
+  .gb-article {
+    min-width: 0;
+  }
+
+  .gb-head > * + *,
+  .gb-body > * + * {
+    margin-block-start: var(--spacing-4);
+  }
+
+  .gb-body {
+    margin-block-start: var(--spacing-6);
+  }
+
+  .gb-lead {
+    font-size: var(--text-large-size);
+    line-height: var(--text-heading-3-leading);
+    color: var(--color-text-secondary);
+    text-wrap: pretty;
+  }
+
+  .gb-meta {
+    margin-block-start: var(--spacing-12);
+    padding-block-start: var(--spacing-4);
+    border-block-start: var(--border-width) solid var(--color-border);
+    font-size: var(--text-supporting-size);
+    line-height: var(--text-supporting-leading);
+    color: var(--color-text-secondary);
+  }
+
+  /* --- Headings ------------------------------------------------------- */
+
+  .gb-body :is(h2, h3) {
+    scroll-margin-block-start: var(--gb-anchor-offset);
+    text-wrap: balance;
+  }
+
+  .gb-body h2 {
+    margin-block-start: var(--spacing-12);
+  }
+
+  .gb-body h3 {
+    margin-block-start: var(--spacing-8);
+  }
+
+  .gb-body > h2:first-child {
+    margin-block-start: 0;
+  }
+
+  /* A question and its answer. */
+  .gb-body > section {
+    margin-block-start: var(--spacing-6);
+  }
+
+  .gb-body > section > h3 {
+    margin-block-start: 0;
+  }
+
+  .gb-body > section > * + * {
+    margin-block-start: var(--spacing-2);
+  }
+
+  /* --- Text ----------------------------------------------------------- */
+
+  .gb-article :is(p, li, td, th) {
+    line-height: var(--text-supporting-leading);
+  }
+
+  .gb-body p {
+    text-wrap: pretty;
+  }
+
+  /* Text links. Design-system buttons rendered as links style themselves. */
+  .gb-article a:not(.astryx-button) {
+    color: var(--color-text-accent);
+    text-decoration-line: underline;
+    text-decoration-thickness: from-font;
+    text-underline-offset: 0.2em;
+    text-decoration-color: var(--color-border-emphasized);
+    border-radius: var(--radius-inner);
+    transition: text-decoration-color var(--duration-fast) var(--ease-standard);
+  }
+
+  .gb-article a:not(.astryx-button):hover {
+    text-decoration-color: currentcolor;
+  }
+
+  .gb-article a:not(.astryx-button):focus-visible {
+    outline: var(--focus-outline-width) solid var(--color-accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+
+  /* Inline code in running text. Code blocks style their own <code>. */
+  .gb-article :is(p, li, td, th) code {
+    padding: var(--spacing-0-5) var(--spacing-1);
+    border-radius: var(--radius-inner);
+    background: var(--color-overlay-hover);
+    font-family: var(--font-family-code);
+    font-size: 0.92em;
+    /* Breaks a long URL only when it would overflow, never to narrow a column. */
+    overflow-wrap: break-word;
+  }
+
+  .gb-body :is(ul, ol) {
+    padding-inline-start: var(--spacing-5);
+  }
+
+  .gb-body ul {
+    list-style: disc;
+  }
+
+  .gb-body ol {
+    list-style: decimal;
+  }
+
+  .gb-body li + li {
+    margin-block-start: var(--spacing-1-5);
+  }
+
+  .gb-body li::marker {
+    color: var(--color-text-secondary);
+  }
+
+  .gb-note {
+    padding: var(--spacing-3) var(--spacing-4);
+    border-inline-start: var(--focus-outline-width) solid
+      var(--color-border-emphasized);
+    border-radius: var(--radius-inner);
+    background: var(--color-overlay-hover);
+    color: var(--color-text-secondary);
+  }
+
+  /* --- Tables --------------------------------------------------------- */
+
+  .gb-table {
+    overflow-x: auto;
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-container);
+  }
+
+  .gb-table table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: start;
+  }
+
+  .gb-table :is(th, td) {
+    padding: var(--spacing-2) var(--spacing-3);
+    vertical-align: top;
+    text-align: start;
+  }
+
+  .gb-table th {
+    font-weight: var(--text-label-weight);
+    color: var(--color-text-secondary);
+    background: var(--color-overlay-hover);
+    white-space: nowrap;
+  }
+
+  .gb-table tbody tr {
+    border-block-start: var(--border-width) solid var(--color-border);
+    scroll-margin-block-start: var(--gb-anchor-offset);
+  }
+
+  /* The row a problem's `type` URL points at. */
+  .gb-table tbody tr:target {
+    background: var(--color-accent-muted);
+  }
+
+  /*
+   * A table with many columns keeps a readable width and scrolls sideways
+   * on a narrow screen, instead of wrapping every cell into a sliver.
+   */
+  .gb-table table:has(th:nth-child(3)) {
+    min-width: 30rem;
+  }
+
+  .gb-table table:has(th:nth-child(4)) {
+    min-width: 42rem;
+  }
+
+  /* --- Code, banners -------------------------------------------------- */
+
+  .gb-code {
+    min-width: 0;
+  }
+
+  .gb-banner {
+    margin: 0;
+  }
+
+  .gb-banner img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-element);
+  }
+
+  .gb-banner figcaption {
+    margin-block-start: var(--spacing-2);
+    font-size: var(--text-supporting-size);
+    color: var(--color-text-secondary);
+  }
+
+  /* --- Table of contents ---------------------------------------------- */
+
+  .gb-toc {
+    margin-block-start: var(--spacing-6);
+    padding: var(--spacing-3) var(--spacing-4);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-container);
+    font-size: var(--text-body-size);
+  }
+
+  .gb-toc-label {
+    font-weight: var(--text-label-weight);
+    color: var(--color-text-primary);
+  }
+
+  .gb-toc ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .gb-toc > ul {
+    margin-block-start: var(--spacing-2);
+    columns: 2;
+    column-gap: var(--spacing-6);
+  }
+
+  .gb-toc li {
+    break-inside: avoid;
+    padding-block: var(--spacing-0-5);
+  }
+
+  /* On a narrow screen the box lists the top-level sections only. */
+  .gb-toc li ul {
+    display: none;
+  }
+
+  .gb-article .gb-toc a {
+    color: var(--color-text-secondary);
+    text-decoration-line: none;
+  }
+
+  .gb-article .gb-toc a:hover {
+    color: var(--color-text-primary);
+    text-decoration-line: underline;
+  }
+
+  @media (min-width: 64rem) {
+    .gb-page[data-toc] .gb-article {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 15rem;
+      column-gap: var(--spacing-12);
+    }
+
+    .gb-page[data-toc] .gb-head {
+      grid-area: 1 / 1;
+    }
+
+    .gb-page[data-toc] .gb-body {
+      grid-area: 2 / 1;
+    }
+
+    .gb-toc {
+      grid-area: 1 / 2 / span 2;
+      align-self: start;
+      position: sticky;
+      inset-block-start: var(--gb-anchor-offset);
+      max-height: calc(100dvh - var(--gb-anchor-offset) - var(--spacing-6));
+      overflow-y: auto;
+      margin-block-start: 0;
+      padding: 0 0 0 var(--spacing-4);
+      border: 0;
+      border-inline-start: var(--border-width) solid var(--color-border);
+      border-radius: 0;
+    }
+
+    .gb-toc > ul {
+      columns: auto;
+    }
+
+    .gb-toc li ul {
+      display: block;
+      padding-inline-start: var(--spacing-3);
+    }
+  }
+
+  /* --- Heading links (`headingLinks`) -------------------------------- */
+
+  .gb-article a.gb-anchor {
+    color: inherit;
+    text-decoration-line: none;
+  }
+
+  /* A "#" after the heading on hover or focus: CSS, so it costs no markup. */
+  .gb-article .gb-anchor::after {
+    content: "#";
+    margin-inline-start: var(--spacing-2);
+    color: var(--color-text-secondary);
+    opacity: 0;
+    transition: opacity var(--duration-fast) var(--ease-standard);
+  }
+
+  .gb-article .gb-anchor:is(:hover, :focus-visible)::after {
+    opacity: 1;
+  }
+
+  /* --- Section being read (`DocsEnhancer`) ---------------------------- */
+
+  .gb-article .gb-toc a[aria-current] {
+    color: var(--color-text-primary);
+    font-weight: var(--text-label-weight);
+  }
+
+  /* --- Wide pages: a tool above copy at reading measure (`wide`) ------ */
+
+  .gb-page[data-wide] {
+    max-width: calc(76rem + 2 * var(--spacing-4));
+  }
+
+  .gb-page[data-wide] :is(.gb-head, .gb-body) > :not(.gb-wide) {
+    max-width: var(--gb-measure);
+  }
+
+  .gb-wide {
+    margin-block-end: var(--spacing-12);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gb-article a,
+    .gb-article .gb-anchor::after {
+      transition: none;
+    }
+  }
+}

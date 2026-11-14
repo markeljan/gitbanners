@@ -63,7 +63,7 @@ export const PRESETS = [
     kind: "user",
     name: "Year in review",
     description:
-      "A poster of one calendar year: totals, best day, streak and top repositories.",
+      "A poster of one calendar year: the total, the graph, streak, best day, busiest month and top repositories.",
     sections: ["wrapped"],
   },
   {
@@ -85,7 +85,8 @@ export const PRESETS = [
     id: "activity",
     kind: "repo",
     name: "Activity",
-    description: "Commits per week over the last year.",
+    description:
+      "A year of commits as a contribution-style calendar, with the headline numbers.",
     sections: ["header", "activity", "stats"],
   },
   {
@@ -108,7 +109,7 @@ export const PRESETS = [
     kind: "repo",
     name: "Release and health",
     description:
-      "Latest release, open issues and pull requests, recent commit activity.",
+      "Latest release, open issues and pull requests, and commits per week.",
     sections: ["header", "stats", "activity"],
   },
   // ── organizations ────────────────────────────────────────────────────────
@@ -116,7 +117,7 @@ export const PRESETS = [
     id: "overview",
     kind: "org",
     name: "Overview",
-    description: "Identity, headline numbers and public members.",
+    description: "Identity, headline numbers and the faces of public members.",
     sections: ["header", "stats", "people"],
   },
   {
@@ -130,7 +131,8 @@ export const PRESETS = [
     id: "activity",
     kind: "org",
     name: "Activity",
-    description: "Commits per week across the organization's top repositories.",
+    description:
+      "A year of commits across the organization's top repositories, as a calendar.",
     sections: ["header", "stats", "activity"],
   },
 ] as const satisfies readonly BannerPreset[];

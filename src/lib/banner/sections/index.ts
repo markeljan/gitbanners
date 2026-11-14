@@ -21,6 +21,12 @@ export interface SectionSpace {
    * their description lines, for example.
    */
   compact: 0 | 1 | 2;
+  /**
+   * `maxHeight` is exactly what the canvas has left for this section, and
+   * the section is the banner's main content: fill the box as well as it can
+   * (more rows, larger bars) instead of taking a natural size.
+   */
+  stretch?: boolean;
 }
 
 /** A planned content section, with what a layout may ask of it beyond its box. */
@@ -49,16 +55,6 @@ export type SectionPlanner = (
 ) => SectionBlock | null;
 
 /**
- * Sections that fill the height a fixed canvas has left instead of asking
- * for a fixed one: a chart or an avatar grid is as large as its box allows.
- */
-export const FLEXIBLE_SECTIONS: ReadonlySet<SectionId> = new Set([
-  "activity",
-  "people",
-  "contributors",
-]);
-
-/**
  * Content sections that stack as plain blocks. `header`, `stats` and
  * `heatmap` are not here: layouts place those themselves (tiles merge into
  * the header, the heatmap decides the measure of a card).
@@ -68,14 +64,20 @@ export const FLEXIBLE_SECTIONS: ReadonlySet<SectionId> = new Set([
  */
 export const SECTION_PLANNERS: Partial<Record<SectionId, SectionPlanner>> = {
   streak: (ctx, space) =>
-    planStreak(ctx, { width: space.width, maxHeight: space.maxHeight }),
+    planStreak(ctx, {
+      width: space.width,
+      maxHeight: space.maxHeight,
+      compact: space.compact,
+    }),
   repos: (ctx, space) =>
     planRepos(ctx, {
       width: space.width,
       maxHeight: space.maxHeight,
       count: ctx.options.count,
-      lines: (2 - space.compact) as 0 | 1 | 2,
+      // Filling a height, the cards work out their own detail.
+      lines: space.stretch ? 2 : ((2 - space.compact) as 0 | 1 | 2),
       singleRow: space.compact > 0,
+      fill: space.stretch === true,
     }),
   languages: (ctx, space) =>
     planLanguages(ctx, { width: space.width, count: ctx.options.count }),

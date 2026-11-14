@@ -23,6 +23,11 @@ export type Block =
       type: "table";
       head: readonly string[];
       rows: readonly (readonly Inline[])[];
+      /**
+       * Anchor id per row, in row order, so a URL fragment can point at one
+       * row (`/docs#error-not_found`). HTML only; Markdown has no anchors.
+       */
+      rowIds?: readonly string[];
     }
   /** A highlighted aside. */
   | { type: "note"; text: Inline }
@@ -61,4 +66,22 @@ export interface FaqEntry {
   id: string;
   question: string;
   answer: Inline;
+}
+
+/** A plan on the pricing page, in the order it is shown. */
+export interface Plan {
+  id: "free" | "pro";
+  name: string;
+  /** What it costs, as shown in large type: "$0", "One GitHub star". */
+  price: string;
+  /** One line under the price. */
+  summary: Inline;
+  /** What the plan includes, one item per line. */
+  features: readonly Inline[];
+}
+
+/** One step of a short how-to, such as unlocking Pro. */
+export interface Step {
+  title: string;
+  text: Inline;
 }

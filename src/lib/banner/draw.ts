@@ -42,8 +42,6 @@ export interface TextSpec {
   color: string;
   weight?: number;
   align?: "left" | "right" | "center";
-  /** CSS font-family for this leaf only (already quoted). */
-  family?: string;
 }
 
 /**
@@ -94,16 +92,14 @@ function hasText(text: string | readonly TextRun[]): boolean {
     : text.some((run) => run.text.length > 0);
 }
 
-function typeStyle(spec: TextSpec): CSSProperties {
-  const style: CSSProperties = {
+function typeStyle(spec: Omit<TextSpec, "text">): CSSProperties {
+  return {
     fontSize: spec.size,
     lineHeight: `${spec.line}px`,
     fontWeight: spec.weight ?? 400,
     color: spec.color,
     textAlign: spec.align ?? "left",
   };
-  if (spec.family) style.fontFamily = spec.family;
-  return style;
 }
 
 /** One line of text, cut with an ellipsis when it does not fit. */
@@ -140,13 +136,25 @@ export function textLine(spec: TextSpec): Node | null {
   );
 }
 
+/** A paragraph: plain text only, because of how its box is clamped (see `textBlock`). */
+export interface ParagraphSpec extends Omit<TextSpec, "text"> {
+  text: string;
+  /** Lines the paragraph may take; what does not fit ends in an ellipsis. */
+  lines: number;
+}
+
 /**
  * A paragraph clamped to `lines` lines. The box is exactly `lines` line
  * boxes tall, so the line height must not be tighter than the font's own
  * 1.41 or the clamp would clip glyphs.
+ *
+ * The text is one string on purpose: the clamp needs a `-webkit-box`, and a
+ * browser lays each child element of such a box out as an item of its own
+ * (one per line), which the image renderer does not. Runs in several colours
+ * belong in a `textLine`.
  */
-export function textBlock(spec: TextSpec & { lines: number }): Node | null {
-  if (!hasText(spec.text) || spec.width <= 0 || spec.lines < 1) return null;
+export function textBlock(spec: ParagraphSpec): Node | null {
+  if (!spec.text || spec.width <= 0 || spec.lines < 1) return null;
   return createElement(
     "div",
     {
@@ -163,7 +171,7 @@ export function textBlock(spec: TextSpec & { lines: number }): Node | null {
         ...typeStyle(spec),
       } satisfies CSSProperties,
     },
-    ...runs(spec.text),
+    spec.text,
   );
 }
 

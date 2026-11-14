@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { demoEntity } from "@/lib/banner/demo";
 import { STAT_IDS } from "@/lib/banner/options";
 import { PRESET_DEFAULTS, PRESETS } from "@/lib/banner/presets";
-import { PENDING, statIds, statTiles } from "@/lib/banner/stats";
+import { PENDING, showsStat, statIds, statTiles } from "@/lib/banner/stats";
 
 describe("statTiles", () => {
   test("users: every stat that applies, formatted and labelled", () => {
@@ -42,10 +42,16 @@ describe("statTiles", () => {
       { id: "stars", label: "Stars", value: "48.2k" },
       { id: "repositories", label: "Repositories", value: "128" },
       { id: "forks", label: "Forks", value: "5.9k" },
-      { id: "members", label: "Members", value: "24" },
+      { id: "members", label: "Members", value: "36" },
     ]);
-    expect(statTiles(demoEntity("repo"), STAT_IDS)).toEqual([
-      { id: "stars", label: "Stars", value: "18.4k" },
+    const repo = demoEntity("repo");
+    expect(statTiles(repo, STAT_IDS)).toEqual([
+      {
+        id: "stars",
+        label: "Stars",
+        value: "18.4k",
+        trend: repo.starHistory?.map((point) => point.stars),
+      },
       { id: "forks", label: "Forks", value: "912" },
       { id: "watchers", label: "Watchers", value: "187" },
       { id: "openIssues", label: "Open issues", value: "143" },
@@ -103,8 +109,92 @@ describe("statTiles", () => {
       contributorCount: null,
     });
     expect(
-      statTiles(repo, ["release", "totalCommits", "contributors", "stars"]),
-    ).toEqual([{ id: "stars", label: "Stars", value: "18.4k" }]);
+      statTiles(repo, ["release", "totalCommits", "contributors", "stars"]).map(
+        (tile) => tile.id,
+      ),
+    ).toEqual(["stars"]);
+    // Outsiders only see public members: none visible means hidden, not zero.
+    org.stats = { ...org.stats, members: 0 };
+    expect(statTiles(org, ["members", "stars"]).map((tile) => tile.id)).toEqual(
+      ["stars"],
+    );
+  });
+
+  test("stars carry their history as a trend, when there is one", () => {
+    const repo = demoEntity("repo");
+    const [stars] = statTiles(repo, ["stars"]);
+    expect(stars?.trend).toHaveLength(30);
+    expect(stars?.trend?.at(-1)).toBe(repo.stars);
+    expect(statTiles({ ...repo, starHistory: null }, ["stars"])[0]).toEqual({
+      id: "stars",
+      label: "Stars",
+      value: "18.4k",
+    });
+    // Two points are a difference, not a trend.
+    const short = { ...repo, starHistory: repo.starHistory?.slice(0, 2) ?? [] };
+    expect(statTiles(short, ["stars"])[0]?.trend).toBeUndefined();
+    const junk = {
+      ...repo,
+      starHistory: [null, { stars: Number.NaN }, { stars: 5 }] as never,
+    };
+    expect(statTiles(junk, ["stars"])[0]?.trend).toBeUndefined();
+    // Users and organizations have stars, but no history of them.
+    expect(statTiles(demoEntity("user"), ["stars"])[0]?.trend).toBeUndefined();
+    expect(statTiles(demoEntity("org"), ["stars"])[0]?.trend).toBeUndefined();
+  });
+
+  test("a release says when it came out, given a clock", () => {
+    const repo = demoEntity("repo");
+    const at = (now: string) =>
+      statTiles(repo, ["release"], new Date(now))[0]?.label;
+    expect(at("2026-11-13T12:00:00Z")).toBe("Released last week");
+    expect(at("2026-11-03T23:00:00Z")).toBe("Released today");
+    expect(at("2026-11-04T01:00:00Z")).toBe("Released yesterday");
+    expect(at("2027-03-01T00:00:00Z")).toBe("Released 3 months ago");
+    // Without a clock, or without a date, it is simply the latest one.
+    expect(statTiles(repo, ["release"])[0]).toEqual({
+      id: "release",
+      label: "Latest release",
+      value: "v4.2.0",
+    });
+    const undated = {
+      ...repo,
+      latestRelease: { tag: "v1", name: null, publishedAt: null },
+    };
+    expect(statTiles(undated, ["release"], new Date())[0]?.label).toBe(
+      "Latest release",
+    );
+    expect(statTiles(repo, ["release"], new Date(Number.NaN))[0]?.label).toBe(
+      "Latest release",
+    );
+  });
+});
+
+describe("showsStat", () => {
+  test("true only when the stat row is drawn and holds the tile", () => {
+    const repo = demoEntity("repo");
+    const base = { stats: null, sections: null };
+    expect(showsStat(repo, { ...base, preset: "release" }, "release")).toBe(
+      true,
+    );
+    expect(showsStat(repo, { ...base, preset: "overview" }, "release")).toBe(
+      false,
+    );
+    expect(
+      showsStat(
+        repo,
+        { preset: "overview", stats: ["release"], sections: null },
+        "release",
+      ),
+    ).toBe(true);
+    // The tile is configured, but the banner has no stat row.
+    expect(
+      showsStat(
+        repo,
+        { preset: "release", stats: null, sections: ["header", "activity"] },
+        "release",
+      ),
+    ).toBe(false);
   });
 });
 

@@ -24,7 +24,7 @@ export type CachePolicy = {
 export const CACHE = {
   /** Banner images: at most ~25 minutes behind GitHub at the edge plus 10 in camo. */
   banner: { downstream: 600, edge: 900, swr: 86_400, sie: 604_800 },
-  /** Saved Pro banners refresh faster. */
+  /** Saved Pro banners are redrawn sooner at the edge (from the same data). */
   bannerPro: { downstream: 120, edge: 300, swr: 3_600, sie: 604_800 },
   /** Markdown and other negotiated documents. */
   document: { downstream: 0, edge: 900, swr: 86_400, sie: 604_800 },

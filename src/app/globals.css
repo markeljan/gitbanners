@@ -10,7 +10,17 @@
 @import "@astryxdesign/core/tailwind-theme.css";
 @import "tailwindcss/utilities.css" layer(utilities);
 
-/* 3. `dark:` follows <html data-theme>, and the OS only while no mode is set ("system"). */
+/*
+ * 3. App styles, next to the components they belong to. They sit in the
+ * `components` layer: after Astryx (so they win over component defaults) and
+ * before Tailwind's utilities (so a utility on an element still wins).
+ * @import rules have to come before any other rule, hence up here.
+ */
+@import "../components/site/site.css" layer(components);
+@import "../components/banner/banner.css" layer(components);
+@import "../components/home/home.css" layer(components);
+
+/* 4. `dark:` follows <html data-theme>, and the OS only while no mode is set ("system"). */
 @custom-variant dark {
   &:where([data-theme="dark"], [data-theme="dark"] *) {
     @slot;
@@ -22,7 +32,7 @@
   }
 }
 
-/* 4. App-level token wiring. Unlayered on purpose: unlayered rules beat every @layer above. */
+/* 5. App-level token wiring. Unlayered on purpose: unlayered rules beat every @layer above. */
 [data-astryx-theme] {
   /* next/font's self-hosted Figtree plus its metric-matched fallback face */
   --font-family-body:
@@ -40,7 +50,43 @@ body {
 }
 
 /*
- * 5. Banner fonts for the live DOM preview. The family names must equal the
+ * 6. App chrome. Site furniture is built from Astryx tokens with shared
+ * classes (prefix `gb-`) instead of utility strings on repeated elements,
+ * which keeps the server HTML small: the homepage must stay mostly text
+ * (see the content-ratio check in the agent-readiness notes).
+ */
+:root {
+  /* App tokens are prefixed: a `--color-*` or `--spacing-*` name here would change Astryx itself. */
+  --gb-header-height: calc(var(--spacing-1) * 14);
+  --gb-page-width: 72rem;
+  --gb-prose-width: 44rem;
+  /* The README column on github.com: a banner at this width is shown 1:1. */
+  --gb-readme-width: 846px;
+}
+
+html {
+  /* Anchors land below the sticky header. */
+  scroll-padding-top: calc(var(--gb-header-height) + var(--spacing-4));
+}
+
+@layer base {
+  /* Astryx components bring their own ring; this one is for plain links and buttons. */
+  a:focus-visible,
+  button:focus-visible,
+  summary:focus-visible,
+  [tabindex="0"]:focus-visible {
+    outline: var(--focus-outline-width) solid var(--color-accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+
+  /* <main> takes focus from the skip link without drawing a ring around the page. */
+  main:focus {
+    outline: none;
+  }
+}
+
+/*
+ * 7. Banner fonts for the live DOM preview. The family names must equal the
  * names registered with the image engine (src/lib/render/fonts.ts) so the
  * preview and the rendered image use identical glyph metrics. Plain @font-face
  * on purpose: next/font would hash the family name.

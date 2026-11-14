@@ -15,6 +15,15 @@
         "GITHUB_TOKEN=${GITHUB_TOKEN:-$(gh auth token 2>/dev/null)} PORT=3100 exec bunx next start -p 3100"
       ],
       "port": 3100
+    },
+    {
+      "name": "dev-pro",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "PRO_LOGINS=$(gh api user -q .login 2>/dev/null) exec bunx next dev -p 3005"
+      ],
+      "port": 3005
     }
   ]
 }

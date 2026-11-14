@@ -58,9 +58,25 @@ export interface BandBlock extends Block {
 
 /** A piece of the layout that sizes itself for the box it is offered. */
 export interface Band {
-  plan(width: number, maxHeight: number): BandBlock | null;
+  /**
+   * `align` is the side of its region the band will hold on to when it is
+   * narrower than `width`: a band that mixes pieces of different widths (a
+   * small graph over a full-width line) needs it to line them up.
+   */
+  plan(
+    width: number,
+    maxHeight: number,
+    align?: Region["align"],
+  ): BandBlock | null;
   /** Takes whatever height its region has left (the contribution graph). */
   flex?: boolean;
+  /**
+   * Plans the band for exactly the height its region has left, when no
+   * `flex` band claims it: a chart, an avatar grid or a set of cards that is
+   * the banner's main content grows into the canvas instead of asking for a
+   * fixed size. Only the first such band of a region is asked.
+   */
+  fit?(width: number, height: number): BandBlock | null;
   /** Sits in the bottom-right corner of its region, outside the flow. */
   pinned?: boolean;
 }
@@ -94,6 +110,12 @@ export interface Attempt {
   placed: Placed[];
   /** The contribution graph of this candidate, when it has one. */
   grid: GridPlan | null;
+  /**
+   * The name had to shrink visibly or be cut to fit this arrangement. An
+   * arrangement that shows it whole is preferred; this one is still better
+   * than dropping content.
+   */
+  cramped?: boolean;
 }
 
 /** Cell size of the candidate's graph; 0 without one. Bigger is better. */
@@ -127,6 +149,14 @@ export interface Gaps {
 
 /** Below this a contribution graph is noise; the candidate is dropped instead. */
 export const MIN_CELL = 3;
+
+/**
+ * A graph at least this wide (as a share of the column it sits in) sets the
+ * measure: what surrounds it is laid out at exactly its width, so everything
+ * lines up with both of its edges. A much narrower graph would squeeze the
+ * rest, and is treated as one block among others instead.
+ */
+export const MEASURE_SHARE = 0.85;
 
 /** The content box of the canvas and the zone that must stay empty. */
 export function frameOf(ctx: Ctx): Frame {

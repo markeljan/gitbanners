@@ -1,6 +1,5 @@
 import "server-only";
 
-import type { ReactElement, ReactNode } from "react";
 import {
   type BannerOptions,
   type BannerTarget,
@@ -25,7 +24,7 @@ import { site } from "@/lib/site";
 import { animateHeatmap } from "./animate-heatmap";
 import { avatarDataUri } from "./avatar";
 import { renderPng, renderSvg } from "./engine";
-import { fallbackFontsFor } from "./fallback-fonts";
+import { prepareText } from "./text";
 
 /**
  * The one way a banner image is produced on the server:
@@ -104,19 +103,6 @@ function labelSvg(svg: string, alt: string): string {
   const end = svg.indexOf(">");
   if (end === -1) return svg;
   return `<svg role="img" aria-label="${label}"${svg.slice(4, end + 1)}<title>${label}</title>${svg.slice(end + 1)}`;
-}
-
-function elementText(node: ReactNode, out: string[]): void {
-  if (typeof node === "string") {
-    out.push(node);
-  } else if (Array.isArray(node)) {
-    for (const child of node) elementText(child, out);
-  } else if (node && typeof node === "object" && "props" in node) {
-    elementText(
-      (node as ReactElement<{ children?: ReactNode }>).props.children,
-      out,
-    );
-  }
 }
 
 /** A README-sized card with one line of text, for when Takumi itself fails. */
@@ -213,13 +199,11 @@ async function draw(
   options: BannerOptions | null,
   animate: boolean,
 ): Promise<{ body: string | Uint8Array; animated: boolean }> {
-  const strings: string[] = [];
-  elementText(built.element, strings);
-  const fonts = await fallbackFontsFor(strings.join("\n"));
+  const { element, fonts } = await prepareText(built.element);
   const size = { width: built.width, height: built.height, fonts };
 
   if (request.format === "png") {
-    const body = await renderPng(built.element, {
+    const body = await renderPng(element, {
       ...size,
       scale: pngScale(built, options, request.scale),
       signal: request.signal,
@@ -227,7 +211,7 @@ async function draw(
     return { body, animated: false };
   }
 
-  let svg = await renderSvg(built.element, { ...size, signal: request.signal });
+  let svg = await renderSvg(element, { ...size, signal: request.signal });
   let animated = false;
   if (animate && built.heatmap) {
     const result = animateHeatmap(svg, {

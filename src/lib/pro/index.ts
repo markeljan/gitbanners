@@ -9,11 +9,19 @@
 import "server-only";
 import { hasStarred } from "@/lib/auth/github";
 import { getUser } from "@/lib/db/users";
-import { LOGIN_RE, REPO_NAME_RE } from "@/lib/github/schema";
 import { forbidden, type ProblemOverrides } from "@/lib/http/problem";
-import { site } from "@/lib/site";
 import { getStore, keys, type Store } from "@/lib/store";
 import { type Entitlements, entitlementsFor } from "./entitlements";
+import { proRepo, proRepoSlug, type StarRepo } from "./repo";
+
+/**
+ * What a sign-in check concluded, for telling the user: their star was seen,
+ * GitHub said they have not starred, or no check could answer.
+ */
+export type StarVerdict = "starred" | "not_starred" | "unknown";
+
+/** The decision taken at sign-in, with how it was reached. */
+export type ProDecision = ProStatus & { verdict: StarVerdict };
 
 /** Which check produced a positive Pro decision. */
 export type ProSource = "allowlist" | "user_token" | "stargazers";
@@ -28,12 +36,6 @@ export interface ProStatus {
   at: number;
   /** `null` whenever `pro` is false. */
   source: ProSource | null;
-}
-
-/** A repository as `owner` and `name`, both already validated. */
-export interface StarRepo {
-  owner: string;
-  name: string;
 }
 
 /**
@@ -85,29 +87,6 @@ function resolveDeps(deps: Partial<ProDeps> = {}): ProDeps {
     hasStarred: deps.hasStarred ?? hasStarred,
     now: deps.now ?? Date.now,
   };
-}
-
-/**
- * The repository whose stargazers are Pro: `PRO_REPO` when set, the product's
- * own repository otherwise. `null` when the value is not `owner/name`, in
- * which case only the allowlist can grant Pro.
- */
-export function proRepo(): StarRepo | null {
-  const [owner, name, ...rest] = (process.env.PRO_REPO || site.repo.slug).split(
-    "/",
-  );
-  if (rest.length > 0 || !owner || !name) return null;
-  if (!LOGIN_RE.test(owner) || !REPO_NAME_RE.test(name)) return null;
-  return { owner, name };
-}
-
-/**
- * "owner/name" of the repository to star, for messages. Falls back to the
- * product's own repository when `PRO_REPO` is unusable.
- */
-export function proRepoSlug(): string {
-  const repo = proRepo();
-  return repo ? `${repo.owner}/${repo.name}` : site.repo.slug;
 }
 
 /**
@@ -218,11 +197,16 @@ export async function decideProAtSignIn(
   user: { id: string; login: string },
   options: { accessToken?: string } = {},
   deps?: Partial<ProDeps>,
-): Promise<ProStatus> {
+): Promise<ProDecision> {
   const d = resolveDeps(deps);
   const now = d.now();
+  const decided = (status: Promise<ProStatus>, verdict: StarVerdict) =>
+    status.then((saved) => ({ ...saved, verdict }));
   if (isAllowlisted(user.login)) {
-    return save(d.store, user.id, { pro: true, at: now, source: "allowlist" });
+    return decided(
+      save(d.store, user.id, { pro: true, at: now, source: "allowlist" }),
+      "starred",
+    );
   }
 
   const repo = proRepo();
@@ -232,28 +216,29 @@ export async function decideProAtSignIn(
       .hasStarred(options.accessToken, repo)
       .catch(() => "unknown" as const);
     if (starred === true) {
-      return save(d.store, user.id, {
-        pro: true,
-        at: now,
-        source: "user_token",
-      });
+      return decided(
+        save(d.store, user.id, { pro: true, at: now, source: "user_token" }),
+        "starred",
+      );
     }
     notStarred = starred === false;
   }
 
   const verdict = await lookUpStargazer(d, user.id);
   if (verdict === "starred") {
-    return save(d.store, user.id, {
-      pro: true,
-      at: now,
-      source: "stargazers",
-    });
+    return decided(
+      save(d.store, user.id, { pro: true, at: now, source: "stargazers" }),
+      "starred",
+    );
   }
   if (notStarred || verdict === "not_starred") {
-    return save(d.store, user.id, { pro: false, at: now, source: null });
+    return decided(
+      save(d.store, user.id, { pro: false, at: now, source: null }),
+      "not_starred",
+    );
   }
   const cached = parseStatus(await d.store.get(keys.pro(user.id)));
-  return keepLastKnown(d.store, user.id, cached, now);
+  return decided(keepLastKnown(d.store, user.id, cached, now), "unknown");
 }
 
 async function recheck(
@@ -350,3 +335,10 @@ export {
   FREE,
   PRO,
 } from "./entitlements";
+export {
+  type ProRepoLink,
+  proRepo,
+  proRepoLink,
+  proRepoSlug,
+  type StarRepo,
+} from "./repo";

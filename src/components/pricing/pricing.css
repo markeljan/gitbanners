@@ -1,0 +1,134 @@
+/*
+ * Pricing: two plans side by side under the heading, then the steps, the
+ * comparison table and the questions at reading measure. Tokens only.
+ */
+@layer components {
+  .gb-pricing {
+    --gb-measure: 52rem;
+  }
+
+  .gb-plans {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--spacing-4);
+    margin-block-start: var(--spacing-8);
+  }
+
+  @media (min-width: 48rem) {
+    .gb-plans {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .gb-plan {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-5);
+    padding: var(--spacing-6);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-container);
+    background: var(--color-background-card);
+  }
+
+  .gb-plan[data-plan="pro"] {
+    border-color: var(--color-border-emphasized);
+  }
+
+  .gb-plan-head > * + * {
+    margin-block-start: var(--spacing-2);
+  }
+
+  .gb-plan-price {
+    font-size: var(--text-heading-1-size);
+    line-height: var(--text-heading-1-leading);
+    font-weight: var(--text-heading-1-weight);
+    color: var(--color-text-primary);
+  }
+
+  .gb-plan-summary {
+    color: var(--color-text-secondary);
+  }
+
+  .gb-plan-features {
+    display: grid;
+    gap: var(--spacing-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .gb-plan-features li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--spacing-2);
+    align-items: start;
+    line-height: var(--text-supporting-leading);
+  }
+
+  .gb-plan-features li > :first-child {
+    margin-block-start: var(--spacing-0-5);
+  }
+
+  .gb-plan-foot {
+    margin-block-start: auto;
+  }
+
+  .gb-plan-actions {
+    display: grid;
+    gap: var(--spacing-2);
+  }
+
+  .gb-plan-state {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    min-height: var(--size-element-md);
+  }
+
+  /* --- Steps ---------------------------------------------------------- */
+
+  .gb-pricing .gb-body {
+    margin-block-start: var(--spacing-12);
+  }
+
+  .gb-article .gb-steps {
+    display: grid;
+    gap: var(--spacing-3);
+    padding: 0;
+    list-style: none;
+  }
+
+  .gb-article .gb-steps li + li {
+    margin-block-start: 0;
+  }
+
+  .gb-step {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--spacing-3);
+    align-items: start;
+    padding: var(--spacing-4);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-container);
+  }
+
+  .gb-step-number {
+    display: grid;
+    place-items: center;
+    width: var(--size-element-sm);
+    height: var(--size-element-sm);
+    border-radius: var(--radius-full);
+    background: var(--color-overlay-hover);
+    font-weight: var(--text-label-weight);
+  }
+
+  .gb-step-text {
+    display: grid;
+    gap: var(--spacing-1);
+    line-height: var(--text-supporting-leading);
+  }
+
+  .gb-step-text > :last-child {
+    color: var(--color-text-secondary);
+  }
+}

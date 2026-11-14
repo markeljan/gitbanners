@@ -1,13 +1,19 @@
 import { describe, expect, test } from "bun:test";
 import {
   addDays,
+  dateOf,
+  daysBetween,
   formatCount,
   formatDateRange,
   formatDay,
   formatNumber,
+  longMonthName,
   monthName,
   parseIsoDate,
+  percentChange,
+  relativeDay,
   toIsoDate,
+  weekdayName,
   weekdayOf,
 } from "@/lib/banner/format";
 
@@ -149,5 +155,104 @@ describe("dates", () => {
     expect(formatDateRange(null, "2026-11-13")).toBe("Nov 13");
     expect(formatDateRange(null, null)).toBe("");
     expect(formatDateRange("junk", "more junk")).toBe("");
+  });
+});
+
+describe("names of months and weekdays", () => {
+  test("long names, and nothing for values out of range", () => {
+    expect(longMonthName(1)).toBe("January");
+    expect(longMonthName(9)).toBe("September");
+    expect(longMonthName(12)).toBe("December");
+    expect(longMonthName(0)).toBe("");
+    expect(longMonthName(13)).toBe("");
+    expect(weekdayName(0)).toBe("Sunday");
+    expect(weekdayName(3)).toBe("Wednesday");
+    expect(weekdayName(6)).toBe("Saturday");
+    expect(weekdayName(7)).toBe("");
+    expect(weekdayName(-1)).toBe("");
+  });
+});
+
+describe("dateOf and daysBetween", () => {
+  test("an instant is read in UTC", () => {
+    expect(dateOf(new Date("2026-11-13T23:59:59Z"))).toEqual({
+      year: 2026,
+      month: 11,
+      day: 13,
+    });
+    expect(dateOf(new Date("2026-01-01T00:00:00Z"))).toEqual({
+      year: 2026,
+      month: 1,
+      day: 1,
+    });
+    expect(dateOf(new Date(Number.NaN))).toBeNull();
+    expect(dateOf("2026-11-13" as unknown as Date)).toBeNull();
+  });
+
+  test("whole days, across months, leap days and backwards", () => {
+    const day = (iso: string) =>
+      parseIsoDate(iso) as NonNullable<ReturnType<typeof parseIsoDate>>;
+    expect(daysBetween(day("2026-11-13"), day("2026-11-13"))).toBe(0);
+    expect(daysBetween(day("2026-11-03"), day("2026-11-13"))).toBe(10);
+    expect(daysBetween(day("2025-11-09"), day("2026-11-13"))).toBe(369);
+    expect(daysBetween(day("2024-02-28"), day("2024-03-01"))).toBe(2);
+    expect(daysBetween(day("2026-11-13"), day("2026-11-03"))).toBe(-10);
+  });
+});
+
+describe("relativeDay", () => {
+  const now = new Date("2026-11-13T12:00:00Z");
+  const table: [string, string][] = [
+    ["2026-11-13T00:00:01Z", "today"],
+    ["2026-11-12T23:59:59Z", "yesterday"],
+    ["2026-11-11", "2 days ago"],
+    ["2026-11-07", "6 days ago"],
+    ["2026-11-06", "last week"],
+    ["2026-11-03T15:00:00Z", "last week"],
+    ["2026-10-30", "2 weeks ago"],
+    ["2026-10-15", "4 weeks ago"],
+    ["2026-10-14", "last month"],
+    ["2026-09-14", "2 months ago"],
+    ["2025-11-14", "12 months ago"],
+    ["2025-11-11", "last year"],
+    ["2023-06-01", "3 years ago"],
+  ];
+  for (const [input, expected] of table) {
+    test(`${input} -> ${expected}`, () => {
+      expect(relativeDay(input, now)).toBe(expected);
+    });
+  }
+
+  test("is total: a date to come reads as today, junk as nothing", () => {
+    expect(relativeDay("2027-01-01", now)).toBe("today");
+    expect(relativeDay(null, now)).toBeNull();
+    expect(relativeDay(undefined, now)).toBeNull();
+    expect(relativeDay("soon", now)).toBeNull();
+    expect(relativeDay("2026-11-03", new Date(Number.NaN))).toBeNull();
+  });
+});
+
+describe("percentChange", () => {
+  test("signed whole percentages", () => {
+    expect(percentChange(100, 122)).toBe("+22%");
+    expect(percentChange(1660, 2033)).toBe("+22%");
+    expect(percentChange(100, 92)).toBe("-8%");
+    expect(percentChange(100, 100)).toBe("0%");
+    expect(percentChange(1000, 1004)).toBe("0%");
+    expect(percentChange(4, 1)).toBe("-75%");
+    expect(percentChange(100, 0)).toBe("-100%");
+  });
+
+  test("beyond tenfold it says how many times", () => {
+    expect(percentChange(10, 109)).toBe("+990%");
+    expect(percentChange(10, 110)).toBe("11x");
+    expect(percentChange(2, 4015)).toBe("2008x");
+  });
+
+  test("no base, no rate", () => {
+    expect(percentChange(0, 500)).toBeNull();
+    expect(percentChange(-3, 500)).toBeNull();
+    expect(percentChange(Number.NaN, 500)).toBeNull();
+    expect(percentChange(100, Number.POSITIVE_INFINITY)).toBeNull();
   });
 });

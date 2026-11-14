@@ -13,9 +13,11 @@ interface Context {
 }
 
 export async function GET(request: Request, context: Context) {
+  // Route params arrive URL-decoded: decoding again would turn `%25` into a
+  // lone "%" (and a lone "%" into a URIError) instead of a 400.
   const { login } = await context.params;
   return publicApi(request, "api", async (url) => {
-    const owner = await getOwnerData(decodeURIComponent(login), {
+    const owner = await getOwnerData(login, {
       year: parseYear(url.searchParams.get("year")),
       view: url.searchParams.get("view") === "preview" ? "preview" : "full",
     });

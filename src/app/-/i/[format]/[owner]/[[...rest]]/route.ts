@@ -6,7 +6,7 @@
  *   /{owner}.svg                     -> /-/i/svg/{owner}
  *   /{owner}/{preset}.png            -> /-/i/png/{owner}/{preset}
  *   /{owner}/{repo}/{preset}.svg     -> /-/i/svg/{owner}/{repo}/{preset}
- *   /embed/{owner}[/...]             -> /-/i/auto/{owner}[/...]
+ *   /embed/{owner}[/...]             -> /-/i/auto/@{owner}[/...]
  *   /{owner}[/...] requested by <img> -> /-/i/auto/{owner}[/...]
  *
  * The answer is always an image and always `200`: unknown targets and
@@ -16,6 +16,7 @@ import type { NextRequest } from "next/server";
 import {
   type BannerOptions,
   type ImageFormat,
+  isProfileOf,
   parseBannerPath,
   parseOptions,
   QUERY_KEYS,
@@ -24,7 +25,7 @@ import { getDefaultBanner } from "@/lib/db/banners";
 import { CACHE, entityCacheTag } from "@/lib/http/cache-headers";
 import { methodNotAllowed, notFound } from "@/lib/http/problem";
 import { getEntitlements } from "@/lib/pro";
-import { renderBanner } from "@/lib/render/banner";
+import { renderBanner, renderMessage } from "@/lib/render/banner";
 import {
   bannerResponse,
   negotiateFormat,
@@ -63,12 +64,8 @@ async function vanityDefault(login: string): Promise<Chosen | null> {
     const found = await getDefaultBanner(login);
     const banner = found?.banner;
     if (!found || !banner) return null;
-    if (
-      banner.target.kind !== "owner" ||
-      banner.target.login.toLowerCase() !== login.toLowerCase()
-    ) {
-      return null;
-    }
+    // The API refuses such a default; one stored before it did is ignored.
+    if (!isProfileOf(banner.target, login)) return null;
     const entitlements = await getEntitlements(found.userId);
     if (!entitlements.canSetDefault) return null;
     const overrides = parseOptions(new URLSearchParams(banner.query));
@@ -90,27 +87,44 @@ export async function GET(
   context: Context,
 ): Promise<Response> {
   const params = await context.params;
-  const negotiated = params.format === "auto";
-  if (!negotiated && params.format !== "svg" && params.format !== "png") {
+  // The rewrites match the suffix without regard to case, so `/vercel.SVG`
+  // arrives as "SVG": it is the same image as `/vercel.svg`.
+  const requested = params.format.toLowerCase();
+  const negotiated = requested === "auto";
+  if (!negotiated && requested !== "svg" && requested !== "png") {
     return notFound("Unknown image format.", {
       instance: request.nextUrl.pathname,
     });
   }
+  const format: ImageFormat = negotiated
+    ? negotiateFormat(request.headers.get("accept"))
+    : (requested as ImageFormat);
+  const query = request.nextUrl.searchParams;
+
   const parsed = parseBannerPath(
     [params.owner, ...(params.rest ?? [])].map(decode),
   );
   if (!parsed) {
-    return notFound("This is not a banner URL.", {
-      instance: request.nextUrl.pathname,
-      resolution:
-        "Use /{owner}.svg, /{owner}/{preset}.svg or /{owner}/{repo}.svg.",
+    // Still an image: an <img> shows a card, never a broken-image icon.
+    const rendered = await renderMessage({
+      message: {
+        title: "This is not a banner URL",
+        detail:
+          "Use /{owner}.svg, /{owner}/{preset}.svg or /{owner}/{repo}.svg.",
+      },
+      state: "not_found",
+      format,
+      scale: parseScale(query.get("scale")) ?? undefined,
+    });
+    return bannerResponse(rendered, {
+      format,
+      tags: [],
+      name: ["banner"],
+      download: query.get("download") === "1",
+      negotiated,
     });
   }
-  const format: ImageFormat = negotiated
-    ? negotiateFormat(request.headers.get("accept"))
-    : (params.format as ImageFormat);
 
-  const query = request.nextUrl.searchParams;
   let chosen: Chosen = {
     preset: parsed.preset,
     overrides: parseOptions(query),

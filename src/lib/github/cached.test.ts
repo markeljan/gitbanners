@@ -29,6 +29,7 @@ import {
   getOwnerPreview,
   getRepo,
   getSuggestions,
+  hasPageData,
 } from "./cached";
 import { GitHubError } from "./errors";
 import * as ownerModule from "./owner";
@@ -491,5 +492,27 @@ describe("without a token", () => {
     const owner = await getOwnerPreview("markeljan");
     expect(owner).not.toBe(SAMPLE_USER);
     expect(fake.count("OwnerCore")).toBe(1);
+  });
+});
+
+describe("hasPageData", () => {
+  const other = { kind: "repo", owner: "react", name: "react" } as const;
+  const sample = {
+    kind: "repo",
+    owner: SAMPLE_REPO.owner.login,
+    name: SAMPLE_REPO.name,
+  } as const;
+
+  test("accounts always, any repository with a token", () => {
+    process.env.GITHUB_TOKEN = "server-token";
+    expect(hasPageData({ kind: "owner", login: "torvalds" })).toBe(true);
+    expect(hasPageData(other)).toBe(true);
+  });
+
+  test("without a token, only repositories with a bundled sample", () => {
+    delete process.env.GITHUB_TOKEN;
+    expect(hasPageData({ kind: "owner", login: "torvalds" })).toBe(true);
+    expect(hasPageData(sample)).toBe(true);
+    expect(hasPageData(other)).toBe(false);
   });
 });

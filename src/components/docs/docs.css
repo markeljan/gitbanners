@@ -1,0 +1,100 @@
+/*
+ * Docs page extras: the live URL builder in the cheat sheet and the section
+ * picker of narrow screens. Tokens only.
+ */
+@layer components {
+  /* --- URL builder ---------------------------------------------------- */
+
+  .gb-builder {
+    display: grid;
+    gap: var(--spacing-4);
+    margin-block-start: var(--spacing-4);
+    padding: var(--spacing-4);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-container);
+  }
+
+  .gb-builder-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+    gap: var(--spacing-3);
+    align-items: end;
+  }
+
+  .gb-builder-fields > :first-child {
+    grid-column: 1 / -1;
+  }
+
+  .gb-builder-result {
+    display: grid;
+    gap: var(--spacing-3);
+    min-width: 0;
+  }
+
+  .gb-builder-url {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    min-width: 0;
+  }
+
+  .gb-article .gb-builder-url code {
+    flex: 1;
+    min-width: 0;
+    padding: var(--spacing-1-5) var(--spacing-2);
+    border-radius: var(--radius-inner);
+    background: var(--color-overlay-hover);
+    font-family: var(--font-family-code);
+    font-size: var(--text-supporting-size);
+    overflow-wrap: anywhere;
+  }
+
+  .gb-builder-preview {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-element);
+  }
+
+  /* --- Section picker on narrow screens ------------------------------- */
+
+  .gb-jump {
+    position: fixed;
+    z-index: 30;
+    inset-inline: var(--spacing-4);
+    inset-block-end: var(--spacing-4);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-1-5) var(--spacing-1-5) var(--spacing-1-5)
+      var(--spacing-3);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-full);
+    background: var(--color-background-popover);
+    box-shadow: var(--shadow-med);
+  }
+
+  .gb-jump-label {
+    flex: none;
+    font-size: var(--text-supporting-size);
+    color: var(--color-text-secondary);
+  }
+
+  .gb-jump-select {
+    flex: 1;
+    min-width: 0;
+    min-height: var(--size-element-md);
+    padding-inline: var(--spacing-2);
+    border: 0;
+    border-radius: var(--radius-full);
+    background: var(--color-overlay-hover);
+    color: var(--color-text-primary);
+    font: inherit;
+    text-overflow: ellipsis;
+  }
+
+  .gb-jump-select:focus-visible {
+    outline: var(--focus-outline-width) solid var(--color-accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+}

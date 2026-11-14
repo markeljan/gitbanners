@@ -3,29 +3,21 @@
  * (or ?error=access_denied&state=… when the user declined)
  *
  * Finishes "Sign in with GitHub". Every outcome is a 303 back to the page the
- * user started from; failures add `?auth_error=<code>`:
- *
- *   state_mismatch       no or wrong transaction cookie (expired, replayed)
- *   access_denied        the user declined on github.com
- *   github_error         GitHub reported another error
- *   missing_code         no authorization code in the request
- *   expired_code         the code was already used or is older than ten minutes
- *   rate_limited         too many sign-ins from this address
- *   accounts_unavailable accounts are not configured on this deployment
- *   sign_in_failed       anything else (GitHub or the database unreachable)
+ * user started from; failures add `?auth_error=<code>` (the codes are listed
+ * at `AuthError` in `src/lib/auth/env.ts`).
  */
 import type { NextRequest } from "next/server";
 import {
+  type AuthError,
+  backTo,
   canonicalOrigin,
   env,
   githubSignInAvailable,
-  redirectTo,
 } from "@/lib/auth/env";
 import {
   exchangeCode,
   fetchGitHubUser,
   GitHubSignInError,
-  safeReturnTo,
   timingSafeEqual,
 } from "@/lib/auth/github";
 import { completeSignIn, consumeSignInCookie } from "@/lib/auth/session";
@@ -46,22 +38,27 @@ const MAX_CODE_LENGTH = 256;
 /** What an error code or an error class name looks like. */
 const LOGGABLE_REASON = /^\w{1,64}$/;
 
-type AuthError =
-  | "state_mismatch"
-  | "access_denied"
-  | "github_error"
-  | "missing_code"
-  | "expired_code"
-  | "rate_limited"
-  | "accounts_unavailable"
-  | "sign_in_failed";
-
-function backTo(returnTo: string, error?: AuthError): Response {
-  // `returnTo` was validated when the flow started; it is validated again
-  // where it is used, so nothing depends on what an old cookie contains.
-  const url = new URL(safeReturnTo(returnTo), "http://internal.invalid");
-  if (error) url.searchParams.set("auth_error", error);
-  return redirectTo(url.pathname + url.search + url.hash);
+/**
+ * "I starred it, check again" signs in with `pro_check` in its return
+ * address. The answer replaces it, so the page can say what happened:
+ * `pro`, `not_starred` (GitHub says no star) or `unverified` (no check could
+ * answer; the plan stayed as it was).
+ */
+function withProCheck(
+  returnTo: string,
+  pro: { pro: boolean; verdict: "starred" | "not_starred" | "unknown" },
+): string {
+  const url = new URL(returnTo, "http://internal.invalid");
+  if (!url.searchParams.has("pro_check")) return returnTo;
+  url.searchParams.set(
+    "pro_check",
+    pro.pro
+      ? "pro"
+      : pro.verdict === "not_starred"
+        ? "not_starred"
+        : "unverified",
+  );
+  return url.pathname + url.search + url.hash;
 }
 
 export async function GET(request: NextRequest): Promise<Response> {
@@ -106,8 +103,8 @@ export async function GET(request: NextRequest): Promise<Response> {
       redirectUri: `${canonicalOrigin(request)}/api/auth/github/callback`,
     });
     const profile = await fetchGitHubUser(accessToken);
-    await completeSignIn(profile, { accessToken });
-    return back();
+    const { pro } = await completeSignIn(profile, { accessToken });
+    return backTo(withProCheck(tx.returnTo, pro), undefined);
   } catch (error) {
     const reason =
       error instanceof GitHubSignInError

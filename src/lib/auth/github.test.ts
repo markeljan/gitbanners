@@ -45,6 +45,7 @@ beforeEach(() => {
     deny: false,
     checkNeedsScope: false,
     starListTruncated: false,
+    repoPrivate: false,
     user: { id: 4242, login: "Octo-Test", name: null },
   });
   mock.requests.length = 0;
@@ -347,8 +348,16 @@ describe("hasStarred", () => {
     expect(await hasStarred(token, REPO)).toBe(false);
     expect(mock.requests).toEqual([
       "GET /user/starred/acme/gitbanners",
+      "GET /repos/acme/gitbanners",
       "GET /user/starred",
     ]);
+  });
+
+  test("a private repository the token cannot see: 'unknown', not 'no'", async () => {
+    const token = await signIn();
+    Object.assign(mock.state, { starred: true, repoPrivate: true });
+    mock.state.checkNeedsScope = true;
+    expect(await hasStarred(token, REPO)).toBe("unknown");
   });
 
   test("the check endpoint hides the star (scope): the list still finds it, any casing", async () => {
@@ -395,10 +404,12 @@ describe("hasStarred", () => {
     const flaky = Bun.serve({
       port: 0,
       hostname: "127.0.0.1",
-      fetch: (request) =>
-        new URL(request.url).pathname === "/user/starred"
-          ? listBody.clone()
-          : Response.json({ message: "Not Found" }, { status: 404 }),
+      fetch: (request) => {
+        const { pathname } = new URL(request.url);
+        if (pathname === "/user/starred") return listBody.clone();
+        if (pathname === "/repos/acme/gitbanners") return Response.json({});
+        return Response.json({ message: "Not Found" }, { status: 404 });
+      },
     });
     const undo = setEnv({ GITHUB_API_URL: `http://127.0.0.1:${flaky.port}` });
     try {

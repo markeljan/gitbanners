@@ -12,7 +12,12 @@ export interface Entitlements {
   canAnimate: boolean;
   /** May choose the banner served at `/{login}`. */
   canSetDefault: boolean;
-  /** How long a saved banner may be served from cache before it re-renders. */
+  /**
+   * How long the CDN may serve a saved banner before it is drawn again
+   * (`CACHE.banner.edge` / `CACHE.bannerPro.edge`). The GitHub data it is
+   * drawn from has its own lifetime (`cacheLife("github")`), the same on
+   * every plan, so copy must not sell this as fresher data.
+   */
   refreshSeconds: number;
 }
 

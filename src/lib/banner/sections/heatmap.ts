@@ -296,11 +296,16 @@ export function planGrid(
   };
 }
 
-/** Legend swatches: close to the cell size, but never equal to it. */
-function swatchSize(cell: number, textSize: number): number {
-  const size = Math.max(cell - 1, Math.round(textSize * 0.55));
+/**
+ * Legend swatches: close to the cell size, but never equal to it, and never
+ * taller than the line they sit on (a calendar of a few weeks on a large
+ * canvas has cells the size of tiles).
+ */
+function swatchSize(cell: number, textSize: number, line: number): number {
+  const size = Math.min(line, Math.max(cell - 1, Math.round(textSize * 0.55)));
   // A swatch with the cell's exact shape would be animated as if it were a day.
-  return size === cell ? size + 1 : size;
+  if (size !== cell) return size;
+  return size < line ? size + 1 : size - 1;
 }
 
 /** "Less ▢▢▢▢▢ More", as under GitHub's own graph. */
@@ -308,7 +313,7 @@ export function planLegend(ctx: Ctx, geometry: HeatmapGeometry): Block {
   const { ramp, palette } = ctx;
   const size = finePrint(ctx);
   const line = noteLine(ctx);
-  const swatch = swatchSize(geometry.cell, size);
+  const swatch = swatchSize(geometry.cell, size, line);
   const swatchGap = Math.max(2, Math.round(swatch * 0.3));
   const textGap = Math.round(size * 0.55);
   const less = boxOf(ctx, "Less", size);

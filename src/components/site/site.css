@@ -1,0 +1,293 @@
+/*
+ * Site chrome: page frame, header, footer, type, the 404 page.
+ *
+ * Imported by src/app/globals.css into `@layer components`: Astryx's own
+ * layers come earlier, so these rules win over component defaults, and
+ * Tailwind utilities come later, so a utility on an element still wins.
+ * Everything is built from Astryx tokens; app tokens are prefixed `--gb-`.
+ */
+
+/* ── Page frame ────────────────────────────────────────────────────────────── */
+.gb-container {
+  width: 100%;
+  max-width: var(--gb-page-width);
+  margin-inline: auto;
+  padding-inline: var(--spacing-4);
+}
+.gb-container-narrow {
+  max-width: var(--gb-prose-width);
+}
+@media (width >= 40rem) {
+  .gb-container {
+    padding-inline: var(--spacing-6);
+  }
+}
+
+.gb-skip-link {
+  position: fixed;
+  inset-block-start: var(--spacing-2);
+  inset-inline-start: var(--spacing-2);
+  z-index: 60;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-element);
+  background: var(--color-background-inverted);
+  color: var(--color-background-body);
+  font-weight: var(--text-label-weight);
+  transform: translateY(-200%);
+}
+.gb-skip-link:focus-visible {
+  transform: none;
+}
+
+/*
+ * Touch targets. On phones and small tablets (the same query Astryx uses
+ * to step its type scale up) every button and text field is at least 44px
+ * tall, whatever size the component was given for a mouse.
+ */
+@media (width < 64rem) and (pointer: coarse) {
+  .astryx-button,
+  .astryx-text-input {
+    min-height: calc(var(--spacing-1) * 11);
+  }
+  .astryx-button {
+    min-width: calc(var(--spacing-1) * 11);
+  }
+}
+
+/* ── Header ────────────────────────────────────────────────────────────────── */
+.gb-header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 40;
+  height: var(--gb-header-height);
+  border-block-end: var(--border-width) solid var(--color-border);
+  background: color-mix(in srgb, var(--color-background-body) 80%, transparent);
+  backdrop-filter: blur(var(--spacing-3)) saturate(1.5);
+}
+.gb-header-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  height: 100%;
+}
+.gb-home-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-inline-end: var(--spacing-3);
+  border-radius: var(--radius-inner);
+  color: var(--color-text-primary);
+}
+.gb-wordmark {
+  font-size: var(--text-large-size);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1;
+}
+.gb-nav-list {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-0-5);
+}
+.gb-nav-link {
+  display: inline-flex;
+  align-items: center;
+  height: var(--size-element-md);
+  padding-inline: var(--spacing-3);
+  border-radius: var(--radius-element);
+  color: var(--color-text-secondary);
+  font-weight: var(--text-label-weight);
+  transition:
+    color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+.gb-nav-link:hover {
+  color: var(--color-text-primary);
+  background: var(--color-overlay-hover);
+}
+.gb-nav-link:active {
+  background: var(--color-overlay-pressed);
+}
+.gb-nav-link[aria-current="page"] {
+  color: var(--color-text-primary);
+}
+.gb-header-end {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-inline-start: auto;
+}
+
+/*
+ * Session slot. While the session hint cookie exists the inline script in
+ * <head> sets `data-gb-in` on <html> before first paint, so the avatar's
+ * place is reserved instead of flashing "Sign in" until /api/me answers.
+ * `data-ready` is set by the component once the session is known.
+ */
+.gb-user {
+  display: inline-flex;
+  align-items: center;
+}
+html[data-gb-in] .gb-user:not([data-ready]) > * {
+  display: none;
+}
+html[data-gb-in] .gb-user:not([data-ready])::after {
+  content: "";
+  width: var(--size-element-sm);
+  height: var(--size-element-sm);
+  border-radius: var(--radius-full);
+  background: var(--color-skeleton);
+}
+
+/* Drawer navigation on small screens: full-width rows, finger sized. */
+.gb-drawer-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: calc(var(--spacing-1) * 11);
+  padding-inline: var(--spacing-3);
+  border-radius: var(--radius-element);
+  color: var(--color-text-primary);
+  font-size: var(--text-large-size);
+  font-weight: var(--text-label-weight);
+}
+.gb-drawer-link:hover {
+  background: var(--color-overlay-hover);
+}
+.gb-drawer-link[aria-current="page"] {
+  background: var(--color-overlay-hover);
+}
+
+/* ── Type ──────────────────────────────────────────────────────────────────── */
+/* The page title. Astryx's display role, tightened for a headline. */
+.gb-display {
+  font-size: var(--text-display-3-size);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+/* Section titles. */
+.gb-h2 {
+  font-size: var(--text-heading-1-size);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+.gb-h3 {
+  font-size: var(--text-large-size);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+@media (width >= 40rem) {
+  .gb-h2 {
+    font-size: var(--text-display-3-size);
+  }
+}
+/* The sentence under a title. */
+.gb-lead {
+  line-height: 1.55;
+}
+@media (width >= 40rem) {
+  .gb-display {
+    font-size: var(--text-display-2-size);
+  }
+  .gb-lead {
+    font-size: var(--text-large-size);
+  }
+}
+@media (width >= 64rem) {
+  .gb-display {
+    font-size: var(--text-display-1-size);
+  }
+}
+
+/* ── Footer ────────────────────────────────────────────────────────────────── */
+.gb-footer {
+  border-block-start: var(--border-width) solid var(--color-border);
+  padding-block: var(--spacing-12) var(--spacing-10);
+  color: var(--color-text-secondary);
+}
+.gb-footer-grid {
+  display: grid;
+  gap: var(--spacing-10) var(--spacing-8);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.gb-footer-brand {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-4);
+  max-width: 22rem;
+}
+@media (width >= 48rem) {
+  .gb-footer-grid {
+    grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
+  }
+  .gb-footer-brand {
+    grid-column: auto;
+  }
+}
+.gb-footer-title {
+  margin-block-end: var(--spacing-3);
+  color: var(--color-text-primary);
+  font-weight: var(--text-label-weight);
+}
+.gb-footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-0-5);
+}
+.gb-footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-height: var(--size-element-sm);
+  border-radius: var(--radius-inner);
+  color: var(--color-text-secondary);
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+.gb-footer-link:hover {
+  color: var(--color-text-primary);
+}
+.gb-footer-note {
+  margin-block-start: var(--spacing-10);
+  padding-block-start: var(--spacing-6);
+  border-block-start: var(--border-width) solid var(--color-border);
+  font-size: var(--text-supporting-size);
+  line-height: var(--text-supporting-leading);
+}
+@media (pointer: coarse) {
+  .gb-footer-link {
+    min-height: calc(var(--spacing-1) * 11);
+  }
+}
+
+/* ── 404 ───────────────────────────────────────────────────────────────────── */
+.gb-not-found {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-4);
+  padding-block: calc(var(--spacing-12) * 2);
+}
+.gb-not-found-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+  margin-block-start: var(--spacing-4);
+}
+
+/* ── Motion ───────────────────────────────────────────────────────────── */
+/* Hover and press fades are decoration: gone for people who asked for less. */
+@media (prefers-reduced-motion: reduce) {
+  .gb-nav-link,
+  .gb-footer-link,
+  .gb-link,
+  .gb-chip,
+  .gb-swap > *,
+  .gb-preview {
+    transition: none;
+  }
+}

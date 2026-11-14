@@ -92,6 +92,7 @@ beforeEach(() => {
     deny: false,
     checkNeedsScope: false,
     starListTruncated: false,
+    repoPrivate: false,
     user: { id: 4242, login: "Octo-Test", name: null },
   });
   mock.requests.length = 0;
@@ -259,7 +260,63 @@ describe("GET /api/auth/github", () => {
         expect(cookies.written()).toEqual([]);
         expect(mock.requests).toEqual([]);
       });
+
+      test(`${label}: a clicked link goes back to the page with the reason`, async () => {
+        setEnv(vars);
+        setStore(undefined);
+        const response = await startRequest("?returnTo=/pricing%3Fplan=pro", {
+          ...canonicalHeaders,
+          accept: "text/html,application/xhtml+xml",
+          "sec-fetch-mode": "navigate",
+        });
+        expect(response.status).toBe(303);
+        expect(response.headers.get("location")).toBe(
+          "/pricing?plan=pro&auth_error=accounts_unavailable",
+        );
+        expect(response.headers.get("cache-control")).toBe("no-store");
+        expect(cookies.written()).toEqual([]);
+        expect(mock.requests).toEqual([]);
+      });
     }
+
+    test("a browser without fetch metadata is recognised by its Accept header", async () => {
+      setEnv({ GITHUB_CLIENT_ID: undefined });
+      const response = await startRequest("?returnTo=/studio", {
+        ...canonicalHeaders,
+        accept: "text/html",
+      });
+      expect(response.status).toBe(303);
+      expect(response.headers.get("location")).toBe(
+        "/studio?auth_error=accounts_unavailable",
+      );
+    });
+
+    test("a script asking for the page still gets the problem document", async () => {
+      setEnv({ GITHUB_CLIENT_ID: undefined });
+      const response = await startRequest("?returnTo=/studio", {
+        ...canonicalHeaders,
+        accept: "text/html",
+        "sec-fetch-mode": "cors",
+      });
+      expect(response.status).toBe(503);
+      expect(response.headers.get("content-type")).toBe(
+        "application/problem+json",
+      );
+    });
+
+    test("the way back is never another site", async () => {
+      setEnv({ GITHUB_CLIENT_ID: undefined });
+      for (const returnTo of ["//evil.example", "https://evil.example/x"]) {
+        const response = await startRequest(
+          `?returnTo=${encodeURIComponent(returnTo)}`,
+          { ...canonicalHeaders, "sec-fetch-mode": "navigate" },
+        );
+        expect(response.status).toBe(303);
+        expect(response.headers.get("location")).toBe(
+          "/?auth_error=accounts_unavailable",
+        );
+      }
+    });
   });
 });
 
@@ -337,10 +394,35 @@ describe("GET /api/auth/github/callback", () => {
       pro: true,
       source: "user_token",
     });
-    expect(mock.requests.slice(-2)).toEqual([
+    expect(mock.requests.slice(-3)).toEqual([
       "GET /user/starred/acme/gitbanners",
+      "GET /repos/acme/gitbanners",
       "GET /user/starred",
     ]);
+  });
+
+  test("'check again' comes back with what the star check found", async () => {
+    const back = async (returnTo: string) => {
+      const flow = await begin(`?returnTo=${encodeURIComponent(returnTo)}`);
+      const response = await flow.finish();
+      return response.headers.get("location");
+    };
+    mock.state.starred = false;
+    expect(await back("/dashboard?pro_check=1")).toBe(
+      "/dashboard?pro_check=not_starred",
+    );
+    mock.state.starred = true;
+    expect(await back("/dashboard?pro_check=1")).toBe(
+      "/dashboard?pro_check=pro",
+    );
+    // A private repository the user's token cannot see: no verdict.
+    Object.assign(mock.state, { checkNeedsScope: true, repoPrivate: true });
+    await store.set("pro:4242", { pro: false, at: 0, source: null });
+    expect(await back("/pricing?pro_check=1")).toBe(
+      "/pricing?pro_check=unverified",
+    );
+    // An ordinary sign-in says nothing.
+    expect(await back("/studio")).toBe("/studio");
   });
 
   test("no transaction cookie, or a state that does not match: state_mismatch", async () => {

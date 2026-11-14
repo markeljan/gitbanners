@@ -14,5 +14,11 @@ export {
   renderSvg,
   renderWebp,
 } from "./engine";
-export { fallbackFontsFor } from "./fallback-fonts";
-export { type BannerFont, loadBaseFonts } from "./fonts";
+export {
+  drawableText,
+  drawnAsEmoji,
+  fontsForText,
+  type TextFonts,
+} from "./fallback-fonts";
+export { type BannerFont, baseCoverage, loadBaseFonts } from "./fonts";
+export { prepareText } from "./text";

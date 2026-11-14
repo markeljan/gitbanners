@@ -1,0 +1,228 @@
+/*
+ * /dashboard. Built from Astryx tokens; app classes are prefixed `gb-`.
+ * In `@layer components`, like the other app stylesheets, so Astryx
+ * component defaults lose to these rules and Tailwind utilities win.
+ */
+@layer components {
+  .gb-dash-page {
+    padding-block: var(--spacing-8) var(--spacing-12);
+  }
+
+  /* Signed-out explanation, and the skeleton that stands in for it while a
+     session probably exists (`data-gb-in` is set before first paint). */
+  .gb-dash-public-wait {
+    display: none;
+  }
+  html[data-gb-in] .gb-dash-public:not([data-ready]) {
+    display: none;
+  }
+  html[data-gb-in] .gb-dash-public:not([data-ready]) + .gb-dash-public-wait {
+    display: block;
+  }
+
+  .gb-dash-intro {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-10);
+  }
+  .gb-dash-intro-lead {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-4);
+    max-width: var(--gb-prose-width);
+  }
+  .gb-dash-intro-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-2);
+  }
+  .gb-dash-points {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: var(--spacing-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .gb-dash-point {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    padding: var(--spacing-5);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-container);
+    background: var(--color-background-surface);
+  }
+  .gb-dash-point-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--size-element-lg);
+    height: var(--size-element-lg);
+    margin-block-end: var(--spacing-1);
+    border-radius: var(--radius-element);
+    background: var(--color-background-muted);
+    color: var(--color-text-primary);
+  }
+
+  /* Signed in: head, then banners beside plan and account. */
+  .gb-dash {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-6);
+  }
+  .gb-dash-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--spacing-4);
+  }
+  .gb-dash-title {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    min-width: 0;
+  }
+  .gb-dash-usage {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+    width: calc(var(--spacing-1) * 56);
+    max-width: 100%;
+  }
+  .gb-dash-cols {
+    display: grid;
+    gap: var(--spacing-6);
+    align-items: start;
+  }
+  @media (width >= 64rem) {
+    .gb-dash-cols {
+      grid-template-columns: minmax(0, 1fr) 20rem;
+    }
+  }
+  .gb-dash-main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+    min-width: 0;
+  }
+  .gb-dash-side {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+  }
+  .gb-dash-empty {
+    padding: var(--spacing-10) var(--spacing-4);
+    border: var(--border-width) dashed var(--color-border-emphasized);
+    border-radius: var(--radius-container);
+  }
+
+  /* Saved banner cards. */
+  .gb-saved-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+    gap: var(--spacing-4);
+  }
+  .gb-saved {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-container);
+    background: var(--color-background-surface);
+  }
+  /* Banners come in many shapes; each is fitted into one frame so the grid
+     stays even. */
+  .gb-saved-frame {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 2 / 1;
+    padding: var(--spacing-3);
+    border-block-end: var(--border-width) solid var(--color-border);
+    background: var(--color-background-muted);
+  }
+  .gb-saved-frame > .astryx-skeleton,
+  .gb-saved-frame > [class*="skeleton"] {
+    width: 100%;
+    height: 100%;
+  }
+  .gb-saved-frame img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  a.gb-saved-frame:focus-visible {
+    outline-offset: calc(
+      var(--focus-outline-offset) *
+      -1 -
+      var(--focus-outline-width)
+    );
+  }
+  .gb-saved-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1-5);
+    padding: var(--spacing-3) var(--spacing-3) var(--spacing-2);
+  }
+  .gb-saved-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    min-width: 0;
+    min-height: var(--size-element-sm);
+  }
+  .gb-saved-name {
+    min-width: 0;
+    font-size: var(--text-label-size);
+  }
+  .gb-saved-rename {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+  .gb-saved-rename-actions {
+    display: flex;
+    gap: var(--spacing-1);
+  }
+  .gb-saved-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-1);
+    margin-block-start: var(--spacing-1);
+    margin-inline-start: calc(var(--spacing-2) * -1);
+  }
+  .gb-saved-actions-end {
+    display: inline-flex;
+    gap: var(--spacing-1);
+    margin-inline-start: auto;
+  }
+
+  /* Account card. */
+  .gb-account {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+  }
+  .gb-account-who {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    min-width: 0;
+  }
+  .gb-account-names {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .gb-account-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+}

@@ -13,6 +13,7 @@ import {
   activityOf,
   chartStyle,
   commitsCaption,
+  commitTotal,
   fullScale,
   levelOf,
   recentWeeks,
@@ -110,11 +111,7 @@ export function planActivity(
   const activity = activityOf(ctx);
   const weeks = activity ? recentWeeks(activity) : null;
   const bars = weeks ? barsOf(weeks) : placeholderBars();
-  const total = activity
-    ? Number.isFinite(activity.total)
-      ? Math.max(0, Math.floor(activity.total))
-      : (weeks ?? []).reduce((sum, week) => sum + week.commits, 0)
-    : null;
+  const total = activity && weeks ? commitTotal(activity, weeks) : null;
   const count = Math.max(1, bars.length);
 
   // Whole-pixel bars on a whole-pixel pitch; what is left over is split
@@ -140,13 +137,14 @@ export function planActivity(
   const axis = ramp.hair;
 
   // A card gives the bars five lines of small text; a fixed canvas lets them
-  // take the height that is free, up to a calm landscape proportion.
+  // take the height that is free, up to two fifths of its own (and never a
+  // chart taller than it is wide).
+  const frame = (canvas.height ?? 0) - canvas.inset.top - canvas.inset.bottom;
   const wanted =
     spec.maxHeight === null
       ? Math.round(ramp.small * 5)
       : Math.round(
-          Math.min(spec.width * 0.24, canvas.unit * 10) /
-            (1 + spec.compact * 0.4),
+          Math.min(spec.width * 0.5, frame * 0.42) / (1 + spec.compact * 0.4),
         );
   const least = Math.round(ramp.small * 2.5);
   const room =
@@ -157,6 +155,12 @@ export function planActivity(
   const chart = Math.min(wanted, room);
   const lowest = Math.max(2, ramp.hair * 2);
   const heat = palette.colors.heat.map(shortHex);
+  // Placeholders are drawn in the empty-cell colour. On the themes where
+  // that is the background itself, the surface colour keeps them visible.
+  const pale =
+    heat[0] === shortHex(palette.colors.bg)
+      ? shortHex(palette.colors.surface)
+      : heat[0];
 
   const draw = (x: number, y: number, brand: Brand | null): Node[] => {
     const nodes: (Node | null)[] = [];
@@ -166,7 +170,7 @@ export function planActivity(
       const height = Math.max(lowest, Math.round(item.share * chart));
       nodes.push(
         box(x + inset + index * pitch, base - height, bar, height, {
-          backgroundColor: heat[item.level] ?? heat[0],
+          backgroundColor: (item.level > 0 && heat[item.level]) || pale,
           borderTopLeftRadius: radius,
           borderTopRightRadius: radius,
         }),
@@ -211,9 +215,7 @@ export function planActivity(
       legend: null,
       brand,
     });
-    if (footer && (caption || brand)) {
-      nodes.push(...footer.at(x, base + axis + labelSpace + footGap));
-    }
+    if (footer) nodes.push(...footer.at(x, base + axis + labelSpace + footGap));
     return compact(nodes);
   };
 

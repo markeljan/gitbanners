@@ -25,6 +25,11 @@ export interface MockGitHubState {
   checkNeedsScope: boolean;
   /** The star list claims to have another page. */
   starListTruncated: boolean;
+  /**
+   * The repository is private: a token without scopes gets 404 for it, so
+   * a missing star proves nothing.
+   */
+  repoPrivate: boolean;
   /** Repository the mock user may have starred, in GitHub's own casing. */
   starRepo: string;
   user: { id: number; login: string; name: string | null };
@@ -55,6 +60,7 @@ export function startMockGitHub(port = 0): MockGitHub {
     deny: false,
     checkNeedsScope: false,
     starListTruncated: false,
+    repoPrivate: false,
     starRepo: "Acme/GitBanners",
     user: { id: 4242, login: "Octo-Test", name: null },
   };
@@ -174,6 +180,13 @@ export function startMockGitHub(port = 0): MockGitHub {
           ? { Link: `<${url.origin}/user/starred?page=2>; rel="next"` }
           : {},
       });
+    }
+    if (/^\/repos\/[^/]+\/[^/]+$/.test(url.pathname)) {
+      const slug = url.pathname.slice("/repos/".length);
+      return state.repoPrivate &&
+        slug.toLowerCase() === state.starRepo.toLowerCase()
+        ? Response.json({ message: "Not Found" }, { status: 404 })
+        : Response.json({ full_name: slug, private: false });
     }
     return Response.json({ message: "Not Found" }, { status: 404 });
   }

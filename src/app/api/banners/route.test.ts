@@ -15,7 +15,9 @@ import {
 const cookies = installFakeCookies();
 
 const { completeSignIn } = await import("@/lib/auth/session");
-const { getBanner, getDefaultBanner } = await import("@/lib/db/banners");
+const { getBanner, getDefaultBanner, setDefaultBanner } = await import(
+  "@/lib/db/banners"
+);
 const { setStore } = await import("@/lib/store");
 const { MemoryStore } = await import("@/lib/store/memory");
 const collection = await import("./route");
@@ -26,6 +28,8 @@ const SAME_ORIGIN = { "sec-fetch-site": "same-origin" };
 const alice = { id: 4242, login: "Alice", name: null, avatarUrl: "" };
 const bob = { id: 5151, login: "Bob", name: null, avatarUrl: "" };
 const banner = { name: "Mine", target: { kind: "owner", login: "torvalds" } };
+/** A banner of Bob's own profile, the only kind that can be his default. */
+const bobsProfile = { name: "Me", target: { kind: "owner", login: "bob" } };
 
 let store = new MemoryStore();
 let restore = () => {};
@@ -307,10 +311,10 @@ describe("plan limits are enforced on the server", () => {
 
   test("Pro: set, move and clear the default", async () => {
     const as = await signIn(bob);
-    const first = await create(as, { ...banner, isDefault: true });
+    const first = await create(as, { ...bobsProfile, isDefault: true });
     expect((await getDefaultBanner("BOB"))?.banner?.id).toBe(first);
 
-    const second = await create(as);
+    const second = await create(as, bobsProfile);
     const moved = await call({
       as,
       id: second,
@@ -336,7 +340,7 @@ describe("plan limits are enforced on the server", () => {
 
   test("someone who lost Pro can still take their default down", async () => {
     const as = await signIn(bob);
-    const id = await create(as, { ...banner, isDefault: true });
+    const id = await create(as, { ...bobsProfile, isDefault: true });
     // Off the allowlist; the cached decision is made to look stale.
     setEnv({ PRO_LOGINS: undefined });
     await store.set("pro:5151", { pro: true, at: 0, source: "allowlist" });
@@ -356,6 +360,121 @@ describe("plan limits are enforced on the server", () => {
     });
     expect(cleared.status).toBe(200);
     expect((await cleared.json()).banner.isDefault).toBe(false);
+    expect((await getDefaultBanner("bob"))?.banner).toBeNull();
+  });
+});
+
+describe("the profile default shows the user's own profile", () => {
+  test("a default of another target is refused, and the real one stays", async () => {
+    const as = await signIn(bob);
+    const mine = await create(as, { ...bobsProfile, isDefault: true });
+    for (const target of [
+      { kind: "owner", login: "torvalds" },
+      { kind: "repo", owner: "bob", name: "dotfiles" },
+    ]) {
+      const refused = await call({
+        as,
+        method: "POST",
+        body: { name: "Other", target, isDefault: true },
+      });
+      expect(refused.status).toBe(422);
+      expect(refused.headers.get("content-type")).toBe(PROBLEM);
+      expect(await refused.json()).toMatchObject({
+        code: "default_not_own_profile",
+      });
+    }
+    // Refused before anything was stored.
+    expect(await listIds(as)).toEqual([mine]);
+    expect((await getDefaultBanner("bob"))?.banner?.id).toBe(mine);
+  });
+
+  test("the login is compared without case", async () => {
+    const as = await signIn(bob);
+    const id = await create(as, {
+      name: "Me",
+      target: { kind: "owner", login: "BOB" },
+      isDefault: true,
+    });
+    expect((await getDefaultBanner("bob"))?.banner?.id).toBe(id);
+  });
+
+  test("a banner of someone else cannot be made the default", async () => {
+    const as = await signIn(bob);
+    const mine = await create(as, { ...bobsProfile, isDefault: true });
+    const other = await create(as);
+    const patch = await call({
+      as,
+      id: other,
+      method: "PATCH",
+      body: { isDefault: true },
+    });
+    expect(patch.status).toBe(422);
+    expect((await patch.json()).code).toBe("default_not_own_profile");
+    expect((await getDefaultBanner("bob"))?.banner?.id).toBe(mine);
+  });
+
+  test("the default cannot be moved to another target", async () => {
+    const as = await signIn(bob);
+    const id = await create(as, { ...bobsProfile, isDefault: true });
+    const moved = await call({
+      as,
+      id,
+      method: "PATCH",
+      body: { target: { kind: "repo", owner: "vercel", name: "next.js" } },
+    });
+    expect(moved.status).toBe(422);
+    expect((await moved.json()).code).toBe("default_not_own_profile");
+    // Nothing changed: not the target, not the pointer.
+    expect((await getBanner(id))?.target).toEqual({
+      kind: "owner",
+      login: "bob",
+    });
+    expect((await getDefaultBanner("bob"))?.banner?.id).toBe(id);
+
+    // Saying it is no longer the default makes the same change valid.
+    const both = await call({
+      as,
+      id,
+      method: "PATCH",
+      body: {
+        target: { kind: "repo", owner: "vercel", name: "next.js" },
+        isDefault: false,
+      },
+    });
+    expect(both.status).toBe(200);
+    expect((await both.json()).banner).toMatchObject({
+      isDefault: false,
+      target: { kind: "repo", owner: "vercel", name: "next.js" },
+    });
+    expect((await getDefaultBanner("bob"))?.banner).toBeNull();
+  });
+
+  test("a default of another target stored earlier can still be cleared", async () => {
+    const as = await signIn(bob);
+    const id = await create(as);
+    // As the API allowed before it checked the target.
+    await setDefaultBanner({ id: "5151", login: "bob" }, id);
+    const renamed = await call({
+      as,
+      id,
+      method: "PATCH",
+      body: { name: "Renamed" },
+    });
+    expect(renamed.status).toBe(200);
+    const again = await call({
+      as,
+      id,
+      method: "PATCH",
+      body: { isDefault: true },
+    });
+    expect(again.status).toBe(422);
+    const cleared = await call({
+      as,
+      id,
+      method: "PATCH",
+      body: { isDefault: false },
+    });
+    expect(cleared.status).toBe(200);
     expect((await getDefaultBanner("bob"))?.banner).toBeNull();
   });
 });
