@@ -386,7 +386,7 @@ function imageResponses(): Json {
   return {
     "200": {
       description:
-        "The banner. Also when the target is unknown or GitHub cannot be asked: the image then says so, and `X-Banner-State` tells which.",
+        "The banner, including error images when the target is unknown or GitHub cannot be asked. When a recognized SVG/PNG image handler receives a login or repository name that is too long or malformed, or more than three segments, it still answers HTTP 200 with an error image and `X-Banner-State: not_found`.",
       headers: {
         "X-Banner-State": header("X-Banner-State"),
         "Cache-Control": header("Cache-Control"),
@@ -396,12 +396,11 @@ function imageResponses(): Json {
         "image/png": image("image/png"),
       },
     },
-    // Two layers refuse a URL that cannot be a banner, and they answer
-    // differently: the image handler with a problem, the routing layer (which
-    // never starts a function for such a path) with the static 404 page.
+    // Keep the routing refusal distinct from the directly reachable internal
+    // handler's format guard. Invalid banner targets use the 200 image above.
     "404": {
       description:
-        "The URL cannot be a banner. A login or repository name that is too long or malformed, or more than three segments, answers a problem (`not_found`). A first segment that is one of this site's own routes, or that contains a character no GitHub login can, answers the site's HTML 404 page.",
+        "A URL rejected by the routing layer answers the site's HTML 404 page, for example `/docs.svg` or a first segment containing a character no GitHub login can. The directly reachable internal handler `/-/i/gif/vercel` instead answers a `not_found` problem with detail `Unknown image format.` This is not a public `.gif` image route: public image suffixes are SVG and PNG.",
       content: {
         "application/problem+json": { schema: ref("ProblemDetails") },
         "text/html": { schema: { type: "string" } },
