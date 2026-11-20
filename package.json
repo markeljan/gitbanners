@@ -36,9 +36,9 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@astryxdesign/cli": "^0.7.15",
-    "@biomejs/biome": "2.6.6",
-    "@playwright/test": "^1.65.0",
+    "@astryxdesign/cli": "^0.7.16",
+    "@biomejs/biome": "2.6.8",
+    "@playwright/test": "^1.65.1",
     "@tailwindcss/turbopack": "4.3.5",
     "@types/bun": "^1.4.4",
     "@types/node": "^26",
@@ -46,7 +46,7 @@
     "@types/react-dom": "^19",
     "@vercel/config": "0.14.1",
     "babel-plugin-react-compiler": "1.0.0",
-    "ioredis": "5",
+    "ioredis": "6",
     "ioredis-mock": "8.13.1",
     "tailwindcss": "4.3.5",
     "typescript": "^7"
