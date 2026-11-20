@@ -12,7 +12,7 @@
         "@upstash/ratelimit": "2.2.1",
         "@upstash/redis": "1.41.0",
         "@vercel/analytics": "^2.0.1",
-        "@vercel/functions": "3.11.2",
+        "@vercel/functions": "3.11.3",
         "@vercel/speed-insights": "^2.1.0",
         "jose": "6.2.17",
         "lucide-react": "^1.72.0",
@@ -378,7 +378,7 @@
 
     "@vercel/config": ["@vercel/config@0.14.1", "", { "dependencies": { "@vercel/routing-utils": "6.6.1", "pretty-cache-header": "^1.0.0", "zod": "^3.22.0" }, "bin": { "config": "dist/cli.js" } }, "sha512-iaCxmLGGm84mglf1NpCEXYbvH8u5xvcWCuXo7iBevxGlIHoN6/qV9532oYf2wv6EPgxdh12Q9jwav+3Buv387w=="],
 
-    "@vercel/functions": ["@vercel/functions@3.11.2", "", { "dependencies": { "@vercel/oidc": "4.0.9" }, "peerDependencies": { "@aws-sdk/credential-provider-web-identity": "*", "ws": ">=8" }, "optionalPeers": ["@aws-sdk/credential-provider-web-identity", "ws"] }, "sha512-SFC8w2S9p39HMe3EFWjH2wY3IJUOTxPI7Ypn9MzPShqTbpUE2arV+AkklE90chi+2s3tda3nDMiy7CkGaPMVSg=="],
+    "@vercel/functions": ["@vercel/functions@3.11.3", "", { "dependencies": { "@vercel/oidc": "4.0.9" }, "peerDependencies": { "@aws-sdk/credential-provider-web-identity": "*", "ws": ">=8" }, "optionalPeers": ["@aws-sdk/credential-provider-web-identity", "ws"] }, "sha512-WOOYeJXbA1CeqQzCu9JLCJQnNdisrGpNgS3K5qSTyMPsXlfs4y47S3EiRCyDPYw6vajPoqQffbFI05zgjYIJcQ=="],
 
     "@vercel/oidc": ["@vercel/oidc@4.0.9", "", { "dependencies": { "@vercel/cli-config": "0.4.0", "@vercel/cli-exec": "1.0.1", "jose": "^5.9.6" } }, "sha512-LBNEPlKHv3ZAhOX2Dcj1hrxdmqYrdzxukGltouKbyjU8IeJvAFSuOHn5X0ZWg0qG2huANcgrHAb03giWeUyubQ=="],
 
