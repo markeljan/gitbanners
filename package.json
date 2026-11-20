@@ -14,8 +14,8 @@
     "check": "bun run lint && bun run typecheck && bun test"
   },
   "dependencies": {
-    "@astryxdesign/core": "^0.7.15",
-    "@astryxdesign/theme-neutral": "^0.7.15",
+    "@astryxdesign/core": "^0.7.16",
+    "@astryxdesign/theme-neutral": "^0.7.16",
     "@modelcontextprotocol/server": "^2",
     "@stylexjs/stylex": "^0.19.2",
     "@upstash/ratelimit": "2.2.1",
