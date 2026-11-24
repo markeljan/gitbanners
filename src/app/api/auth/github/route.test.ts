@@ -417,6 +417,10 @@ describe("GET /api/auth/github/callback", () => {
     );
     // A private repository the user's token cannot see: no verdict.
     Object.assign(mock.state, { checkNeedsScope: true, repoPrivate: true });
+    // The previous confirmed star keeps Pro active during an outage.
+    expect(await back("/dashboard?pro_check=1")).toBe(
+      "/dashboard?pro_check=unverified",
+    );
     await store.set("pro:4242", { pro: false, at: 0, source: null });
     expect(await back("/pricing?pro_check=1")).toBe(
       "/pricing?pro_check=unverified",

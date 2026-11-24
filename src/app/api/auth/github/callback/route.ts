@@ -47,13 +47,13 @@ const LOGGABLE_REASON = /^\w{1,64}$/;
  */
 function withProCheck(
   returnTo: string,
-  pro: { pro: boolean; verdict: "starred" | "not_starred" | "unknown" },
+  pro: { verdict: "starred" | "not_starred" | "unknown" },
 ): string {
   const url = new URL(returnTo, "http://internal.invalid");
   if (!url.searchParams.has("pro_check")) return returnTo;
   url.searchParams.set(
     "pro_check",
-    pro.pro
+    pro.verdict === "starred"
       ? "pro"
       : pro.verdict === "not_starred"
         ? "not_starred"

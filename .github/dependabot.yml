@@ -4,6 +4,10 @@ updates:
     directory: /
     schedule: { interval: weekly }
     open-pull-requests-limit: 5
+    ignore:
+      # ioredis-mock 8 requires ioredis 5 for the Redis integration tests.
+      - dependency-name: ioredis
+        versions: ["6.x"]
     groups:
       next-react:
         patterns:

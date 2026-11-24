@@ -1,12 +1,16 @@
 /**
  * Runs once per server instance, before the first request.
  *
- * Backs the GitHub snapshot cache with the durable store, so the last good
+ * Optionally backs the GitHub snapshot cache with the durable store, so the last good
  * upstream answer outlives a deployment and is shared between instances
  * (the framework's own caches are emptied on every deploy).
  */
 export async function register(): Promise<void> {
-  if (process.env.NEXT_RUNTIME !== "nodejs") return;
+  if (
+    process.env.NEXT_RUNTIME !== "nodejs" ||
+    process.env.GB_DURABLE_SNAPSHOTS !== "1"
+  )
+    return;
   const [{ setSnapshotStore }, { getStore, snapshotStore }] = await Promise.all(
     [import("@/lib/github/snapshot"), import("@/lib/store")],
   );
